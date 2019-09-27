@@ -47,7 +47,6 @@ def generate_enzo_input_file():
     outf.write("GravitationalConstant\t = %10e\t # 4*pi*G*DensityUnits*TimeUnits^2\n\n"%GravitationalConstant)
     
     outf.write("# Gravity Parameters\n")
-    outf.write("SelfGravity\t\t\t = 1\n")
     outf.write("ExternalGravity\t\t\t = 2\n")
     outf.write("ExternalGravityConstant\t\t = %6e\t # in cm/s**2\n"%g0)
     outf.write("ExternalGravityPosition\t\t = 0 0 0\t # in code units\n")

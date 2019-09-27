@@ -12,7 +12,7 @@ module purge
 module load slurm gcc lib/hdf5 openmpi
 
 
-cd /mnt/ceph/users/ibutsky/test/tcool_tff_1
+cd /mnt/ceph/users/ibutsky/test/no_perturb
 
 c=0
 while true
