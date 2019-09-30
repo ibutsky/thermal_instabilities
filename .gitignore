@@ -102,3 +102,10 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+
+init/ThermalInstability*
+init/*.in
+init/*.png
+init/*.out
+init/*.dat
