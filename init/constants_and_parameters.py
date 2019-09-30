@@ -6,20 +6,28 @@ from optparse import OptionParser
 ########### Change these here or with command-line options ###################
 
 ###### gas default parameters
-tcool_tff_ratio = 10
+tcool_tff_ratio = 1
 T0              = 1e6    # K 
 rho0            = 1e-27  # cgs
 g0              = 5e-10  # cm/s**2
-gsoft_scale     = 0.2    # a / H
+gsoft_scale     = 0.1    # a / H
 
+perturb_amplitude     = 0.02   
 
 ###### perturbatio default parameters
 default_n = 128
-default_kmin = 32
-default_kmax = 64
+default_kmin = 4
+default_kmax = 32
 default_f_solenoidal = 2./3.
 default_alpha = 0
 default_seed = 4085281318
+
+
+
+###### computing parameters
+nodes = 1
+tasks_per_node = 32
+
 
 ######### Don't change these ############
 # (unless you really want to)

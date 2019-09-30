@@ -1,5 +1,6 @@
 import matplotlib.pylab as plt
 import shutil
+import os
 
 import perturbation as pert
 from constants_and_parameters import *
@@ -55,7 +56,7 @@ def generate_enzo_input_file():
     outf.write("# Problem-specific Parameters\n")
     outf.write("TIMeanDensity\t\t\t = %e  # g/cc\n"%(rho0))
     outf.write("TIMeanTemperature\t\t = %e  # Kelvin\n"%(T0))
-    outf.write("TIDensityPerturbationAmplitude\t = 0.02\n")
+    outf.write("TIDensityPerturbationAmplitude\t = %f\n"%(perturb_amplitude))
     outf.write("TestProblemUseMetallicityField\t = 0 \n")
     outf.close()
 
@@ -71,6 +72,30 @@ def check_units():
     outf.close()
 
 
+def generate_sbatch_file(nodes = 1, tasks_per_node = 32):
+    cwd = os.getcwd()
+    basename = os.path.basename(cwd)
+    outf = open('submit.sbatch', 'w')
+    outf.write('#!/bin/bash\n')
+    outf.write('#SBATCH --job-name=%s\n'%basename)
+    outf.write('#SBATCH --ntasks=%i\n'%nodes)
+    outf.write('#SBATCH --ntasks-per-node=%i\n'%(tasks_per_node))
+    outf.write('#SBATCH --time=1:00:00\n\n')
+    
+    outf.write('module purge\n')
+    outf.write('module load slurm gcc lib/hdf5 openmpi\n\n')
+
+    outf.write('cd %s\n'%cwd)
+
+    outf.write('c=0\nwhile true\ndo\n')
+    outf.write('    if [ ! -e estd.out.$c ]; then\n        break\n    fi\n')
+    outf.write('    c=$[$c+1]\ndone\nmv estd.out estd.out.$c\n\n')
+
+    procs = nodes * tasks_per_node
+    outf.write('mpirun -n %i ~/enzo-dev-cr/src/enzo/enzo.exe -d ThermalInstability.enzo >&estd.out\n'%(procs))
+    outf.close()
+
+
 ######### GENERATE INITIAL CONDITIONS AND FILES  ########
 
 # generate perturbation input file: 
@@ -83,3 +108,6 @@ plot_cooling_rate_range()
 # generate enzo input file
 generate_enzo_input_file()
 check_units()
+
+# generate submit.sbatch file
+generate_sbatch_file(nodes = nodes, tasks_per_node = 32)
