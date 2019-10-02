@@ -72,13 +72,13 @@ def check_units():
     outf.close()
 
 
-def generate_sbatch_file(nodes = 1, tasks_per_node = 32):
+def generate_sbatch_file(nodes = 2, tasks_per_node = 32):
     cwd = os.getcwd()
     basename = os.path.basename(cwd)
     outf = open('submit.sbatch', 'w')
     outf.write('#!/bin/bash\n')
     outf.write('#SBATCH --job-name=%s\n'%basename)
-    outf.write('#SBATCH --ntasks=%i\n'%nodes)
+    outf.write('#SBATCH --nodes=%i\n'%nodes)
     outf.write('#SBATCH --ntasks-per-node=%i\n'%(tasks_per_node))
     outf.write('#SBATCH --time=1:00:00\n\n')
     

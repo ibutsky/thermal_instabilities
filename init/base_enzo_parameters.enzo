@@ -47,6 +47,8 @@ RadiativeCoolingModel       = 1 # 1
 MultiSpecies                = 0
 MetalCooling                = 0
 CIECooling                  = 0
+UseCoolingTimestep	    = 1
+CoolingTimestepSafetyFactor = 0.4
 
 # Global Parameters
 tiny_number                = 1.0e-10
