@@ -82,3 +82,4 @@ GravitationalConstant      = 4 * np.pi*G * DensityUnits*TimeUnits**2
 
 velocity_test = 1e7 / VelocityUnits
 ethermal_test =  kb*T0 / mu / mh / (gamma - 1) / VelocityUnits**2
+ethermal_min = kb*Tmin / mu / mh / (gamma - 1) / VelocityUnits**2

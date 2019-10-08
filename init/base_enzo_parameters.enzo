@@ -11,11 +11,12 @@ TopGridDimensions          = 128 128 128
 DomainLeftEdge             = -3 -3 -3
 DomainRightEdge            = 3 3 3
 
-LeftFaceBoundaryCondition  = 3 3 6 # 3 = Periodic, 0 = reflecting, 1 = outflow, 6 = extrapolate
-RightFaceBoundaryCondition = 3 3 6 # 3 = Periodic, 0 = reflecting, 1 = outflow, 6 = extrapolate
+LeftFaceBoundaryCondition  = 3 3 6 # 3 = Periodic, 0 = reflecting, 1 = outflow, 6 = hydrostatic
+RightFaceBoundaryCondition = 3 3 6 # 3 = Periodic, 0 = reflecting, 1 = outflow, 6 = hydrostatic
 
 # Hierarchy Control Parameters
 StaticHierarchy            = 1 # 0 = AMR, 1 = No AMR
+MaximumRefinementLevel	   = 0
 UserDefinedRootGridLayout  = 1 1 32  # note: can't have fewer grid divisions than number of cores
 
 # Hydrodynamic Parameters
@@ -47,8 +48,10 @@ RadiativeCoolingModel       = 1 # 1
 MultiSpecies                = 0
 MetalCooling                = 0
 CIECooling                  = 0
-UseCoolingTimestep	    = 1
-CoolingTimestepSafetyFactor = 0.4
+UseCoolingTimestep	    = 0
+UseRadiativeCoolingAndHeatingTimestep = 1
+CoolingTimestepSafetyFactor = 0.1
+CoolingTImestepMinimumTimestep = 1e4 # years
 
 # Global Parameters
 tiny_number                = 1.0e-10
