@@ -3,6 +3,7 @@ import yt
 import numpy as np
 import glob
 import os
+import sys
 
 import matplotlib.pylab as plt
 from matplotlib.colors import LogNorm
@@ -11,8 +12,11 @@ import palettable
 import multiprocessing as mp
 
 
+sim = sys.argv[1]
+half_range = 1
 workdir = '/mnt/ceph/users/ibutsky/simulations/test/bomb_debug'
-sim = 'low_rg_courant'
+#workdir = '/mnt/ceph/users/ibutsky/simulations/kmin_4_kmax_32_alpha_0'
+
 plot_folder = '/mnt/ceph/users/ibutsky/plots/movies/%s'%sim
 if not os.path.isdir(plot_folder):
     os.mkdir(plot_folder)
@@ -41,7 +45,7 @@ def calculate_density_fluctuation(ad, rho0 = 1e-27):
     rho_norm = rho_norm[mask].reshape(resolution, resolution)
     return xbins, ybins, rho_norm, drho
 
-def plot_density_slices(ds, half_range = 0.1, folder = '.', savefig = False):
+def plot_density_slices(ds, folder = '.', savefig = False):
     ad = ds.all_data()
     xbins, ybins, rho_norm, drho = calculate_density_fluctuation(ad)
     fig, ax = plt.subplots(ncols = 2, nrows = 1, figsize=(16,7))
@@ -70,7 +74,7 @@ def make_movie_plots(output):
     figname = '%s/%s.png'%(plot_folder, basename[2:])
     if not os.path.isfile(figname):
         ds = yt.load('%s/%s'%(output, basename))
-        fig, ax = plot_density_slices(ds, half_range = 1)
+        fig, ax = plot_density_slices(ds)
         plt.savefig(figname, dpi = 300)
 
                     
@@ -83,6 +87,8 @@ pool.close()
 
 cwd = os.getcwd()
 os.chdir(plot_folder)
-os.system('ffmpeg -r 5 -f image2 -s 1920x1080 -i %04d.png -vcodec libx264 -crf 25 -pix_fmt yuv420p density.mov')
+os.system('ffmpeg -r 10 -f image2 -s 1920x1080 -i %04d.png -vcodec libx264 -crf 25 -pix_fmt yuv420p density.mov')
 os.rename('density.mov', '%s_density.mov'%(sim))
 os.chdir(cwd)
+
+# ffmpeg -framerate 12 -pattern_type glob -i *.png -c:v mpeg4 -pix_fmt yuv420p -q:v 0 -b 512k movie.mov

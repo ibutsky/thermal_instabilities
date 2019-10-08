@@ -32,8 +32,6 @@ CourantSafetyNumber        = 0.4
 # I/O Parameters
 StopCycle		   = 1000000
 InitialTime 		   = 0.0
-StopTime 		   = 10
-dtDataDump 		   = 0.1   
 DataDumpDir                = DD
 DataDumpName 		   = DD
 OutputTemperature          = 1 
