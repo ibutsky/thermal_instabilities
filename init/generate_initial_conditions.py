@@ -59,7 +59,7 @@ def generate_enzo_input_file():
     outf.write("LengthUnits\t\t = %10e\t # 1 code length unit = %f kpc\n"%(LengthUnits, (LengthScale*H).in_units('kpc')))
     outf.write("# 1 code time unit = 1 free-fall time at the scale height (%e years) \n"%(tff_scale.in_units('yr')))
     outf.write("TimeUnits\t\t = %10e \n"%(TimeUnits))
-    outf.write("StopeTime\t\t = %f\t # stop time is %0.2f cooling times (at the scale height) \n"%(StopTime, num_cooling_cycles))
+    outf.write("StopTime\t\t = %f\t # stop time is %0.2f cooling times (at the scale height) \n"%(StopTime, num_cooling_cycles))
     outf.write("dtDataDump\t\t = %f \n"%(dtDataDump))
     outf.write("GravitationalConstant\t = %10e\t # 4*pi*G*DensityUnits*TimeUnits^2\n\n"%GravitationalConstant)
     
