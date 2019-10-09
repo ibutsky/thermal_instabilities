@@ -95,17 +95,13 @@ Lambda0 = tcool_over_L0_H / (tcool_tff_ratio * tff_H)
 LambdaMin = tcool_over_L0_H / (10  * tff_H)
 LambdaMax = tcool_over_L0_H / (0.1 * tff_H)
 
-
-# estimate cell volume 
-cell_volume = (6*H / 128)**3
-
 LengthScale = 1    # in units of scale height H
 TimeScale   = 1    # in units of free-fall time at the scale height 
-MassScale   = 1e3  # the value, in code-units, of the mass in a cell at the scale height
+DensityScale = 10   # in units of rho0
 
 LengthUnits        = LengthScale * H
-MassUnits          = MassScale * rho0 * cell_volume
-DensityUnits       = MassUnits / np.power(LengthUnits, 3)
+DensityUnits       = rho0 / DensityScale  
+MassUnits          = DensityUnits * np.power(LengthUnits, 3)
 TimeUnits          = TimeScale * tff_H
 VelocityUnits      = LengthUnits / TimeUnits
 AccelerationUnits  = LengthUnits / TimeUnits / TimeUnits
