@@ -6,66 +6,63 @@ import os
 import sys
 
 import matplotlib.pylab as plt
-from matplotlib.colors import LogNorm
+from matplotlib.colors import LogNorm, SymLogNorm
 import palettable
 
 import multiprocessing as mp
 
 
 sim = sys.argv[1]
-half_range = .1
-#workdir = '/mnt/ceph/users/ibutsky/simulations/test/bomb_debug'
-workdir = '/simons/scratch/ibutsky/simulations'
-#workdir = '/mnt/ceph/users/ibutsky/simulations/kmin_4_kmax_32_alpha_0'
+half_range = 1
+rho0 = 1e-27
 
-plot_folder = '/simons/scratch/ibutsky/movies/%s'%sim
+workdir = '../../simulations'
+plot_folder = '../../movies/%s'%sim
+
 if not os.path.isdir(plot_folder):
     os.mkdir(plot_folder)
 
 output_list = glob.glob('%s/%s/DD*'%(workdir, sim))
 
-def calculate_density_fluctuation(ad, rho0 = 1e-27):    
-    x = ad[('gas', 'x')].in_units('kpc')
-    y = ad[('gas', 'y')].in_units('kpc')
-    z = ad[('gas', 'z')].in_units('kpc')
-    rho = ad[('gas', 'density')].in_units('g/cm**3')
+def plot_density_slices(ds, folder = '.'):
+
+    s = yt.SlicePlot(ds, 'x', ('gas', 'density'))
+    frb_s = s.frb
+    p = yt.ProjectionPlot(ds, 'x', ('gas', 'density'), weight_field = 'ones')
+    frb_p = p.frb
+
+    cmap_list = [palettable.cmocean.sequential.Tempo_20.mpl_colormap, \
+                 palettable.cmocean.diverging.Curl_9.mpl_colormap]
+
+    fig, ax = plt.subplots(ncols = 2, nrows = 2, figsize=(16,14))
+
+    for i, frb in enumerate([frb_s, frb_p]):
+        print(i)
+        xbins = frb['y'].in_units('kpc')
+        ybins = frb['z'].in_units('kpc')
+        rho   = frb['density']
+
+        data = rho/rho0
+
+        pcm = ax[i][0].pcolormesh(xbins, ybins, data, norm = LogNorm(), cmap = cmap_list[0], vmin = 1e-1, vmax = 1)
+        cbar = fig.colorbar(pcm, ax = ax[i][0], pad=0)
+        cbar.set_label('Normalized Density')
+        ax[i][0].set_xlabel('y (kpc)')
+        ax[i][0].set_ylabel('z (kpc)')
     
-    drho_over_rho = np.zeros(len(rho))
-    rho_norm = rho / rho0
-    resolution = int( abs(z[0] - z[-1]) / abs(z[0] - z[1])) + 2
-    for i in range(resolution):
-        mask = z == z[i]
-        ave_rho = np.mean(rho[mask])
-        drho_over_rho[mask] = (rho[mask] - ave_rho) / ave_rho
+        
+        # calculate density fluctuation
+        data = []
+        for rho_slice in rho:
+            ave_rho = np.mean(rho_slice)
+            data.append((rho_slice - ave_rho) / rho_slice)
 
-            
-    mask = x == x[64]
-    xbins = y[mask].reshape(resolution,resolution)
-    ybins = z[mask].reshape(resolution,resolution)
-    drho = drho_over_rho[mask].reshape(resolution,resolution)
-    rho_norm = rho_norm[mask].reshape(resolution, resolution)
-    return xbins, ybins, rho_norm, drho
-
-def plot_density_slices(ds, folder = '.', savefig = False):
-    ad = ds.all_data()
-    xbins, ybins, rho_norm, drho = calculate_density_fluctuation(ad)
-    fig, ax = plt.subplots(ncols = 2, nrows = 1, figsize=(16,7))
-
-    cmap = palettable.cmocean.sequential.Tempo_20.mpl_colormap
-    pcm = ax[0].pcolormesh(xbins, ybins, rho_norm, norm = LogNorm(),\
-                           cmap = cmap, vmin = 1e-1, vmax = 1)
-    cbar = fig.colorbar(pcm, ax = ax[0], pad=0)
-    cbar.set_label('Normalized Density')
-    ax[0].set_xlabel('y (kpc)')
-    ax[0].set_ylabel('z (kpc)')
-    
-    cmap = palettable.cmocean.diverging.Curl_9.mpl_colormap
-    pcm = ax[1].pcolormesh(xbins, ybins, drho, \
-                           cmap = cmap, vmin = -half_range, vmax = half_range)
-    cbar = fig.colorbar(pcm, ax = ax[1], pad=0)
-    cbar.set_label('Density Fluctuation')
-    ax[1].set_xlabel('y (kpc)')
-    ax[1].set_ylabel('z (kpc)')
+        pcm = ax[i][1].pcolormesh(xbins, ybins, data, norm=SymLogNorm(0.01), \
+                                  cmap = cmap_list[1], vmin = -half_range, vmax = half_range)
+        cbar = fig.colorbar(pcm, ax = ax[i][1], pad=0)
+        cbar.set_label('Density Fluctuation')
+        ax[i][1].set_xlabel('y (kpc)')
+        ax[i][1].set_ylabel('z (kpc)')
 
     fig.tight_layout()
     return fig, ax

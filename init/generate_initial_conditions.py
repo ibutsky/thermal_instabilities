@@ -70,7 +70,7 @@ def generate_enzo_input_file():
     outf.write("# in pressure equilibrium\n\n")
 
     outf.write("# Initialization Parameters\n")
-    outf.write("Problem Type \t\t = 417\n")
+    outf.write("ProblemType \t\t = 417\n")
     outf.write("TopGridRank \t\t = 3\n\n")
     
     res_x = int(resolution * box_x / box_z)
@@ -103,6 +103,7 @@ def generate_enzo_input_file():
     outf.write("StopTime \t\t = %f\t # stop time is %0.2f cooling times (at the scale height) \n"%(StopTime, num_cooling_cycles))
     outf.write("dtDataDump \t\t = %f \n"%(dtDataDump))
     outf.write("DataDumpDir \t\t = DD\n")
+    outf.write("DataDumpName \t\t = DD\n")
     outf.write("OutputTemperature \t = 1\n")
     outf.write("OutputCoolingTime \t = 1\n")
     outf.write("WriteExternalAccel \t = 1\n\n")
@@ -119,7 +120,7 @@ def generate_enzo_input_file():
     outf.write("MetalCooling \t\t = 0\n")
     outf.write("CIECooling \t\t = 0\n")
     outf.write("UseCoolingTimestep \t = 1\n")
-    outf.write("CoolingTimestepSafetyFactor \t = 0.01\n")
+    outf.write("CoolingTimestepSafetyFactor \t = 0.1\n")
     outf.write("CoolingTimestepMinimumTimestep = 0 # years\n\n")
 
     outf.write("# Global Parameters\n")
@@ -185,6 +186,7 @@ def generate_sbatch_file(nodes = 2, tasks_per_node = 32):
 
     procs = nodes * tasks_per_node
     outf.write('mpirun -n %i ~/enzo-dev-cr/src/enzo/enzo.exe -d ThermalInstability.enzo >&estd.out\n'%(procs))
+    outf.write('#mpirun -n %i ~/enzo-dev-cr/src/enzo/enzo.exe -d -r DD0100/DD0100 >&estd.out\n'%(procs))
     outf.close()
 
 def generate_clean_file():
