@@ -13,11 +13,12 @@ import multiprocessing as mp
 
 
 sim = sys.argv[1]
-half_range = 1
-workdir = '/mnt/ceph/users/ibutsky/simulations/test/bomb_debug'
+half_range = .1
+#workdir = '/mnt/ceph/users/ibutsky/simulations/test/bomb_debug'
+workdir = '/simons/scratch/ibutsky/simulations'
 #workdir = '/mnt/ceph/users/ibutsky/simulations/kmin_4_kmax_32_alpha_0'
 
-plot_folder = '/mnt/ceph/users/ibutsky/plots/movies/%s'%sim
+plot_folder = '/simons/scratch/ibutsky/movies/%s'%sim
 if not os.path.isdir(plot_folder):
     os.mkdir(plot_folder)
 
@@ -52,7 +53,7 @@ def plot_density_slices(ds, folder = '.', savefig = False):
 
     cmap = palettable.cmocean.sequential.Tempo_20.mpl_colormap
     pcm = ax[0].pcolormesh(xbins, ybins, rho_norm, norm = LogNorm(),\
-                           cmap = cmap, vmin = 1e-2, vmax = 10)
+                           cmap = cmap, vmin = 1e-1, vmax = 1)
     cbar = fig.colorbar(pcm, ax = ax[0], pad=0)
     cbar.set_label('Normalized Density')
     ax[0].set_xlabel('y (kpc)')
@@ -89,6 +90,9 @@ cwd = os.getcwd()
 os.chdir(plot_folder)
 os.system('ffmpeg -r 10 -f image2 -s 1920x1080 -i %04d.png -vcodec libx264 -crf 25 -pix_fmt yuv420p density.mov')
 os.rename('density.mov', '%s_density.mov'%(sim))
+png_files = glob.glob('*.png')
+for pic in png_files:
+    os.remove(pic)
 os.chdir(cwd)
 
 # ffmpeg -framerate 12 -pattern_type glob -i *.png -c:v mpeg4 -pix_fmt yuv420p -q:v 0 -b 512k movie.mov
