@@ -204,32 +204,36 @@ def generate_clean_file():
 mu          = 1.22
 gamma       = 5./3.
 
-# cosntant definitions                                                                                                           
+# cosntant definitions                  
 G      = YTQuantity(const.G.cgs.value, 'cm**3/g/s**2')
 kb     = YTQuantity(const.k_B.cgs.value, 'cm**2*g/s**2/K')
 mh     = YTQuantity(const.m_p.cgs.value, 'g')
 
 
-# solve for the remaining variables                                                                                              
-# scale height and gravitational softening in kpc                                                                                
+# scale height and gravitational softening in kpc
 H = kb*T0 / mu / mh / g0
 a = gsoft_scale * H
 
 
-# free fall time and density at the scale height, in seconds                                                                     
+# free fall time and density at the scale height, in seconds 
 tff_H = calculate_free_fall_time(H, g0)
 rho_H = calculate_density(rho0, H, a, H, halo_profile)
 
 tcool_over_L0_H = kb*mu*mh*np.power(T0, 1 - T_power_law_index) / rho_H / (gamma - 1)
 Lambda0 = tcool_over_L0_H / (tcool_tff_ratio * tff_H)
 
-# assuming range of tcool_tff_ratio from 0.1 - 10                                                                                
+# assuming range of tcool_tff_ratio from 0.1 - 10
 LambdaMin = tcool_over_L0_H / (10  * tff_H)
 LambdaMax = tcool_over_L0_H / (0.1 * tff_H)
 
+if halo_profile == 1:
+    box_x, box_y, box_z   = [3, 3, 3]  # box dimensions are (2*box_x*box_y*box_z)**3  
+elif halo_profile == 2:
+    box_x, box_y, box_z   = [2, 2, 2]
+
 LengthScale  = 1    # in units of scale height H
 TimeScale    = 1    # in units of free-fall time at the scale height
-DensityScale = 10   # in units of rho0                                                                                           
+DensityScale = 10   # in units of rho0
 
 LengthUnits        = LengthScale * H
 DensityUnits       = rho0 / DensityScale

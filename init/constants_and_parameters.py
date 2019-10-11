@@ -2,13 +2,9 @@ from yt import YTQuantity
 
 ########### These parameters will likely change between runs ########
 
-tcool_tff_ratio = 1  # ratio of t_cool / t_free_fall 
-halo_profile    = 1  # 1 = isothermal, 2 = isentropic
-
-
-# simulation box size and resolution
-box_x, box_y, box_z   = [3, 3, 3]  # box dimensions are (2*box_x*box_y*box_z)**3
-resolution            = 128        # resolution along z-axis; scaled for x-y axes
+tcool_tff_ratio = 1    # ratio of t_cool / t_free_fall 
+halo_profile    = 1    # 1 = isothermal, 2 = isentropic
+resolution      = 128  # resolution along z-axis; scaled for x-y axes
 
 
 # cooling function parameters
@@ -28,9 +24,6 @@ gsoft_scale     = 0.1    # units of scale height
 mu              = 1.22
 gamma           = 5./3.
 
-####### box size and units 
-box_height   = 3    # box will be 2*box_size in units of scale height 
-
 ###### perturbatio default parameters
 perturbation_amplitude = 0.02
 default_n              = resolution
@@ -44,8 +37,8 @@ default_seed           = 4085281318
 ###### computing parameters
 nodes              = 1
 tasks_per_node     = 32
-num_cooling_cycles = 20  # simulation stop time = 20 * t_cool
-num_outputs        = 200
+num_cooling_cycles = 10  # simulation stop time = 20 * t_cool
+num_outputs        = 100
 
 
 
