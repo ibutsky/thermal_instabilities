@@ -16,7 +16,7 @@ sim = sys.argv[1]
 half_range = 1
 rho0 = 1e-27
 
-workdir = '../../simulations'
+workdir = '../../simulations/kmin_4_kmax_32_alpha_0'
 plot_folder = '../../movies/%s'%sim
 
 if not os.path.isdir(plot_folder):
@@ -28,13 +28,18 @@ def plot_density_slices(ds, folder = '.'):
 
     s = yt.SlicePlot(ds, 'x', ('gas', 'density'))
     frb_s = s.frb
-    p = yt.ProjectionPlot(ds, 'x', ('gas', 'density'), weight_field = 'ones')
+    p = yt.ProjectionPlot(ds, 'x', [('gas', 'density'), ('gas', 'velocity_z')], weight_field = 'ones')
+    p.set_unit(('gas', 'velocity_z'), 'km/s')
     frb_p = p.frb
+
+    ad = ds.all_data()
+    ph = yt.PhasePlot(ad, ('gas', 'density'), ('gas', 'temperature'), ('gas', 'cell_mass'), weight_field = None)
+    ph.set_unit(('gas', 'cell_mass'), 'Msun')
 
     cmap_list = [palettable.cmocean.sequential.Tempo_20.mpl_colormap, \
                  palettable.cmocean.diverging.Curl_9.mpl_colormap]
 
-    fig, ax = plt.subplots(ncols = 2, nrows = 2, figsize=(16,14))
+    fig, ax = plt.subplots(ncols = 3, nrows = 2, figsize=(24,14))
 
     for i, frb in enumerate([frb_s, frb_p]):
         print(i)
@@ -63,6 +68,32 @@ def plot_density_slices(ds, folder = '.'):
         cbar.set_label('Density Fluctuation')
         ax[i][1].set_xlabel('y (kpc)')
         ax[i][1].set_ylabel('z (kpc)')
+        
+    # plot velocity
+    pcm = ax[1][2].pcolormesh(xbins, ybins, frb_p[('gas', 'velocity_z')], norm=SymLogNorm(1), \
+                                  cmap = palettable.scientific.diverging.Vik_20.mpl_colormap, \
+                                   vmin = -100, vmax = 100)
+    cbar = fig.colorbar(pcm, ax = ax[1][2], pad=0)
+    cbar.set_label('Z-Velocity')
+    ax[1][2].set_xlabel('y (kpc)')
+    ax[1][2].set_ylabel('z (kpc)')
+        
+    # plot phase plot
+    prof = ph.profile
+    xbins = prof.x
+    ybins = prof.y
+    data  = prof[('gas', 'cell_mass')].T
+    ax[0][2].set_xscale('log')
+    ax[0][2].set_yscale('log')
+    ax[0][2].set_xlim(5e-29, 5e-26)
+    ax[0][2].set_ylim(1e4, 1e7)
+    pcm = ax[0][2].pcolormesh(xbins, ybins, data, norm=LogNorm(), \
+                                  cmap = palettable.scientific.sequential.Bilbao_16.mpl_colormap,\
+                                   vmin = 1e5, vmax = 1e9)
+    cbar = fig.colorbar(pcm, ax = ax[0][2], pad=0)
+    cbar.set_label('Cell Mass (M$_{\odot}$)')
+    ax[0][2].set_xlabel('Density (g/cm$^3$)')
+    ax[0][2].set_ylabel('Temperature (K)')
 
     fig.tight_layout()
     return fig, ax
