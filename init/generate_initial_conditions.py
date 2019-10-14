@@ -31,26 +31,26 @@ def calculate_free_fall_time(z, g0):
     return np.sqrt(2*z / g0)
 
 
-def calculate_cooling_rate(T, Lambda0, logT_min = 5.0):
-    cooling_rate = Lambda0 * np.power(T, -2./3.)
+def calculate_cooling_rate(T, Lambda0, T_power_law_index, logT_min = 5.0):
+    cooling_rate = Lambda0 * np.power(T, T_power_law_index)
     return cooling_rate
 
 
-def calculate_cooling_time(Lambda0, rho0, T0, z, a, H, profile):
+def calculate_cooling_time(Lambda0, rho0, T0, z, a, H, profile, T_power_law_index):
     rho = calculate_density(rho0, z, a, H, profile)
     n = rho / (mu * mh)
     T = calculate_temperature(T0, z, a, H, profile)
 
     eth = n * kb * T / (gamma - 1)
-    d_eth = np.power(n, 2) * calculate_cooling_rate(T, Lambda0)
+    d_eth = np.power(n, 2) * calculate_cooling_rate(T, Lambda0, T_power_law_index)
     cooling_time = eth / d_eth
     return cooling_time
     
 
 def plot_cooling_rate_range():
     T_list = np.logspace(5, 7, 100)
-    plt.loglog(T_list, calculate_cooling_rate(T_list, LambdaMin), label = "tcool / tff = 10")
-    plt.loglog(T_list, calculate_cooling_rate(T_list, LambdaMax), label = "tcool / tff = 0.1")
+    plt.loglog(T_list, calculate_cooling_rate(T_list, LambdaMin, T_power_law_index), label = "tcool / tff = 10")
+    plt.loglog(T_list, calculate_cooling_rate(T_list, LambdaMax, T_power_law_index), label = "tcool / tff = 0.1")
     plt.xlim(8e4, 3e6)
     plt.ylim(1e-24, 3e-21)
     plt.xlabel("Temperature (K)")
@@ -160,8 +160,8 @@ def check_units():
     outf.write("100 km/s  = %e in code units\n\n"%velocity_test)
 
     outf.write("Free fall time at H = %e years\n"%(tff_H.in_units('yr')))
-    outf.write("Cooling time at H = %e years\n"%calculate_cooling_time(Lambda0, rho0, T0, H, a, H, halo_profile).in_units('yr'))
-    outf.write("Cooling_time at 3H = %e years\n"%calculate_cooling_time(Lambda0, rho0, T0, 3*H, a, H, halo_profile).in_units('yr'))
+    outf.write("Cooling time at H = %e years\n"%calculate_cooling_time(Lambda0, rho0, T0, H, a, H, halo_profile, T_power_law_index).in_units('yr'))
+    outf.write("Cooling_time at 3H = %e years\n"%calculate_cooling_time(Lambda0, rho0, T0, 3*H, a, H, halo_profile, T_power_law_index).in_units('yr'))
     outf.close()
 
 

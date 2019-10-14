@@ -16,7 +16,7 @@ sim = sys.argv[1]
 half_range = 1
 rho0 = 1e-27
 
-workdir = '../../simulations/kmin_4_kmax_32_alpha_0'
+workdir = '../../simulations/'
 plot_folder = '../../movies/%s'%sim
 
 if not os.path.isdir(plot_folder):
