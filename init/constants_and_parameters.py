@@ -1,4 +1,5 @@
 from yt import YTQuantity
+from yt import YTArray
 
 ########### These parameters will likely change between runs ########
 
@@ -10,8 +11,9 @@ resolution      = 128  # resolution along z-axis; scaled for x-y axes
 # cooling function parameters
 # Tmin should be ~ T0/20    
 T_min = YTQuantity(5e4, 'K')
-T_max = YTQuantity(1e7, 'K')
+T_max = YTQuantity(1e9, 'K')
 T_power_law_index = (-2./3.)
+smooth_factor = 0.02
 
 
 ########### These parameters don't really need to change ###########

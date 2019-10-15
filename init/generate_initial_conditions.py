@@ -31,9 +31,26 @@ def calculate_free_fall_time(z, g0):
     return np.sqrt(2*z / g0)
 
 
-def calculate_cooling_rate(T, Lambda0, T_power_law_index, logT_min = 5.0):
+def calculate_cooling_rate(T, Lambda0, T_power_law_index, smooth_factor = 0.1, Tmin = 5e4, Tmax = 1e8):
+    # only the power law
     cooling_rate = Lambda0 * np.power(T, T_power_law_index)
-    return cooling_rate
+    cooling_rate[T < Tmin] = Lambda0 * np.power(Tmin, T_power_law_index)
+    cooling_rate[T > Tmax] = Lambda0 * np.power(Tmax, T_power_law_index)
+
+    logT = np.log10(T)
+    logT_min = np.log10(Tmin)
+    logT_max = np.log10(Tmax)
+
+    # smooth the edges
+    Tminscale =  (logT - logT_min) / (smooth_factor * logT_min) 
+    Tmaxscale = -(logT - logT_max) / (smooth_factor * logT_max)
+    
+    ymin = 1e-20 * Lambda0.d
+    smooth_min = 1
+    smooth_max = 1
+    smooth_min = (np.tanh(Tminscale - 2.0) + 1.0) / 2. * (1.0 - ymin)  + ymin
+    smooth_max = (np.tanh(Tmaxscale - 2.0) + 1.0) / 2. * (1.0 - ymin) + ymin
+    return cooling_rate * smooth_min * smooth_max 
 
 
 def calculate_cooling_time(Lambda0, rho0, T0, z, a, H, profile, T_power_law_index):
@@ -47,14 +64,18 @@ def calculate_cooling_time(Lambda0, rho0, T0, z, a, H, profile, T_power_law_inde
     return cooling_time
     
 
-def plot_cooling_rate_range():
-    T_list = np.logspace(5, 7, 100)
-    plt.loglog(T_list, calculate_cooling_rate(T_list, LambdaMin, T_power_law_index), label = "tcool / tff = 10")
-    plt.loglog(T_list, calculate_cooling_rate(T_list, LambdaMax, T_power_law_index), label = "tcool / tff = 0.1")
-    plt.xlim(8e4, 3e6)
-    plt.ylim(1e-24, 3e-21)
-    plt.xlabel("Temperature (K)")
-    plt.ylabel("$\Lambda$(T) (erg cm^3/s)")
+def plot_cooling_rate(Lambda0, T_power_law_index, smooth_factor, Tmin, Tmax):
+    T_list = YTArray(np.logspace(np.log10(Tmin)-1, np.log10(Tmax)+1, 100), 'K')
+    
+    cool_rate = calculate_cooling_rate(T_list, Lambda0, T_power_law_index, smooth_factor, Tmin = Tmin, Tmax = Tmax)
+    plt.loglog(T_list, cool_rate)
+    plt.loglog(T_list, Lambda0*T_list**(T_power_law_index), color = 'black', linestyle = 'dashed', \
+               label = '$ T = \Lambda_0 T^{%0.2f}$'%(T_power_law_index))
+    plt.axvline(Tmin, color = 'black', linestyle = 'dotted', label = '$T_{min} = %.1e$'%(Tmin))
+    plt.axvline(Tmax, color = 'black', linestyle = 'dotted', label = '$T_{max} = %.1e$'%(Tmax))
+
+    plt.xlabel('Temperature (K)')
+    plt.ylabel('Cooling Rate (erg * cm^3 /s)')
     plt.legend()
     plt.savefig("cooling_rates.png")
 
@@ -114,13 +135,14 @@ def generate_enzo_input_file():
     outf.write("RadiativeHeating \t = 1\n")
     outf.write("RadiativeCoolingFunctionConstant   = %e\n"%Lambda0)
     outf.write("RadiativeCoolingPowerLawIndex      = %0.8f\n"%(T_power_law_index))
+    outf.write("RadiativeCoolingSmoothingFactor    = %f\n"%smooth_factor)
     outf.write("RadiativeCoolingMinimumTemperature = %e\n"%(T_min))
     outf.write("RadiativeCoolingMaximumTemperature = %e\n"%(T_max))
     outf.write("MultiSpecies \t\t = 0\n")
     outf.write("MetalCooling \t\t = 0\n")
     outf.write("CIECooling \t\t = 0\n")
     outf.write("UseCoolingTimestep \t = 1\n")
-    outf.write("CoolingTimestepSafetyFactor \t = 0.1\n")
+    outf.write("CoolingTimestepSafetyFactor \t = 0.4\n")
     outf.write("CoolingTimestepMinimumTimestep = 0 # years\n\n")
 
     outf.write("# Global Parameters\n")
@@ -252,7 +274,7 @@ ethermal_min = kb*T_min / mu / mh / (gamma - 1) / VelocityUnits**2
 # generate perturbation input file: 
 pert.generate_perturbation_infile()
 
-plot_cooling_rate_range()
+plot_cooling_rate(Lambda0, T_power_law_index, smooth_factor, T_min, T_max)
 
 # generate enzo input file
 generate_enzo_input_file()
