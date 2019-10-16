@@ -8,13 +8,20 @@ import sys
 import matplotlib.pylab as plt
 from matplotlib.colors import LogNorm, SymLogNorm
 import palettable
+import astropy.constants as const
 
 import multiprocessing as mp
 
+import yt_functions as ytf
 
 sim = sys.argv[1]
 half_range = 1
 rho0 = 1e-27
+T0 = 1e6
+mu = 1.22
+mh = const.m_p.cgs.value
+kb = const.k_B.cgs.value
+p0 = (rho0 / mu / mh) * kb*T0
 
 workdir = '../../simulations/'
 plot_folder = '../../movies/%s'%sim
@@ -26,7 +33,7 @@ output_list = glob.glob('%s/%s/DD*'%(workdir, sim))
 
 def plot_density_slices(ds, folder = '.'):
 
-    s = yt.SlicePlot(ds, 'x', ('gas', 'density'))
+    s = yt.SlicePlot(ds, 'x', [('gas', 'density'), ('gas', 'pressure')])
     frb_s = s.frb
     p = yt.ProjectionPlot(ds, 'x', [('gas', 'density'), ('gas', 'velocity_z')], weight_field = 'ones')
     p.set_unit(('gas', 'velocity_z'), 'km/s')
@@ -34,12 +41,16 @@ def plot_density_slices(ds, folder = '.'):
 
     ad = ds.all_data()
     ph = yt.PhasePlot(ad, ('gas', 'density'), ('gas', 'temperature'), ('gas', 'cell_mass'), weight_field = None)
+    ph2 = yt.PhasePlot(ad, ('gas', 'z'), ('gas', 'tcool_tff_ratio'), ('gas', 'cell_mass'), weight_field = None)
+    ph2.set_log(('gas', 'z'), False)
+
     ph.set_unit(('gas', 'cell_mass'), 'Msun')
+    ph2.set_unit(('gas', 'cell_mass'), 'Msun')
 
     cmap_list = [palettable.cmocean.sequential.Tempo_20.mpl_colormap, \
                  palettable.cmocean.diverging.Curl_9.mpl_colormap]
 
-    fig, ax = plt.subplots(ncols = 3, nrows = 2, figsize=(24,14))
+    fig, ax = plt.subplots(ncols = 4, nrows = 2, figsize=(30,14))
 
     for i, frb in enumerate([frb_s, frb_p]):
         print(i)
@@ -49,9 +60,12 @@ def plot_density_slices(ds, folder = '.'):
 
         data = rho/rho0
 
-        pcm = ax[i][0].pcolormesh(xbins, ybins, data, norm = LogNorm(), cmap = cmap_list[0], vmin = 1e-1, vmax = 1)
+        pcm = ax[i][0].pcolormesh(xbins, ybins, data, norm = LogNorm(), cmap = cmap_list[0], vmin = 3e-2, vmax = 1)
         cbar = fig.colorbar(pcm, ax = ax[i][0], pad=0)
-        cbar.set_label('Normalized Density')
+        if i == 0:
+            cbar.set_label('Normalized Density (Slice)')
+        elif i == 1:
+            cbar.set_label('Normalized Density (Projection)')
         ax[i][0].set_xlabel('y (kpc)')
         ax[i][0].set_ylabel('z (kpc)')
     
@@ -65,35 +79,74 @@ def plot_density_slices(ds, folder = '.'):
         pcm = ax[i][1].pcolormesh(xbins, ybins, data, norm=SymLogNorm(0.01), \
                                   cmap = cmap_list[1], vmin = -half_range, vmax = half_range)
         cbar = fig.colorbar(pcm, ax = ax[i][1], pad=0)
-        cbar.set_label('Density Fluctuation')
+        if i == 0:
+            cbar.set_label('Density Fluctuation (Slice)')
+        elif i == 1:
+            cbar.set_label('Density Fluctuation (Projection)')
         ax[i][1].set_xlabel('y (kpc)')
         ax[i][1].set_ylabel('z (kpc)')
-        
+
+    # plot pressure
+#    data = []
+#    for p_slice in frb_p[('gas',' pressure')]:
+#        ave_p = np.mean(p_slice)
+#        data.append((p_slice - ave_p) / p_slice)
+    data = []
+    pres = frb_p[('gas', 'pressure')] / p0
+    for p_slice in pres:
+        ave_p = np.mean(p_slice)
+        data.append((p_slice - ave_p) / p_slice)
+    pcm = ax[0][2].pcolormesh(xbins, ybins, data, norm=SymLogNorm(0.01), \
+                                  cmap = 'magma',\
+                                   vmin = -half_range, vmax = half_range)
+    cbar = fig.colorbar(pcm, ax = ax[0][2], pad=0)
+    cbar.set_label('Gas Pressure Fluctuation (Slice)')
+    ax[0][2].set_xlabel('y (kpc)')
+    ax[0][2].set_ylabel('z (kpc)')
+
     # plot velocity
     pcm = ax[1][2].pcolormesh(xbins, ybins, frb_p[('gas', 'velocity_z')], norm=SymLogNorm(1), \
                                   cmap = palettable.scientific.diverging.Vik_20.mpl_colormap, \
                                    vmin = -100, vmax = 100)
     cbar = fig.colorbar(pcm, ax = ax[1][2], pad=0)
-    cbar.set_label('Z-Velocity')
+    cbar.set_label('Z-Velocity (Projection)')
     ax[1][2].set_xlabel('y (kpc)')
     ax[1][2].set_ylabel('z (kpc)')
         
-    # plot phase plot
+    # plot phase plots
     prof = ph.profile
     xbins = prof.x
     ybins = prof.y
     data  = prof[('gas', 'cell_mass')].T
-    ax[0][2].set_xscale('log')
-    ax[0][2].set_yscale('log')
-    ax[0][2].set_xlim(5e-29, 5e-26)
-    ax[0][2].set_ylim(1e4, 1e7)
-    pcm = ax[0][2].pcolormesh(xbins, ybins, data, norm=LogNorm(), \
+    ax[0][3].set_xscale('log')
+    ax[0][3].set_yscale('log')
+    ax[0][3].set_xlim(5e-29, 5e-26)
+    ax[0][3].set_ylim(1e4, 1e7)
+    pcm = ax[0][3].pcolormesh(xbins, ybins, data, norm=LogNorm(), \
                                   cmap = palettable.scientific.sequential.Bilbao_16.mpl_colormap,\
                                    vmin = 1e5, vmax = 1e9)
-    cbar = fig.colorbar(pcm, ax = ax[0][2], pad=0)
+    cbar = fig.colorbar(pcm, ax = ax[0][3], pad=0)
     cbar.set_label('Cell Mass (M$_{\odot}$)')
-    ax[0][2].set_xlabel('Density (g/cm$^3$)')
-    ax[0][2].set_ylabel('Temperature (K)')
+    ax[0][3].set_xlabel('Density (g/cm$^3$)')
+    ax[0][3].set_ylabel('Temperature (K)')
+
+    
+    prof = ph2.profile
+    xbins = prof.x.in_units('kpc')
+    ybins = prof.y
+    data  = prof[('gas', 'cell_mass')].T
+
+    ax[1][3].set_yscale('log')
+    ax[1][3].set_xlim(0, max(xbins))
+    ax[1][3].set_ylim(1e-3, 1e3)
+
+    pcm = ax[1][3].pcolormesh(xbins, ybins, data, norm=LogNorm(), \
+                                  cmap = palettable.cubehelix.jim_special_16_r.mpl_colormap,
+                                   vmin = 1e5, vmax = 1e9)
+    cbar = fig.colorbar(pcm, ax = ax[1][3], pad=0)
+    cbar.set_label('Cell Mass (M$_{\odot}$)')
+    ax[1][3].set_xlabel('z (kpc)')
+    ax[1][3].set_ylabel('Cooling Time / Free-Fall Time')
 
     fig.tight_layout()
     return fig, ax
@@ -102,7 +155,7 @@ def make_movie_plots(output):
     basename = os.path.basename(output)
     figname = '%s/%s.png'%(plot_folder, basename[2:])
     if not os.path.isfile(figname):
-        ds = yt.load('%s/%s'%(output, basename))
+        ds = ytf.load('%s/%s'%(output, basename))
         fig, ax = plot_density_slices(ds)
         plt.savefig(figname, dpi = 300)
 
