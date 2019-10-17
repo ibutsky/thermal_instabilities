@@ -168,6 +168,8 @@ def generate_enzo_input_file():
     outf.write("TIMeanTemperature\t\t = %e  # Kelvin\n"%(T0))
     outf.write("TIDensityPerturbationAmplitude\t = %f\n"%(perturbation_amplitude))
     outf.write("TIHaloProfile \t\t\t = %i\n"%(halo_profile))
+    outf.write("TIMagneticFieldDirection = %f %f %f\n"%(bfield_direction[0], bfield_direction[1], bfield_direction[2]))
+    outf.write("TIMagneticFieldInverseBeta      = %e\n"%(bfield_inverse_beta))
     outf.write("TestProblemUseMetallicityField\t = 0 \n")
     outf.close()
 
@@ -195,7 +197,7 @@ def generate_sbatch_file(nodes = 2, tasks_per_node = 32):
     outf.write('#SBATCH --job-name=%s\n'%basename)
     outf.write('#SBATCH --nodes=%i\n'%nodes)
     outf.write('#SBATCH --ntasks-per-node=%i\n'%(tasks_per_node))
-    outf.write('#SBATCH --time=1:00:00\n\n')
+    outf.write('#SBATCH --time=16:00:00\n\n')
     
     outf.write('module purge\n')
     outf.write('module load slurm gcc lib/hdf5 openmpi\n\n')

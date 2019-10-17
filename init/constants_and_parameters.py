@@ -7,6 +7,9 @@ tcool_tff_ratio = 1    # ratio of t_cool / t_free_fall
 halo_profile    = 1    # 1 = isothermal, 2 = isentropic
 resolution      = 128  # resolution along z-axis; scaled for x-y axes
 
+# note: beta = p_mag / p_gas 
+bfield_inverse_beta   = 1.0 / 4.0
+bfield_direction      = [0, 1, 0]
 
 # cooling function parameters
 # Tmin should be ~ T0/20    
