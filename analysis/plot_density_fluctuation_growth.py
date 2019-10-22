@@ -57,10 +57,11 @@ def plot_density_fluctuation_growth(sim, tctf_list = None, work_dir = '../../sim
         time_list, drho_rms_list = calculate_drho_rms(sim_location, output_list)
         ax.plot(time_list/tctf, drho_rms_list, linewidth = 3, label = label, color = cpal[i])
         if tctf == 1.0:
-            sim_location = '%s/%s_64'%(work_dir, sim)
-            time_list, drho_rms_list = calculate_drho_rms(sim_location, output_list)
-            ax.plot(time_list/tctf, drho_rms_list, linewidth = 3, color = cpal[i], \
-                    linestyle = 'dotted', label = label + ', lowres')
+            for res, linestyle in zip([64, 256], ['dashed', 'dotted']):
+                sim_location = '%s/%s_%i'%(work_dir, sim, res)
+                time_list, drho_rms_list = calculate_drho_rms(sim_location, output_list)
+                ax.plot(time_list/tctf, drho_rms_list, linewidth = 3, color = cpal[i], \
+                        linestyle = linestyle, label = label + ', res = %i$^3$'%res)
     
     ax.set_xlabel('t/t$_{cool}$')
     ax.set_ylabel('$ \\langle \\delta \\rho / \\rho\\rangle_{\\mathrm{rms}}$ ')

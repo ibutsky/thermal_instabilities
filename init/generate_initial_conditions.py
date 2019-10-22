@@ -116,7 +116,7 @@ def generate_enzo_input_file():
     outf.write("FluxCorrection \t\t = 1\n")
     outf.write("DualEnergyFormalism \t = 1\n")
     outf.write("Gamma \t\t\t = 1.66666666666667\n")
-    outf.write("CourantSafetyNumber \t = 0.4\n\n")
+    outf.write("CourantSafetyNumber \t = 0.2\n\n")
 
     outf.write("# I/O Parameters \n")
     outf.write("StopCycle \t\t = 1000000\n")
@@ -142,7 +142,7 @@ def generate_enzo_input_file():
     outf.write("MetalCooling \t\t = 0\n")
     outf.write("CIECooling \t\t = 0\n")
     outf.write("UseCoolingTimestep \t = 1\n")
-    outf.write("CoolingTimestepSafetyFactor \t = 0.4\n")
+    outf.write("CoolingTimestepSafetyFactor \t = 0.2\n")
     outf.write("CoolingTimestepMinimumTimestep = 0 # years\n\n")
 
     outf.write("# Global Parameters\n")

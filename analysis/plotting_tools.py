@@ -1,4 +1,6 @@
 import yt
+from yt import YTQuantity
+from yt import YTArray
 
 import numpy as np
 import glob
@@ -13,24 +15,53 @@ import astropy.constants as const
 import multiprocessing as mp
 
 import yt_functions as ytf
-import plotting_tools as pt
 
-sim = sys.argv[1]
-half_range = 1
-rho0 = 1e-27
-T0 = 1e6
-mu = 1.22
-mh = const.m_p.cgs.value
-kb = const.k_B.cgs.value
-p0 = (rho0 / mu / mh) * kb*T0
+def calculate_p(rho, T):
+    mu = 1.22
+    mh = const.m_p.cgs.value
+    kb = const.k_B.cgs.value
+    return (rho / mu / mh) * kb*T
 
-workdir = '../../simulations/'
-plot_folder = '../../movies/temp'
+def calculate_drho_rms(ds, zmin = 0.9, zmax = 1.1):
+    region1 = ds.r[0, 0, zmin:zmax]
+    region2 = ds.r[0, 0, -zmax:-zmin]
+    zlist    = np.append(region1[('gas', 'z')].in_units('kpc'),\
+                         region2[('gas', 'z')].in_units('kpc'))
 
+    drho = np.array([])
+    for z in zlist:
+        zslice  = ds.r[:, :, YTQuantity(z, 'kpc')]
+        rho     = zslice[('gas', 'density')]
+        rho_ave = np.mean(rho)
+        drho    = np.append(drho, (rho - rho_ave) / rho_ave)
 
-output_list = glob.glob('%s/%s/DD*'%(workdir, sim))
+    drho_rms = np.sqrt(np.mean(drho**2))
+    return drho_rms
 
-def plot_density_slices(ds, folder = '.'):
+def calculate_averaged_drho_rms(output_list, sim_location = '.', zmin = 0.9, zmax = 1.1):
+    drho_rms_list = []
+    for output in output_list:
+        ds = yt.load('%s/DD%04d/DD%04d'%(sim_location, output, output))
+        drho_rms_list.append(calculate_drho_rms(ds, zmin = zmin, zmax = zmax))
+    return np.mean(drho_rms_list)
+
+def calculate_cold_fraction(ds, Tmin = 3.333333e5):
+    ad = ds.all_data()
+    cold = ad[('gas', 'temperature')] <= Tmin
+
+    total_mass = np.sum(ad[('gas', 'cell_mass')].in_units('Msun'))
+    cold_mass = np.sum(ad[('gas', 'cell_mass')][cold].in_units('Msun'))
+    return cold_mass / total_mass
+
+def calculate_averaged_cold_fraction(output_list, sim_location = '.', Tmin = 3.333333e5):
+    cold_fraction_list = []
+    for output in output_list:
+        ds = yt.load('%s/DD%04d/DD%04d'%(sim_location, output, output))
+        cold_fraction_list.append(calculate_cold_fraction(ds, Tmin = Tmin))
+    return np.mean(cold_fraction_list)
+
+def plot_density_slices(ds, folder = '.', rho0 = 1e-27, T0 = 1e6, half_range = 1):
+    p0 = calculate_p(rho0, T0)
 
     s = yt.SlicePlot(ds, 'x', [('gas', 'density'), ('gas', 'pressure')])
     frb_s = s.frb
@@ -39,8 +70,7 @@ def plot_density_slices(ds, folder = '.'):
     frb_p = p.frb
 
     ad = ds.all_data()
-    #ph = yt.PhasePlot(ad, ('gas', 'density'), ('gas', 'temperature'), ('gas', 'cell_mass'), weight_field = None)
-    ph = yt.PhasePlot(ad, ('gas', 'pressure'), ('gas', 'entropy'), ('gas', 'cell_mass'), weight_field = None)
+    ph = yt.PhasePlot(ad, ('gas', 'density'), ('gas', 'temperature'), ('gas', 'cell_mass'), weight_field = None)
     ph2 = yt.PhasePlot(ad, ('gas', 'z'), ('gas', 'tcool_tff_ratio'), ('gas', 'cell_mass'), weight_field = None)
     ph2.set_log(('gas', 'z'), False)
 
@@ -86,11 +116,6 @@ def plot_density_slices(ds, folder = '.'):
         ax[i][1].set_xlabel('y (kpc)')
         ax[i][1].set_ylabel('z (kpc)')
 
-    # plot pressure
-#    data = []
-#    for p_slice in frb_p[('gas',' pressure')]:
-#        ave_p = np.mean(p_slice)
-#        data.append((p_slice - ave_p) / p_slice)
     data = []
     pres = frb_p[('gas', 'pressure')] / p0
     for p_slice in pres:
@@ -120,19 +145,15 @@ def plot_density_slices(ds, folder = '.'):
     data  = prof[('gas', 'cell_mass')].T
     ax[0][3].set_xscale('log')
     ax[0][3].set_yscale('log')
-#    ax[0][3].set_xlim(5e-29, 5e-26)
-#    ax[0][3].set_ylim(1e4, 1e7)
-    ax[0][3].set_xlim(1e-15, 3e-13)
-    ax[0][3].set_ylim(3e-2, 1e3)
+    ax[0][3].set_xlim(5e-29, 5e-26)
+    ax[0][3].set_ylim(1e4, 1e7)
     pcm = ax[0][3].pcolormesh(xbins, ybins, data, norm=LogNorm(), \
                                   cmap = palettable.scientific.sequential.Bilbao_16.mpl_colormap,\
                                    vmin = 1e5, vmax = 1e9)
     cbar = fig.colorbar(pcm, ax = ax[0][3], pad=0)
     cbar.set_label('Cell Mass (M$_{\odot}$)')
- #   ax[0][3].set_xlabel('Density (g/cm$^3$)')
- #   ax[0][3].set_ylabel('Temperature (K)')
-    ax[0][3].set_xlabel('Gas Pressure ($\\frac{\\mathrm{dyn}}{\\mathrm{cm}^2}$)')
-    ax[0][3].set_ylabel('Gas Entropy ($\\mathrm{cm}^2 \cdot \\mathrm{keV}$)')
+    ax[0][3].set_xlabel('Density (g/cm$^3$)')
+    ax[0][3].set_ylabel('Temperature (K)')
 
     
     prof = ph2.profile
@@ -155,6 +176,45 @@ def plot_density_slices(ds, folder = '.'):
     fig.tight_layout()
     return fig, ax
 
+
+def add_plot(ax, ds, field, field_type = 'slice', view = 'x', cmap = 'viridis', \
+                 norm_factor = 1.0, cbar = True, vmin = None, vmax = None, weight_field = 'ones'):
+        
+    if not field_type.__contains__('phase'):
+        if field_type.__contains('slice'):
+            s = yt.SlicePlot(ds, view, field)
+        elif field_type.__contains('proj'):
+            s = yt.ProjectionPlot(ds, view, field, weight_field = weight_field)
+        frb = s.frb
+        xbins = frb['y'].in_units('kpc')
+        ybins = frb['z'].in_units('kpc')
+        field_frb = frb[field]
+        
+        if field_type.__contains__('fluct'):
+            data = []
+            for field_slice in field_frb:
+                ave_field = np.mean(field_slice)
+                data.append((field_slice - ave_field) / field_slice)
+        else:
+            data  = field_frb / norm_factor
+                
+        if vmin == None:
+            vmin = min(data)
+        if vmax == None: 
+            vmax = max(data)
+
+        pcm = ax.pcolormesh(xbins, ybins, data, norm = LogNorm(), cmap = cmap, vmin = vmin, vmax = vmax)
+        if cbar:
+            cbar = fig.colorbar(pcm, ax = ax, pad=0)
+            cbar.set_label('Normalized Density (Slice)')
+        elif i == 1:
+            cbar.set_label('Normalized Density (Projection)')
+        ax[i][0].set_xlabel('y (kpc)')
+        ax[i][0].set_ylabel('z (kpc)')
+        
+
+        
+
 def make_movie_plots(output):
     basename = os.path.basename(output)
     figname = '%s/%s.png'%(plot_folder, basename[2:])
@@ -163,21 +223,5 @@ def make_movie_plots(output):
         fig, ax = plot_density_slices(ds)
         plt.savefig(figname, dpi = 300)
 
-                    
 
-pool = mp.Pool(mp.cpu_count())
-print("Number of processors: ", mp.cpu_count())
 
-pool.map(make_movie_plots, [output for output in output_list])
-pool.close()
-
-cwd = os.getcwd()
-os.chdir(plot_folder)
-os.system('ffmpeg -r 10 -f image2 -s 1920x1080 -i %04d.png -vcodec libx264 -crf 25 -pix_fmt yuv420p density.mov')
-os.rename('density.mov', '../%s_density.mov'%(sim))
-png_files = glob.glob('*.png')
-for pic in png_files:
-    os.remove(pic)
-os.chdir(cwd)
-
-# ffmpeg -framerate 12 -pattern_type glob -i *.png -c:v mpeg4 -pix_fmt yuv420p -q:v 0 -b 512k movie.mov

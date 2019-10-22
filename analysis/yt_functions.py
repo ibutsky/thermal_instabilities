@@ -30,6 +30,8 @@ def _ff_time(field, data):
 def _cool_ff_ratio(field, data):
     return data[('gas', 'cooling_time')] / data[('gas', 'free_fall_time')]
 
+def _total_pressure(field, data):
+    return data[('gas', 'pressure')] + data[('gas', 'magnetic_pressure')]
 
 def load(output_location):
     ds = yt.load(output_location)
@@ -41,5 +43,6 @@ def load(output_location):
 
     ds.add_field(('gas', 'tcool_tff_ratio'), function = _cool_ff_ratio, \
                 display_name = 'Cooling Time / Free Fall Time', units = '')
-    
+    ds.add_field(('gas', 'total_pressure'), function = _total_pressure, \
+                 display_name = 'Total Pressure', units = 'dyne/cm**2')
     return ds
