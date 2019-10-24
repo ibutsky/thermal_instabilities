@@ -41,8 +41,13 @@ def calculate_drho_rms(ds, zmin = 0.9, zmax = 1.1):
 def calculate_averaged_drho_rms(output_list, sim_location = '.', zmin = 0.9, zmax = 1.1):
     drho_rms_list = []
     for output in output_list:
-        ds = yt.load('%s/DD%04d/DD%04d'%(sim_location, output, output))
-        drho_rms_list.append(calculate_drho_rms(ds, zmin = zmin, zmax = zmax))
+        ds_path = '%s/DD%04d/DD%04d'%(sim_location, output, output)
+        if os.path.isfile(ds_path):
+            ds = yt.load(ds_path)
+            drho_rms_list.append(calculate_drho_rms(ds, zmin = zmin, zmax = zmax))
+        else: 
+            print("warning: no such file '%s'"%ds_path)
+            drho_rms_list.append(0)
     return np.mean(drho_rms_list)
 
 def calculate_cold_fraction(ds, Tmin = 3.333333e5):
@@ -56,8 +61,13 @@ def calculate_cold_fraction(ds, Tmin = 3.333333e5):
 def calculate_averaged_cold_fraction(output_list, sim_location = '.', Tmin = 3.333333e5):
     cold_fraction_list = []
     for output in output_list:
-        ds = yt.load('%s/DD%04d/DD%04d'%(sim_location, output, output))
-        cold_fraction_list.append(calculate_cold_fraction(ds, Tmin = Tmin))
+        ds_path = '%s/DD%04d/DD%04d'%(sim_location, output, output)
+        if os.path.isfile(ds_path):
+            ds = yt.load(ds_path)
+            cold_fraction_list.append(calculate_cold_fraction(ds, Tmin = Tmin))
+        else:
+            print("warning: no such file '%s'"%(ds_path))
+            cold_fraction_list.append(0)
     return np.mean(cold_fraction_list)
 
 def plot_density_slices(ds, folder = '.', rho0 = 1e-27, T0 = 1e6, half_range = 1):
