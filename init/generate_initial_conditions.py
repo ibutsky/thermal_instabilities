@@ -68,16 +68,19 @@ def plot_cooling_rate(Lambda0, T_power_law_index, smooth_factor, Tmin, Tmax):
     T_list = YTArray(np.logspace(np.log10(Tmin)-1, np.log10(Tmax)+1, 100), 'K')
     
     cool_rate = calculate_cooling_rate(T_list, Lambda0, T_power_law_index, smooth_factor, Tmin = Tmin, Tmax = Tmax)
-    plt.loglog(T_list, cool_rate)
+    plt.loglog(T_list, cool_rate, linewidth = 3)
     plt.loglog(T_list, Lambda0*T_list**(T_power_law_index), color = 'black', linestyle = 'dashed', \
-               label = '$ T = \Lambda_0 T^{%0.2f}$'%(T_power_law_index))
-    plt.axvline(Tmin, color = 'black', linestyle = 'dotted', label = '$T_{min} = %.1e$'%(Tmin))
-    plt.axvline(Tmax, color = 'black', linestyle = 'dotted', label = '$T_{max} = %.1e$'%(Tmax))
-
+               label = '$ T = \Lambda_0 T^{%0.2f}$'%(T_power_law_index), linewidth = 2)
+#    plt.axvline(Tmin, color = 'black', linestyle = 'dotted', label = '$T_{min} = %.1e$'%(Tmin))
+#    plt.axvline(Tmax, color = 'black', linestyle = 'dotted', label = '$T_{max} = %.1e$'%(Tmax))
+    
+    plt.xlim(Tmin/5, Tmax*5)
+    ymax = max(Lambda0*T_list**(T_power_law_index))
+    plt.ylim(ymax * 1e-3, ymax)
     plt.xlabel('Temperature (K)')
-    plt.ylabel('Cooling Rate (erg * cm^3 /s)')
+    plt.ylabel('Cooling Rate (erg cm$^3$ s$^{-1}$)')
     plt.legend()
-    plt.savefig("cooling_rates.png")
+    plt.savefig("cooling_rates.png", dpi = 300)
 
 
 def generate_enzo_input_file():

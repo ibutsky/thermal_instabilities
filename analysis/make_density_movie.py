@@ -92,7 +92,7 @@ def plot_density_slices(ds, folder = '.'):
 #        ave_p = np.mean(p_slice)
 #        data.append((p_slice - ave_p) / p_slice)
     data = []
-    pres = frb_p[('gas', 'pressure')] / p0
+    pres = frb_s[('gas', 'pressure')] / p0
     for p_slice in pres:
         ave_p = np.mean(p_slice)
         data.append((p_slice - ave_p) / p_slice)

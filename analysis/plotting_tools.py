@@ -16,6 +16,8 @@ import multiprocessing as mp
 
 import yt_functions as ytf
 
+
+
 def calculate_p(rho, T):
     mu = 1.22
     mh = const.m_p.cgs.value
@@ -155,8 +157,8 @@ def plot_density_slices(ds, folder = '.', rho0 = 1e-27, T0 = 1e6, half_range = 1
     data  = prof[('gas', 'cell_mass')].T
     ax[0][3].set_xscale('log')
     ax[0][3].set_yscale('log')
-    ax[0][3].set_xlim(5e-29, 5e-26)
-    ax[0][3].set_ylim(1e4, 1e7)
+    ax[0][3].set_xlim(1e-29, 5e-26)
+    ax[0][3].set_ylim(1e4, 1e9)
     pcm = ax[0][3].pcolormesh(xbins, ybins, data, norm=LogNorm(), \
                                   cmap = palettable.scientific.sequential.Bilbao_16.mpl_colormap,\
                                    vmin = 1e5, vmax = 1e9)
@@ -234,4 +236,70 @@ def make_movie_plots(output):
         plt.savefig(figname, dpi = 300)
 
 
+def fft_comp(ds, field, level = 0 ):
+    cube = ds.covering_grid(level, left_edge=ds.domain_left_edge,
+                            dims=ds.domain_dimensions)
 
+    rho = cube[('gas', 'density')].d
+    if field == 'rho':
+        fft_field = rho
+    elif field == 'drho':
+        drho = np.ndarray(shape = rho.shape)
+        for i in range(len(rho)):
+            rho_slice = rho[:, :, i]
+            rho_ave = np.mean(rho_slice)
+            drho[:, :, i]  = (rho_slice - rho_ave) / rho_ave
+        fft_field = drho
+
+    nx, ny, nz = rho.shape
+
+    # do the FFTs -- note that since our data is real, there will be 
+    # too much information here.  fftn puts the positive freq terms in
+    # the first half of the axes -- that's what we keep.  Our      
+    # normalization has an '8' to account for this clipping to one 
+    # octant.
+
+    ru = np.fft.fftn(fft_field)[0:nx//2+1,0:ny//2+1,0:nz//2+1]
+    ru = 8.0*ru/(nx*ny*nz)
+
+    return np.abs(ru)**2
+
+
+def make_power_spectrum(ds, field = 'drho'):
+    dims = ds.domain_dimensions
+    nx, ny, nz = dims
+
+    Kk = np.zeros( (nx//2+1, ny//2+1, nz//2+1))
+    Kk = fft_comp(ds, field)
+
+    # wavenumbers in units of box length 
+    L = np.array([1.0, 1.0, 1.0])
+
+    kx = np.fft.rfftfreq(nx)*nx/L[0]
+    ky = np.fft.rfftfreq(ny)*ny/L[1]
+    kz = np.fft.rfftfreq(nz)*nz/L[2]
+
+    # physical limits to the wavenumbers
+    kmin = np.min(1.0/L)
+    kmax = np.min(0.5*np.array(dims)/L)
+
+
+    kbins = np.arange(kmin, kmax, kmin)
+    N = len(kbins)
+
+    # bin the Fourier KE into radial kbins
+    kx3d, ky3d, kz3d = np.meshgrid(kx, ky, kz, indexing="ij")
+    k = np.sqrt(kx3d**2 + ky3d**2 + kz3d**2)
+
+    whichbin = np.digitize(k.flat, kbins)
+    ncount = np.bincount(whichbin)
+
+    P_spectrum = np.zeros(len(ncount)-1)
+
+    for n in range(1,len(ncount)):
+        P_spectrum[n-1] = np.sum(Kk.flat[whichbin==n])
+
+    k = kbins[1:N]
+    P_spectrum = P_spectrum[1:N]
+
+    return k, P_spectrum

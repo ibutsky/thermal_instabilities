@@ -9,7 +9,7 @@ import palettable
 
 import plotting_tools as pt
 
-def calculate_drho_rms(sim_folder, output_list):
+def calculate_drho_rms(sim_folder, output_list, save = True):
     time_list     = np.array([])
     drho_rms_list = np.array([])
     if not os.path.isdir(sim_folder):
@@ -34,8 +34,16 @@ def calculate_drho_rms(sim_folder, output_list):
             drho_rms = np.sqrt(np.mean(drho**2))
             time_list     = np.append(time_list,    ds.current_time)
             drho_rms_list = np.append(drho_rms_list, drho_rms)
+
+    if save:
+        outf = open('fluctuation_growth_%s_%s.dat'%(sim, beta), 'w')
+        for i in range(len(time_list)):
+            outf.write("%e %e\n"%(time_list[i], drho_rms_list[i]))
+        outf.close()
+
     
     return time_list, drho_rms_list
+
 
 
 
@@ -57,7 +65,8 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, work_di
 #    cpal = palettable.wesanderson.Darjeeling4_5.mpl_colors
     cpal = palettable.cmocean.sequential.Tempo_7_r.mpl_colors
     cpal = palettable.scientific.sequential.Batlow_6.mpl_colors
-    output_list = np.linspace(0, 100, 10)
+    #output_list = np.linspace(0, 100, 10)
+    output_list = np.arange(0, 100, 1)
     for i, tctf in enumerate(tctf_list):
         if beta == 'inf':
             sim_location = '%s/%s_tctf_%.1f'%(work_dir, sim, tctf)
@@ -87,6 +96,7 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, work_di
 
 
 tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
+tctf_list = [10]
 
 sim = sys.argv[1]
 beta = sys.argv[2]
