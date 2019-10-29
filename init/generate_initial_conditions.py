@@ -8,30 +8,53 @@ import os
 import perturbation as pert
 from constants_and_parameters import *
 
-def calculate_density(rho0, z, a, H, profile):
-    scale = np.sqrt(1 + (z/a)**2) - 1
+def calculate_density(rho0, z, a, H, profile, inv_beta, eta, T_power_law_index):
+    zscale = z/a
+    total_pressure_factor = (1.0 + inv_beta + eta)
+    halo_scale = a * (np.sqrt(1.0 + zscale*zscale)-1.0) / H / total_pressure_factor
     if profile == 1:
         # isothermal
-        return rho0 * np.exp(-(a/H) * scale)
+        hydro_scale_at_scaleheight = a * (np.sqrt(1.0 + (H*H /a/a))-1.0) / H
+
+        pressure_norm = np.exp(-hydro_scale_at_scaleheight * (1.0 - 1.0/total_pressure_factor))\
+                        /total_pressure_factor
+        rho =  rho0 * np.exp(-halo_scale) 
+        return rho * pressure_norm
+
     elif profile == 2:
         # isentropic
-        base = (1 - (gamma - 1)*a/(gamma*H) * scale)
+        base = (1 - (gamma - 1)/(gamma) * halo_scale)
         return rho0 * np.power(base, 1.0 / (gamma-1))
 
-def calculate_temperature(T0, z, a, H, profile):
+    elif profile == 3:
+        # isocool
+        alpha = T_power_law_index
+        base = np.exp(-halo_scale * (alpha - 2))
+        return rho0 * np.power(base, -(alpha - 3) / (alpha - 2))
+        
+
+def calculate_temperature(T0, z, a, H, profile, inv_beta, eta, T_power_law_index):
+    zscale = z/a
+    total_pressure_factor = (1.0 + inv_beta + eta)
+    halo_scale = a * (np.sqrt(1.0 + zscale*zscale)-1.0) / H / total_pressure_factor
     if profile == 1:
         # isothermal
         return T0
     elif profile == 2:
         # isentropic
         scale = np.sqrt(1 +(z/a)**2) - 1
-        return T0 * (1 - (gamma - 1)*a/(gamma*H) * scale)
+        return T0 * (1 - (gamma - 1)/(gamma)*halo_scale )
+    elif profile == 3:
+        # isocool
+        alpha = T_power_law_index
+        base = np.exp(-halo_scale * (alpha - 2))
+        return rho0 * np.power(base, -(alpha - 3) / (alpha - 2))
 
 def calculate_free_fall_time(z, g0):
     return np.sqrt(2*z / g0)
 
 
-def calculate_cooling_rate(T, Lambda0, T_power_law_index, smooth_factor = 0.1, Tmin = 5e4, Tmax = 1e8):
+def calculate_cooling_rate(T, Lambda0, T_power_law_index, smooth_factor, Tmin = 5e4, Tmax = 1e8):
     # only the power law
     cooling_rate = Lambda0 * np.power(T, T_power_law_index)
     cooling_rate[T < Tmin] = Lambda0 * np.power(Tmin, T_power_law_index)
@@ -45,7 +68,9 @@ def calculate_cooling_rate(T, Lambda0, T_power_law_index, smooth_factor = 0.1, T
     Tminscale =  (logT - logT_min) / (smooth_factor * logT_min) 
     Tmaxscale = -(logT - logT_max) / (smooth_factor * logT_max)
     
-    ymin = 1e-20 * Lambda0.d
+    ymin = 1e-20 * Lambda0
+    if Lambda0 != 1:
+        ymin = ymin.d
     smooth_min = 1
     smooth_max = 1
     smooth_min = (np.tanh(Tminscale - 2.0) + 1.0) / 2. * (1.0 - ymin)  + ymin
@@ -53,16 +78,15 @@ def calculate_cooling_rate(T, Lambda0, T_power_law_index, smooth_factor = 0.1, T
     return cooling_rate * smooth_min * smooth_max 
 
 
-def calculate_cooling_time(Lambda0, rho0, T0, z, a, H, profile, T_power_law_index):
-    rho = calculate_density(rho0, z, a, H, profile)
+def calculate_cooling_time(Lambda0, rho0, T0, z, a, H, profile, T_power_law_index, inv_beta, eta, smooth_factor):
+    rho = calculate_density(rho0, z, a, H, profile, inv_beta, eta, T_power_law_index)
     n = rho / (mu * mh)
-    T = calculate_temperature(T0, z, a, H, profile)
+    T = calculate_temperature(T0, z, a, H, profile, inv_beta, eta, T_power_law_index)
 
     eth = n * kb * T / (gamma - 1)
-    d_eth = np.power(n, 2) * calculate_cooling_rate(T, Lambda0, T_power_law_index)
+    d_eth = np.power(n, 2) * calculate_cooling_rate(T, Lambda0, T_power_law_index, smooth_factor)
     cooling_time = eth / d_eth
     return cooling_time
-    
 
 def plot_cooling_rate(Lambda0, T_power_law_index, smooth_factor, Tmin, Tmax):
     T_list = YTArray(np.logspace(np.log10(Tmin)-1, np.log10(Tmax)+1, 100), 'K')
@@ -71,8 +95,6 @@ def plot_cooling_rate(Lambda0, T_power_law_index, smooth_factor, Tmin, Tmax):
     plt.loglog(T_list, cool_rate, linewidth = 3)
     plt.loglog(T_list, Lambda0*T_list**(T_power_law_index), color = 'black', linestyle = 'dashed', \
                label = '$ T = \Lambda_0 T^{%0.2f}$'%(T_power_law_index), linewidth = 2)
-#    plt.axvline(Tmin, color = 'black', linestyle = 'dotted', label = '$T_{min} = %.1e$'%(Tmin))
-#    plt.axvline(Tmax, color = 'black', linestyle = 'dotted', label = '$T_{max} = %.1e$'%(Tmax))
     
     plt.xlim(Tmin/5, Tmax*5)
     ymax = max(Lambda0*T_list**(T_power_law_index))
@@ -172,8 +194,11 @@ def generate_enzo_input_file():
     outf.write("TIDensityPerturbationAmplitude\t = %f\n"%(perturbation_amplitude))
     outf.write("TIHaloProfile \t\t\t = %i\n"%(halo_profile))
     outf.write("TIMagneticFieldDirection = %f %f %f\n"%(bfield_direction[0], bfield_direction[1], bfield_direction[2]))
-    outf.write("TIMagneticFieldInverseBeta      = %e\n"%(bfield_inverse_beta))
+    outf.write("TIMagneticFieldInverseBeta      = %e\n"%(magnetic_pressure_ratio))
     outf.write("TestProblemUseMetallicityField\t = 0 \n")
+    if cr_pressure_ratio > 0 :
+        outf.write("TICosmicRayPressureRatio \t =%e\n"%(cr_pressure_ratio))
+        outf.write("CRModel\t\t = 1\n")
     outf.close()
 
 
@@ -187,8 +212,10 @@ def check_units():
     outf.write("100 km/s  = %e in code units\n\n"%velocity_test)
 
     outf.write("Free fall time at H = %e years\n"%(tff_H.in_units('yr')))
-    outf.write("Cooling time at H = %e years\n"%calculate_cooling_time(Lambda0, rho0, T0, H, a, H, halo_profile, T_power_law_index).in_units('yr'))
-    outf.write("Cooling_time at 3H = %e years\n"%calculate_cooling_time(Lambda0, rho0, T0, 3*H, a, H, halo_profile, T_power_law_index).in_units('yr'))
+    outf.write("Cooling time at H = %e years\n"%calculate_cooling_time(Lambda0, rho0, T0, H, a, H, halo_profile, \
+                T_power_law_index, magnetic_pressure_ratio, cr_pressure_ratio, smooth_factor).in_units('yr'))
+    outf.write("Cooling_time at 3H = %e years\n"%calculate_cooling_time(Lambda0, rho0, T0, 3*H, a, H, halo_profile, \
+                    T_power_law_index, magnetic_pressure_ratio, cr_pressure_ratio, smooth_factor).in_units('yr'))
     outf.close()
 
 
@@ -244,19 +271,23 @@ a = gsoft_scale * H
 
 # free fall time and density at the scale height, in seconds 
 tff_H = calculate_free_fall_time(H, g0)
-rho_H = calculate_density(rho0, H, a, H, halo_profile)
+rho_H = calculate_density(rho0, H, a, H, halo_profile, \
+                          magnetic_pressure_ratio, cr_pressure_ratio, T_power_law_index)
+T_H = calculate_temperature(T0, H, a, H, halo_profile, magnetic_pressure_ratio, \
+                            cr_pressure_ratio, T_power_law_index)
 
-tcool_over_L0_H = kb*mu*mh*np.power(T0, 1 - T_power_law_index) / rho_H / (gamma - 1)
+tcool_over_L0_H = calculate_cooling_time(1, rho0, T0, H, a, H, halo_profile,\
+            T_power_law_index, magnetic_pressure_ratio, cr_pressure_ratio, smooth_factor)
 Lambda0 = tcool_over_L0_H / (tcool_tff_ratio * tff_H)
 
-# assuming range of tcool_tff_ratio from 0.1 - 10
-LambdaMin = tcool_over_L0_H / (10  * tff_H)
-LambdaMax = tcool_over_L0_H / (0.1 * tff_H)
+
 
 if halo_profile == 1:
     box_x, box_y, box_z   = [3, 3, 3]  # box dimensions are (2*box_x*box_y*box_z)**3  
 elif halo_profile == 2:
     box_x, box_y, box_z   = [2, 2, 2]
+elif halo_profile == 3:
+    box_x, box_y, box_z   = [3, 3, 3]
 
 LengthScale  = 1    # in units of scale height H
 TimeScale    = 1    # in units of free-fall time at the scale height
