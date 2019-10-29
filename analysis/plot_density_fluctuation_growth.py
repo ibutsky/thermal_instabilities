@@ -47,34 +47,52 @@ def calculate_drho_rms(sim_folder, output_list, save = True):
 
 
 
-def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, work_dir = '../../simulations'):
+def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list = None, work_dir = '../../simulations'):
     if tctf_list == None:
         tctf_list = [0.1, 0.3, 1.0, 10.0]
+    cr_compare = True
+    if cr_list == None:
+        cr_compare = False
+        cr_list = len(tctf_list) * [0]
     fig, ax = plt.subplots(figsize = (6, 6))
     ax.set_yscale('log')
     ax.set_ylim(5e-3, 5)
     ax.set_xlim(0, 10)
     
     gamma = 5./3.
-    time_list = np.linspace(0, 10, 10)
+    time_list = np.arange(0, 12, 1)
     wcool = 1.0 / (gamma * 1.0)
-    pi = (5./3.) * wcool
-    ax.plot(time_list, 0.02*np.exp(pi*time_list), color = 'black',\
+    if cr_compare:
+        pi_high_eta = 4./9.
+        pi_low_eta = 16./15.
+        ax.plot(time_list, 0.02*np.exp(pi_high_eta*time_list), color = 'black',\
+            linestyle = 'dashed', label = 'Linear Theory, high $\\eta$', linewidth = 3)
+        ax.plot(time_list, 0.02*np.exp(pi_low_eta*time_list), color = 'black',\
+            linestyle = 'dotted', label = 'Linear Theory, log $\\eta$', linewidth = 3)
+    else:
+        pi = (5./3.) * wcool
+        ax.plot(time_list, 0.02*np.exp(pi*time_list), color = 'black',\
             linestyle = 'dashed', label = 'Linear Theory', linewidth = 3)
 
-#    cpal = palettable.wesanderson.Darjeeling4_5.mpl_colors
     cpal = palettable.cmocean.sequential.Tempo_7_r.mpl_colors
     cpal = palettable.scientific.sequential.Batlow_6.mpl_colors
     #output_list = np.linspace(0, 100, 10)
-    output_list = np.arange(0, 100, 1)
+    output_list = np.arange(0, 100, 10)
     for i, tctf in enumerate(tctf_list):
         if beta == 'inf':
             sim_location = '%s/%s_tctf_%.1f'%(work_dir, sim, tctf)
         else:
             sim_location =  '%s/%s_tctf_%.1f_beta_%.1f'%(work_dir, sim, tctf, beta)
+        cr = cr_list[i]
+        if cr > 0:
+            sim_location += '_cr_%0.1f'%(cr)
+
         if not os.path.isdir(sim_location):
             continue
-        label = '$t_{cool}/t_{ff}$ = %0.1f'%tctf
+
+        label = '$t_{cool}/t_{ff}$ = %.1f'%tctf
+        if cr_compare:
+            label = 'P$_c$ / P$_g$ = %.1f'%cr
         time_list, drho_rms_list = calculate_drho_rms(sim_location, output_list)
         ax.plot(time_list/tctf, drho_rms_list, linewidth = 3, label = label, color = cpal[i])
         if tctf == 1.0 and beta == 'inf':
@@ -89,17 +107,26 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, work_di
     ax.legend()
     fig.tight_layout()
     if beta == 'inf':
-        plot_name = '../../plots/density_fluctuation_growth_%s.png'%sim
+        plot_name = '../../plots/density_fluctuation_growth_%s'%sim
     else:
-        plot_name = '../../plots/density_fluctuation_growth_%s_beta_%.1f.png'%(sim, beta)
+        plot_name = '../../plots/density_fluctuation_growth_%s_beta_%.1f'%(sim, beta)
+    if cr_compare:
+        plot_name += '_cr'
+    plot_name += '.png'
+
     plt.savefig(plot_name, dpi = 300)
 
 
 tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
-tctf_list = [10]
+cr_list = None
+
+cr_list = [0, 0.1, 0.3, 1.0, 3.0]
+tctf_list = len(cr_list) * [1.0]
+
 
 sim = sys.argv[1]
-beta = sys.argv[2]
+beta = 10.0
+#beta = sys.argv[2]
 if beta != 'inf':
     beta = int(beta)
-plot_density_fluctuation_growth(sim, tctf_list = tctf_list, beta = beta)
+plot_density_fluctuation_growth(sim, tctf_list = tctf_list, beta = beta, cr_list = cr_list)

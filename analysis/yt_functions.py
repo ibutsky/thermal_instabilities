@@ -4,19 +4,17 @@ import numpy as np
 
 ds = yt.load('../../simulations/isothermal_tctf_1.0/DD0000/DD0000')
 
-def _drho_over_rho(field, data):
-    z = data[('gas', 'z')]
-    rho = data[('gas', 'density')]
-    print(np.shape(z))
-    res = int( abs(z[0] - z[-1]) / abs(z[0] - z[1])) + 1
-    drho_over_rho = np.zeros(len(z))
-    
-    for i in range(res):
-        mask = z == z[i]
-        ave_rho = np.mean(rho[mask])
-        drho_over_rho[mask] = (rho[mask] - ave_rho) / ave_rho
-    return drho_over_rho 
-    
+def _crenergy(field, data):
+    cre = ds.arr(data[('enzo', 'CREnergyDensity')] / data[('enzo', 'Density')], 'code_velocity**2')
+    return cre
+
+def _crpressure(field, data):
+    crgamma = 4./3.
+    crp = ds.arr(data[('enzo', 'CREnergyDensity')] * (crgamma - 1.0), 'code_velocity**2 * code_density')
+    return crp
+
+def _creta(field, data):
+    return data[('gas', 'cr_pressure')] / data[('gas', 'pressure')]
     
 def _accel_z(field, data):
     accel_unit = ds.length_unit.value / ds.time_unit.value**2
@@ -45,4 +43,12 @@ def load(output_location):
                 display_name = 'Cooling Time / Free Fall Time', units = '')
     ds.add_field(('gas', 'total_pressure'), function = _total_pressure, \
                  display_name = 'Total Pressure', units = 'dyne/cm**2')
+
+    if output_location.__contains__('_cr_'):
+        ds.add_field(('gas', 'cr_energy'), function = _crenergy, \
+                     display_name = 'Cosmic Ray Energy', units = 'erg/g')
+        ds.add_field(('gas', 'cr_pressure'), function = _crpressure, \
+                     display_name = 'Cosmic Ray Pressure', units = 'dyne/cm**2')
+        ds.add_field(('gas', 'cr_eta'), function = _creta, \
+                     display_name = 'P$_c$ / P$_g$', units = '')
     return ds
