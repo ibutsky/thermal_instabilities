@@ -12,10 +12,12 @@ def calculate_density(rho0, z, a, H, profile, inv_beta, eta, T_power_law_index):
     zscale = z/a
     total_pressure_factor = (1.0 + inv_beta + eta)
     halo_scale = a * (np.sqrt(1.0 + zscale*zscale)-1.0) / H / total_pressure_factor
+
+    hydro_scale_at_scaleheight = a * (np.sqrt(1.0 + (H*H /a/a))-1.0) / H
+
     if profile == 1:
         # isothermal
         hydro_scale_at_scaleheight = a * (np.sqrt(1.0 + (H*H /a/a))-1.0) / H
-
         pressure_norm = np.exp(-hydro_scale_at_scaleheight * (1.0 - 1.0/total_pressure_factor))\
                         /total_pressure_factor
         rho =  rho0 * np.exp(-halo_scale) 
@@ -29,14 +31,19 @@ def calculate_density(rho0, z, a, H, profile, inv_beta, eta, T_power_law_index):
     elif profile == 3:
         # isocool
         alpha = T_power_law_index
-        base = np.exp(-halo_scale * (alpha - 2))
-        return rho0 * np.power(base, -(alpha - 3) / (alpha - 2))
+        base = (1 - halo_scale/(2-alpha))
+        pressure_norm = (1 - (hydro_scale_at_scaleheight / (2 - alpha)) *\
+                               (1.0 - 1.0/total_pressure_factor)) / total_pressure_factor;
+
+        return rho0 * np.power(base, 1-alpha) * pressure_norm
         
 
 def calculate_temperature(T0, z, a, H, profile, inv_beta, eta, T_power_law_index):
     zscale = z/a
     total_pressure_factor = (1.0 + inv_beta + eta)
     halo_scale = a * (np.sqrt(1.0 + zscale*zscale)-1.0) / H / total_pressure_factor
+    hydro_scale_at_scaleheight = a * (np.sqrt(1.0 + (H*H /a/a))-1.0) / H
+
     if profile == 1:
         # isothermal
         return T0
@@ -47,8 +54,9 @@ def calculate_temperature(T0, z, a, H, profile, inv_beta, eta, T_power_law_index
     elif profile == 3:
         # isocool
         alpha = T_power_law_index
-        base = np.exp(-halo_scale * (alpha - 2))
-        return rho0 * np.power(base, -(alpha - 3) / (alpha - 2))
+#        pressure_norm = (1 - (hydro_scale_at_scaleheight / (2 - alpha)) *\
+ #                              (1.0 - 1.0/total_pressure_factor)) / total_pressure_factor;
+        return T0 * (1 - halo_scale / (2 - alpha))
 
 def calculate_free_fall_time(z, g0):
     return np.sqrt(2*z / g0)
@@ -280,14 +288,14 @@ tcool_over_L0_H = calculate_cooling_time(1, rho0, T0, H, a, H, halo_profile,\
             T_power_law_index, magnetic_pressure_ratio, cr_pressure_ratio, smooth_factor)
 Lambda0 = tcool_over_L0_H / (tcool_tff_ratio * tff_H)
 
-
+print(rho_H, T_H, Lambda0)
 
 if halo_profile == 1:
     box_x, box_y, box_z   = [3, 3, 3]  # box dimensions are (2*box_x*box_y*box_z)**3  
 elif halo_profile == 2:
     box_x, box_y, box_z   = [2, 2, 2]
 elif halo_profile == 3:
-    box_x, box_y, box_z   = [3, 3, 3]
+    box_x, box_y, box_z   = [2, 2, 2]
 
 LengthScale  = 1    # in units of scale height H
 TimeScale    = 1    # in units of free-fall time at the scale height
