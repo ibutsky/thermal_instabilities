@@ -89,15 +89,17 @@ def make_power_spectrum(ds, field = 'drho'):
     return k, P_spectrum
 
 
-def plot_power_spectrum(output, field = 'drho', k_list = [4, 32]):
+def plot_power_spectrum(output, field = 'drho'):
     fig, ax = plt.subplots(figsize = (6, 6))
-    for tctf, beta, label, color, k in zip(tctf_list, beta_list, label_list, color_list, k_list):
+    for tctf, beta, cr, label, color, k in zip(tctf_list, beta_list, cr_list, label_list, color_list, k_list):
         # load the simulation
         sim_loc = '%s/%s_tctf_%.1f'%(work_dir, model, tctf)
         if beta != 'inf':
             sim_loc += '_beta_%.1f'%(beta)
             if beta == 256:
                 sim_loc += '_k_%.1f'%(k)
+        if cr > 0:
+            sim_loc += '_cr_%.1f'%cr
         ds_path = '%s/DD%04d/DD%04d'%(sim_loc, output, output)
         if not os.path.isfile(ds_path):
             return
@@ -127,6 +129,7 @@ if compare == 'tctf':
     color_list  = palettable.scientific.sequential.Batlow_6.mpl_colors
     tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0]
     beta_list = 5*[beta]
+    cr_list = 5*[0]
     label_list = []
     for tctf in tctf_list:
         label_list.append("t$_{cool}$/t$_{ff}$ = %.1f"%tctf)
@@ -135,6 +138,7 @@ elif compare == 'beta':
     color_list  = palettable.scientific.sequential.Batlow_6.mpl_colors
     tctf_list = 3*[tctf]
     beta_list = [4, 100, 'inf']
+    cr_list = 3*[0]
     label_list = []
     for beta in beta_list:
         if beta == 'inf':
@@ -146,8 +150,21 @@ elif compare == 'ktest':
     color_list = palettable.scientific.sequential.Batlow_6.mpl_colors
     tctf_list  = [3, 3]
     beta_list  = [256, 256]
+    k_list = [ 4, 32]
+    cr_list = [0, 0]
     label_list = ['k = 4', 'k = 32']
     
+
+elif compare == 'cr':
+    color_list  = palettable.scientific.sequential.Batlow_6.mpl_colors
+    tctf_list = 6*[1.0]
+    beta_list = 6*[10.0]
+    cr_list = [0, 0.1, 0.3, 1.0, 3.0, 10.0]
+    k_list = 6*[0]
+    label_list = []
+    for cr in cr_list:
+        label_list.append('$\\eta = $%0.1f'%cr)
+
     
 
 
@@ -170,6 +187,8 @@ elif compare == 'beta':
     os.rename('power_spectrum.mov', '../power_spectrum_%s_tctf_%.1f.mov'%(model, tctf))
 elif compare == 'ktest':
     os.rename('power_spectrum.mov', '../power_spectrum_%s_ktest.mov'%model)
+elif compare == 'cr':
+    os.rename('power_spectrum.mov', '../power_spectrum_%s_cr.mov'%model)
 
 png_files = glob.glob('*.png')
 for pic in png_files:

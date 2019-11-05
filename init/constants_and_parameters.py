@@ -19,7 +19,7 @@ T_max = YTQuantity(1e9, 'K')
 T_power_law_index = (-2./3.)
 smooth_factor = 0.02
 
-
+rescale_pressure = 0
 ########### These parameters don't really need to change ###########
 ####### gas parameters ######
 # changing these will just rescale the units

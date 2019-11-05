@@ -12,13 +12,15 @@ def calculate_density(rho0, z, a, H, profile, inv_beta, eta, T_power_law_index):
     zscale = z/a
     total_pressure_factor = (1.0 + inv_beta + eta)
     halo_scale = a * (np.sqrt(1.0 + zscale*zscale)-1.0) / H / total_pressure_factor
-
     hydro_scale_at_scaleheight = a * (np.sqrt(1.0 + (H*H /a/a))-1.0) / H
+
+    pressure_norm = 1
 
     if profile == 1:
         # isothermal
         hydro_scale_at_scaleheight = a * (np.sqrt(1.0 + (H*H /a/a))-1.0) / H
-        pressure_norm = np.exp(-hydro_scale_at_scaleheight * (1.0 - 1.0/total_pressure_factor))\
+        if rescale_pressure:
+            pressure_norm = np.exp(-hydro_scale_at_scaleheight * (1.0 - 1.0/total_pressure_factor))\
                         /total_pressure_factor
         rho =  rho0 * np.exp(-halo_scale) 
         return rho * pressure_norm
@@ -31,11 +33,12 @@ def calculate_density(rho0, z, a, H, profile, inv_beta, eta, T_power_law_index):
     elif profile == 3:
         # isocool
         alpha = T_power_law_index
-        base = (1 - halo_scale/(2-alpha))
-        pressure_norm = (1 - (hydro_scale_at_scaleheight / (2 - alpha)) *\
+        base = (1 - halo_scale/(2-alpha)) 
+        if rescale_pressure:
+            pressure_norm = (1 - (hydro_scale_at_scaleheight / (2 - alpha)) *\
                                (1.0 - 1.0/total_pressure_factor)) / total_pressure_factor;
 
-        return rho0 * np.power(base, 1-alpha) * pressure_norm
+        return rho0 * np.power(base, 1-alpha) * pressure_norm #/ (1 + np.exp(zscale-20))
         
 
 def calculate_temperature(T0, z, a, H, profile, inv_beta, eta, T_power_law_index):
@@ -56,7 +59,7 @@ def calculate_temperature(T0, z, a, H, profile, inv_beta, eta, T_power_law_index
         alpha = T_power_law_index
 #        pressure_norm = (1 - (hydro_scale_at_scaleheight / (2 - alpha)) *\
  #                              (1.0 - 1.0/total_pressure_factor)) / total_pressure_factor;
-        return T0 * (1 - halo_scale / (2 - alpha))
+        return T0 * (1 - halo_scale / (2 - alpha)) #* (1 + np.exp(zscale-20))
 
 def calculate_free_fall_time(z, g0):
     return np.sqrt(2*z / g0)

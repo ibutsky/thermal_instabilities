@@ -63,12 +63,12 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
     time_list = np.arange(0, 12, 1)
     wcool = 1.0 / (gamma * 1.0)
     if cr_compare:
-        pi_high_eta = 4./9.
-        pi_low_eta = 16./15.
+        pi_high_eta = 4./9 * wcool
+        pi_low_eta = 16./15 * wcool
         ax.plot(time_list, 0.02*np.exp(pi_high_eta*time_list), color = 'black',\
             linestyle = 'dashed', label = 'Linear Theory, high $\\eta$', linewidth = 3)
         ax.plot(time_list, 0.02*np.exp(pi_low_eta*time_list), color = 'black',\
-            linestyle = 'dotted', label = 'Linear Theory, log $\\eta$', linewidth = 3)
+            linestyle = 'dotted', label = 'Linear Theory, low $\\eta$', linewidth = 3)
     else:
         pi = (5./3.) * wcool
         ax.plot(time_list, 0.02*np.exp(pi*time_list), color = 'black',\
@@ -77,7 +77,7 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
     cpal = palettable.cmocean.sequential.Tempo_7_r.mpl_colors
     cpal = palettable.scientific.sequential.Batlow_6.mpl_colors
     #output_list = np.linspace(0, 100, 10)
-    output_list = np.arange(0, 100, 10)
+    output_list = np.arange(0, 110, 10)
     for i, tctf in enumerate(tctf_list):
         if beta == 'inf':
             sim_location = '%s/%s_tctf_%.1f'%(work_dir, sim, tctf)
@@ -120,7 +120,7 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
 tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
 cr_list = None
 
-cr_list = [0, 0.1, 0.3, 1.0, 3.0]
+cr_list = [0, 0.1, 0.3, 1.0, 3.0, 10.0]
 tctf_list = len(cr_list) * [1.0]
 
 

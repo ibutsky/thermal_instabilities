@@ -39,9 +39,8 @@ def plot_density_slices(ds, folder = '.'):
     frb_p = p.frb
 
     ad = ds.all_data()
-    #ph = yt.PhasePlot(ad, ('gas', 'density'), ('gas', 'temperature'), ('gas', 'cell_mass'), weight_field = None)
-    ph = yt.PhasePlot(ad, ('gas', 'pressure'), ('gas', 'entropy'), ('gas', 'cell_mass'), weight_field = None)
-    ph2 = yt.PhasePlot(ad, ('gas', 'z'), ('gas', 'tcool_tff_ratio'), ('gas', 'cell_mass'), weight_field = None)
+    ph = yt.PhasePlot(ad, ('gas', 'pressure'), ('gas', 'entropy'), ('gas', 'cell_mass'), weight_field = None, x_bins = 128, y_bins = 128)
+    ph2 = yt.PhasePlot(ad, ('gas', 'z'), ('gas', 'tcool_tff_ratio'), ('gas', 'cell_mass'), weight_field = None, x_bins = 128, y_bins = 128)
     ph2.set_log(('gas', 'z'), False)
 
     ph.set_unit(('gas', 'cell_mass'), 'Msun')
