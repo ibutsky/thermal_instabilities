@@ -4,13 +4,15 @@ from yt import YTArray
 ########### These parameters will likely change between runs ########
 
 tcool_tff_ratio = 1    # ratio of t_cool / t_free_fall 
-halo_profile    = 1    # 1 = isothermal, 2 = isentropic
-resolution      = 128  # resolution along z-axis; scaled for x-y axes
+halo_profile    = 3    # 1 = isothermal, 2 = isentropic, 3 = iso-tcool
+perturb_type    = 1
 
 # note: beta = p_mag / p_gas 
 magnetic_pressure_ratio = 0
 cr_pressure_ratio       = 0
 bfield_direction      = [0, 1, 0]
+
+resolution      = 128  # resolution along z-axis; scaled for x-y axes
 
 # cooling function parameters
 # Tmin should be ~ T0/20    
@@ -19,7 +21,6 @@ T_max = YTQuantity(1e9, 'K')
 T_power_law_index = (-2./3.)
 smooth_factor = 0.02
 
-rescale_pressure = 0
 ########### These parameters don't really need to change ###########
 ####### gas parameters ######
 # changing these will just rescale the units

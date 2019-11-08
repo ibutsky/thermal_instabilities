@@ -18,7 +18,7 @@ def calculate_drho_rms(sim_folder, output_list, save = True):
     print(sim_base)
     
     out_name = '../../data/fluctuation_growth_%s'%sim_base
-    if os.path.isfile(out_name):
+    if os.path.isfile(out_name) and save == True:
         time_list, drho_rms_list = np.loadtxt(out_name, unpack=True)
     
     else:
@@ -112,9 +112,15 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
         if beta_compare:
             label = '$\\beta = $%.1f'%beta_list[i]
         time_list, drho_rms_list = calculate_drho_rms(sim_location, output_list)
-        print(drho_rms_list)
-
         ax.plot(time_list/tctf, drho_rms_list, linewidth = 3, label = label, color = cpal[i])
+
+        if i == 3:
+            sim_location = '%s/isocool_isochoric_perturb'%work_dir
+            time_list, drho_rms_list = calculate_drho_rms(sim_location, output_list, save = False)
+            print(drho_rms_list)
+            ax.plot(time_list/tctf, drho_rms_list, linewidth = 3, color = 'red', \
+                label = 'test')
+
         if tctf == 1.0 and beta == 'inf' and beta_compare == 0:
             for res, linestyle in zip([64, 256], ['dashed', 'dotted']):
                 sim_location = '%s/%s_%i'%(work_dir, sim, res)
@@ -143,15 +149,16 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
 tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
 cr_list = None
 
-cr_list = [0.01, 0.1, 0.3, 0.6, 0.9, 1.0, 1.1, 2.0, 3.0, 10.0, 30.0]
+#cr_list = [0.01, 0.1, 0.3, 0.6, 0.9, 1.0, 1.1, 2.0, 3.0, 10.0, 30.0]
+cr_list = [0.1, 0.3, 1.0, 3.0, 10.0]
 tctf_list = len(cr_list) * [0.1]
 beta_list = len(cr_list)* [10.0]
 
-tctf_list = 4*[3]
-cr_list = [0, 0, 0, 0, 0]
-beta_list = [3, 30, 100, 300]
+#tctf_list = 4*[3]
+#cr_list = [0, 0, 0, 0, 0]
+#beta_list = [3, 30, 100, 300]
 
 sim = 'isocool'
-beta_compare = 1
-cr_compare = 0
+beta_compare = 0
+cr_compare = 1
 plot_density_fluctuation_growth(sim, tctf_list = tctf_list, beta_list = beta_list, cr_list = cr_list)
