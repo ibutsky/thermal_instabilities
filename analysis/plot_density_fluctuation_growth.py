@@ -9,37 +9,46 @@ import palettable
 
 import plotting_tools as pt
 
-def calculate_drho_rms(sim_folder, output_list, save = False):
+def calculate_drho_rms(sim_folder, output_list, save = True):
     time_list     = np.array([])
     drho_rms_list = np.array([])
     if not os.path.isdir(sim_folder):
         return time_list, drho_rms_list
+    sim_base = os.path.basename(sim_folder)
+    print(sim_base)
+    
+    out_name = '../../data/fluctuation_growth_%s'%sim_base
+    if os.path.isfile(out_name):
+        time_list, drho_rms_list = np.loadtxt(out_name, unpack=True)
+    
+    else:
 
-    for output in output_list:
-        ds_path = "%s/DD%04d/DD%04d"%(sim_folder, output, output)
-        if os.path.isfile(ds_path):
-            ds = yt.load(ds_path)
-            region1 = ds.r[0, 0, 0.9:1.1]
-            region2 = ds.r[0, 0, -1.1:-0.9]
-            zlist    = np.append(region1[('gas', 'z')].in_units('kpc'),\
-                         region2[('gas', 'z')].in_units('kpc'))
-                     
-            drho = np.array([])
-            for z in zlist:
-                zslice  = ds.r[:, :, YTQuantity(z, 'kpc')]
-                rho     = zslice[('gas', 'density')]
-                rho_ave = np.mean(rho)
-                drho    = np.append(drho, (rho - rho_ave) / rho_ave)
+        for output in output_list:
+            ds_path = "%s/DD%04d/DD%04d"%(sim_folder, output, output)
 
-            drho_rms = np.sqrt(np.mean(drho**2))
-            time_list     = np.append(time_list,    ds.current_time)
-            drho_rms_list = np.append(drho_rms_list, drho_rms)
+            if os.path.isfile(ds_path):
+                ds = yt.load(ds_path)
+                region1 = ds.r[0, 0, 0.9:1.1]
+                region2 = ds.r[0, 0, -1.1:-0.9]
+                zlist    = np.append(region1[('gas', 'z')].in_units('kpc'),\
+                                     region2[('gas', 'z')].in_units('kpc'))
+                
+                drho = np.array([])
+                for z in zlist:
+                    zslice  = ds.r[:, :, YTQuantity(z, 'kpc')]
+                    rho     = zslice[('gas', 'density')]
+                    rho_ave = np.mean(rho)
+                    drho    = np.append(drho, (rho - rho_ave) / rho_ave)
 
-    if save:
-        outf = open('fluctuation_growth_%s_%s.dat'%(sim, beta), 'w')
-        for i in range(len(time_list)):
-            outf.write("%e %e\n"%(time_list[i], drho_rms_list[i]))
-        outf.close()
+                drho_rms = np.sqrt(np.mean(drho**2))
+                time_list     = np.append(time_list,    ds.current_time)
+                drho_rms_list = np.append(drho_rms_list, drho_rms)
+
+        if save:
+            outf = open(out_name, 'w')
+            for i in range(len(time_list)):
+                outf.write("%e %e\n"%(time_list[i], drho_rms_list[i]))
+            outf.close()
 
     
     return time_list, drho_rms_list
@@ -62,7 +71,7 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
     gamma = 5./3.
     time_list = np.arange(0, 12, 1)
     wcool = 1.0 / (gamma * 1.0)
-    if cr_compare:
+    if 0:
         pi_high_eta = 4./9 * wcool
         pi_low_eta = 16./15 * wcool
         ax.plot(time_list, 0.02*np.exp(pi_high_eta*time_list), color = 'black',\
@@ -75,9 +84,11 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
             linestyle = 'dashed', label = 'Linear Theory', linewidth = 3)
 
     cpal = palettable.cmocean.sequential.Tempo_7_r.mpl_colors
-    cpal = palettable.scientific.sequential.Batlow_6.mpl_colors
+    cpal = palettable.scientific.sequential.Batlow_11.mpl_colors
+    cpal = palettable.scientific.sequential.Batlow_5.mpl_colors
+
     #output_list = np.linspace(0, 100, 10)
-    output_list = np.arange(0, 110, 10)
+    output_list = np.arange(0, 210, 10)
     for i, tctf in enumerate(tctf_list):
         if beta_list[i] == 'inf':
             sim_location = '%s/%s_tctf_%.1f'%(work_dir, sim, tctf)
@@ -85,7 +96,10 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
             sim_location =  '%s/%s_tctf_%.1f_beta_%.1f'%(work_dir, sim, tctf, beta_list[i])
         cr = cr_list[i]
         if cr > 0:
-            sim_location += '_cr_%0.1f'%(cr)
+            if cr < 0.1:
+                sim_location += '_cr_%.2f'%(cr)
+            else:
+                sim_location += '_cr_%0.1f'%(cr)
         print(sim_location)
         if not os.path.isdir(sim_location):
             continue
@@ -93,6 +107,8 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
         label = '$t_{cool}/t_{ff}$ = %.1f'%tctf
         if cr_compare:
             label = 'P$_c$ / P$_g$ = %.1f'%cr
+            if cr < 0.1:
+                label = 'P$_c$ / P$_g$ = %.2f'%cr
         if beta_compare:
             label = '$\\beta = $%.1f'%beta_list[i]
         time_list, drho_rms_list = calculate_drho_rms(sim_location, output_list)
@@ -117,7 +133,7 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
     if beta_compare:
         plot_name = '../../plots/density_fluctuation_growth_%s_tctf_%.1f_beta_compare'%(sim,tctf_list[0])
     if cr_compare:
-        plot_name += '_cr'
+        plot_name += '_tctf_%.2f_cr'%(tctf_list[0])
     plot_name += '.png'
     print(plot_name)
 
@@ -127,12 +143,13 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
 tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
 cr_list = None
 
-cr_list = [0, 0.1, 0.3, 1.0, 3.0, 10.0]
-tctf_list = len(cr_list) * [1.0]
+cr_list = [0.01, 0.1, 0.3, 0.6, 0.9, 1.0, 1.1, 2.0, 3.0, 10.0, 30.0]
+tctf_list = len(cr_list) * [0.1]
+beta_list = len(cr_list)* [10.0]
 
-tctf_list = 4*[1]
+tctf_list = 4*[3]
 cr_list = [0, 0, 0, 0, 0]
-beta_list = [3, 10, 30, 100]
+beta_list = [3, 30, 100, 300]
 
 sim = 'isocool'
 beta_compare = 1

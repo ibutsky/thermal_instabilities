@@ -102,7 +102,7 @@ def plot_power_spectrum(output, field = 'drho'):
             sim_loc += '_cr_%.1f'%cr
         ds_path = '%s/DD%04d/DD%04d'%(sim_loc, output, output)
         if not os.path.isfile(ds_path):
-            return
+            continue
         ds = yt.load(ds_path)
         
         k, P_k = make_power_spectrum(ds, field)
@@ -115,12 +115,14 @@ def plot_power_spectrum(output, field = 'drho'):
     ax.legend(loc = 1)
     fig.tight_layout()
     figname = '%s/%04d.png'%(plot_folder, output)
+    print(figname)
     plt.savefig(figname, dpi = 300)
 
     
 
 model = sys.argv[1]
 compare = sys.argv[2]
+tctf = 3.0
 #tctf = float(sys.argv[3])
 #beta = 100.0 
 
@@ -130,15 +132,18 @@ if compare == 'tctf':
     tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0]
     beta_list = 5*[beta]
     cr_list = 5*[0]
+    k_list = 5*[0]
     label_list = []
     for tctf in tctf_list:
         label_list.append("t$_{cool}$/t$_{ff}$ = %.1f"%tctf)
 
 elif compare == 'beta':
     color_list  = palettable.scientific.sequential.Batlow_6.mpl_colors
-    tctf_list = 3*[tctf]
-    beta_list = [4, 100, 'inf']
-    cr_list = 3*[0]
+    tctf = 3.0
+    beta_list = [3, 10, 30, 100, 300]
+    tctf_list = len(beta_list)*[tctf]
+    cr_list = len(beta_list)*[0]
+    k_list = len(beta_list)*[0]
     label_list = []
     for beta in beta_list:
         if beta == 'inf':
@@ -184,14 +189,14 @@ if compare == 'tctf':
     else:
         os.rename('power_spectrum.mov', '../power_spectrum_%s_beta_%.1f.mov'%(model, beta))
 elif compare == 'beta':
-    os.rename('power_spectrum.mov', '../power_spectrum_%s_tctf_%.1f.mov'%(model, tctf))
+    os.rename('power_spectrum.mov', '../power_spectrum_%s_tctf_%.1f_beta_compare.mov'%(model, tctf))
 elif compare == 'ktest':
     os.rename('power_spectrum.mov', '../power_spectrum_%s_ktest.mov'%model)
 elif compare == 'cr':
     os.rename('power_spectrum.mov', '../power_spectrum_%s_cr.mov'%model)
 
 png_files = glob.glob('*.png')
-for pic in png_files:
-    os.remove(pic)
+#for pic in png_files:
+#    os.remove(pic)
 os.chdir(cwd)
 

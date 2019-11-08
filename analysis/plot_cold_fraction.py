@@ -65,7 +65,9 @@ def plot_cold_fraction(model, beta_list = ['inf'], tctf_list = None, output_list
 
 
 tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
-beta_list = [4, 100, 'inf']
+tctf_list = [1.0, 3.0]
+#beta_list = [4, 100, 'inf']
+beta_list = [3, 10, 30, 100]
                                                                 
 Tmin = 1e6 / 3.0
 model = sys.argv[1]
