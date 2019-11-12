@@ -186,7 +186,7 @@ def generate_enzo_input_file():
     outf.write("# Problem-specific Parameters\n")
     outf.write("TIMeanDensity\t\t\t = %e  # g/cc\n"%(rho0))
     outf.write("TIMeanTemperature\t\t = %e  # Kelvin\n"%(T0))
-    outf.write("TIDensityPerturbationAmplitude\t = %f\n"%(perturbation_amplitude))
+    outf.write("TIPerturbationAmplitude\t = %f\n"%(perturbation_amplitude))
     outf.write("TIPerturbationType\t\t = %i\n"%perturb_type)
     outf.write("TIHaloProfile \t\t\t = %i\n"%(halo_profile))
     outf.write("TIMagneticFieldDirection = %f %f %f\n"%(bfield_direction[0], bfield_direction[1], bfield_direction[2]))
@@ -224,7 +224,7 @@ def generate_sbatch_file(nodes = 2, tasks_per_node = 32):
     outf.write('#SBATCH --job-name=%s\n'%basename)
     outf.write('#SBATCH --nodes=%i\n'%nodes)
     outf.write('#SBATCH --ntasks-per-node=%i\n'%(tasks_per_node))
-    outf.write('#SBATCH --time=16:00:00\n\n')
+    outf.write('#SBATCH --time=%s\n\n'%wall_time)
     
     outf.write('module purge\n')
     outf.write('module load slurm gcc lib/hdf5 openmpi\n\n')
@@ -252,8 +252,9 @@ def generate_clean_file():
     outf.close()
 
 ######### GENERATE INITIAL CONDITIONS AND FILES  ########
-mu          = 1.22
-gamma       = 5./3.
+
+mu              = 1.22
+gamma           = 5./3.
 
 # cosntant definitions                  
 G      = YTQuantity(const.G.cgs.value, 'cm**3/g/s**2')
