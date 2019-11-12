@@ -9,17 +9,17 @@ import palettable
 
 import plotting_tools as pt
 
-def calculate_drho_rms(sim_folder, output_list, save = True):
+def calculate_rms_fluctuation(sim_folder, output_list, field = 'density'):
     time_list     = np.array([])
-    drho_rms_list = np.array([])
+    dzfield_rms_list = np.array([])
     if not os.path.isdir(sim_folder):
-        return time_list, drho_rms_list
+        return time_list, dzfield_rms_list
     sim_base = os.path.basename(sim_folder)
     print(sim_base)
     
-    out_name = '../../data/fluctuation_growth_%s'%sim_base
-    if os.path.isfile(out_name) and save == True:
-        time_list, drho_rms_list = np.loadtxt(out_name, unpack=True)
+    out_name = '../../data/fluctuation_growth_%s_%s'%(sim_base, field)
+    if os.path.isfile(out_name) and load == True:
+        time_list, dzfield_rms_list = np.loadtxt(out_name, unpack=True)
     
     else:
 
@@ -33,30 +33,31 @@ def calculate_drho_rms(sim_folder, output_list, save = True):
                 zlist    = np.append(region1[('gas', 'z')].in_units('kpc'),\
                                      region2[('gas', 'z')].in_units('kpc'))
                 
-                drho = np.array([])
+                dzfield = np.array([])
                 for z in zlist:
                     zslice  = ds.r[:, :, YTQuantity(z, 'kpc')]
-                    rho     = zslice[('gas', 'density')]
-                    rho_ave = np.mean(rho)
-                    drho    = np.append(drho, (rho - rho_ave) / rho_ave)
+                    zfield     = zslice[('gas', field)]
+                    zfield_ave = np.mean(zfield)
+                    dzfield    = np.append(dzfield, (zfield - zfield_ave) / zfield_ave)
 
-                drho_rms = np.sqrt(np.mean(drho**2))
+                dzfield_rms = np.sqrt(np.mean(dzfield**2))
                 time_list     = np.append(time_list,    ds.current_time)
-                drho_rms_list = np.append(drho_rms_list, drho_rms)
+                dzfield_rms_list = np.append(dzfield_rms_list, dzfield_rms)
 
         if save:
             outf = open(out_name, 'w')
             for i in range(len(time_list)):
-                outf.write("%e %e\n"%(time_list[i], drho_rms_list[i]))
+                outf.write("%e %e\n"%(time_list[i], dzfield_rms_list[i]))
             outf.close()
 
     
-    return time_list, drho_rms_list
+    return time_list, dzfield_rms_list
 
 
 
 
-def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list = None, beta_list = None, work_dir = '../../simulations'):
+def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list = None, \
+                                    field = 'density', beta_list = None, work_dir = '../../simulations'):
     if tctf_list == None:
         tctf_list = [0.1, 0.3, 1.0, 10.0]
     if beta_list == None:
@@ -66,6 +67,8 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
     fig, ax = plt.subplots(figsize = (6, 6))
     ax.set_yscale('log')
     ax.set_ylim(5e-3, 5)
+    if nocool:
+        ax.set_ylim(1e-3, 1e-1)
     ax.set_xlim(0, 10)
     
     gamma = 5./3.
@@ -78,14 +81,14 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
             linestyle = 'dashed', label = 'Linear Theory, high $\\eta$', linewidth = 3)
         ax.plot(time_list, 0.02*np.exp(pi_low_eta*time_list), color = 'black',\
             linestyle = 'dotted', label = 'Linear Theory, low $\\eta$', linewidth = 3)
-    else:
+    elif not nocool:
         pi = (5./3.) * wcool
         ax.plot(time_list, 0.02*np.exp(pi*time_list), color = 'black',\
             linestyle = 'dashed', label = 'Linear Theory', linewidth = 3)
 
     cpal = palettable.cmocean.sequential.Tempo_7_r.mpl_colors
     cpal = palettable.scientific.sequential.Batlow_11.mpl_colors
-    cpal = palettable.scientific.sequential.Batlow_5.mpl_colors
+    cpal = palettable.scientific.sequential.Batlow_6.mpl_colors
 
     #output_list = np.linspace(0, 100, 10)
     output_list = np.arange(0, 210, 10)
@@ -100,6 +103,8 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
                 sim_location += '_cr_%.2f'%(cr)
             else:
                 sim_location += '_cr_%0.1f'%(cr)
+        if nocool:
+            sim_location += '_nocool'
         print(sim_location)
         if not os.path.isdir(sim_location):
             continue
@@ -110,55 +115,73 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
             if cr < 0.1:
                 label = 'P$_c$ / P$_g$ = %.2f'%cr
         if beta_compare:
-            label = '$\\beta = $%.1f'%beta_list[i]
-        time_list, drho_rms_list = calculate_drho_rms(sim_location, output_list)
-        ax.plot(time_list/tctf, drho_rms_list, linewidth = 3, label = label, color = cpal[i])
+            if beta_list[i] == 'inf':
+                label = 'Hydro'
+            else:
+                label = '$\\beta = $%.1f'%beta_list[i]
+        time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field)
+        ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 3, label = label, color = cpal[i])
 
-        if i == 3:
-            sim_location = '%s/isocool_isochoric_perturb'%work_dir
-            time_list, drho_rms_list = calculate_drho_rms(sim_location, output_list, save = False)
-            print(drho_rms_list)
-            ax.plot(time_list/tctf, drho_rms_list, linewidth = 3, color = 'red', \
-                label = 'test')
-
-        if tctf == 1.0 and beta == 'inf' and beta_compare == 0:
+        if tctf == 1.0 and beta == 'inf' and beta_compare == 0 and cr_compare == 0:
             for res, linestyle in zip([64, 256], ['dashed', 'dotted']):
                 sim_location = '%s/%s_%i'%(work_dir, sim, res)
-                time_list, drho_rms_list = calculate_drho_rms(sim_location, output_list)
-                ax.plot(time_list/tctf, drho_rms_list, linewidth = 1, alpha = 0.7, color = cpal[i], \
+                time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field)
+                ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 1, alpha = 0.7, color = cpal[i], \
                         linestyle = linestyle, label = label + ', res = %i$^3$'%res)
+    if do_test:
+        time_list, dzfield_rms_list = calculate_rms_fluctuation(test_sim_location, output_list, field = field)
+        ax.plot(time_list/tctf_test, dzfield_rms_list, linewidth = 3, color = 'red', label = 'test')
     
     ax.set_xlabel('t/t$_{cool}$')
-    ax.set_ylabel('$ \\langle \\delta \\rho / \\rho\\rangle_{\\mathrm{rms}}$ ')
+    if field == 'density':
+        ax.set_ylabel('$ \\langle \\delta \\rho / \\rho\\rangle_{\\mathrm{rms}}$ ')
+    elif field == 'temperature':
+        ax.set_ylabel('RMS Temperature Fluctuation')
     ax.legend()
     fig.tight_layout()
     if beta == 'inf':
-        plot_name = '../../plots/density_fluctuation_growth_%s'%sim
+        plot_name = '../../plots/%s_fluctuation_growth_%s'%(field, sim)
     else:
-        plot_name = '../../plots/density_fluctuation_growth_%s_beta_%.1f'%(sim, beta)
+        plot_name = '../../plots/%s_fluctuation_growth_%s_beta_%.1f'%(field, sim, beta)
     if beta_compare:
-        plot_name = '../../plots/density_fluctuation_growth_%s_tctf_%.1f_beta_compare'%(sim,tctf_list[0])
+        plot_name = '../../plots/%s_fluctuation_growth_%s_tctf_%.1f_beta_compare'%(field, sim,tctf_list[0])
     if cr_compare:
-        plot_name += '_tctf_%.2f_cr'%(tctf_list[0])
+        plot_name += '_tctf_%.2f_beta_%.1f_cr'%(tctf_list[0], beta_list[0])
     plot_name += '.png'
     print(plot_name)
 
     plt.savefig(plot_name, dpi = 300)
 
 
+do_test = False
+test_sim_location = '../../simulations/isocool_tctf_0.1_beta_3.0_constB'
+tctf_test = 0.1
+
 tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
 cr_list = None
 
 #cr_list = [0.01, 0.1, 0.3, 0.6, 0.9, 1.0, 1.1, 2.0, 3.0, 10.0, 30.0]
 cr_list = [0.1, 0.3, 1.0, 3.0, 10.0]
-tctf_list = len(cr_list) * [0.1]
+cr_list = [0.01, 0.1, 1.0, 10.0, 100.0]
+tctf_list = len(cr_list) * [3.0]
 beta_list = len(cr_list)* [10.0]
 
-#tctf_list = 4*[3]
-#cr_list = [0, 0, 0, 0, 0]
-#beta_list = [3, 30, 100, 300]
+tctf_list = 6*[3.0]
+cr_list = [0, 0, 0, 0, 0, 0]
+beta_list = [3, 10, 30, 100, 300, 'inf']
+#beta_list = [10, 'inf']
 
+sim = 'isocool_isochoric'
 sim = 'isocool'
-beta_compare = 0
-cr_compare = 1
-plot_density_fluctuation_growth(sim, tctf_list = tctf_list, beta_list = beta_list, cr_list = cr_list)
+#sim = 'isothermal'
+nocool = False
+
+beta_compare = 1
+cr_compare = 0
+field = 'density'
+#field = 'temperature'
+save = False
+load = True 
+
+
+plot_density_fluctuation_growth(sim, tctf_list = tctf_list, beta_list = beta_list, cr_list = cr_list, field = field)

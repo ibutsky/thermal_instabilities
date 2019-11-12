@@ -61,6 +61,10 @@ def _cool_ff_ratio(field, data):
 def _total_pressure(field, data):
     return data[('gas', 'pressure')] + data[('gas', 'magnetic_pressure')]
 
+def _total_cr_pressure(field, data):
+    return data[('gas', 'pressure')] + data[('gas', 'magnetic_pressure')] + data[('gas', 'cr_pressure')]
+
+
 def load(output_location):
     ds = yt.load(output_location)
     ds.add_field(('gas', 'external_acceleration_z'), function = _accel_z, \
@@ -71,7 +75,7 @@ def load(output_location):
 
     ds.add_field(('gas', 'tcool_tff_ratio'), function = _cool_ff_ratio, \
                 display_name = 'Cooling Time / Free Fall Time', units = '')
-    ds.add_field(('gas', 'total_pressure'), function = _total_pressure, \
+    ds.add_field(('gas', 'total_pressure_mhd'), function = _total_pressure, \
                  display_name = 'Total Pressure', units = 'dyne/cm**2')
     ds.add_field(('gas', 'gas_entropy'), function = _gasentropy,\
                  display_name = 'Gas Entropy', units = 'cm**2 * keV')
@@ -79,7 +83,7 @@ def load(output_location):
     ds.add_field(('gas', 'log_total_entropy'), function = _log_gas_entropy, \
                  display_name = 'Log(Total Entropy)', units = '')
 
-    if output_location.__contains__('_cr_'):
+    if output_location.__contains__('_cr_') or output_location.__contains__('isochoric'):
         ds.add_field(('gas', 'cr_energy'), function = _crenergy, \
                      display_name = 'Cosmic Ray Energy', units = 'erg/g')
         ds.add_field(('gas', 'cr_pressure'), function = _crpressure, \
@@ -88,6 +92,8 @@ def load(output_location):
                      display_name = 'P$_c$ / P$_g$', units = '')
         ds.add_field(('gas', 'cr_entropy'), function = _crentropy, \
                      display_name = 'Cosmic Ray Entropy', units = 'cm**2 * dyne')
-        ds.add_field(('gas', 'log_total_entropy'), function= _log_total_entropy, \
-                     display_name ='Log(Total Entropy)', units = '', force_overwrite = True)
+        ds.add_field(('gas', 'log_total_entropy_cr'), function= _log_total_entropy, \
+                     display_name ='Log(Total Entropy)', units = '')
+        ds.add_field(('gas', 'total_pressure_mhdcr'), function = _total_cr_pressure, \
+                     display_name = 'Total Pressure', units = 'dyne/cm**2')
     return ds

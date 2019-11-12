@@ -36,7 +36,7 @@ def plot_cold_fraction(model, beta_list = ['inf'], tctf_list = None, output_list
     ax.set_ylim(1e-2, 1)
     
     
-    cpal = palettable.cmocean.sequential.Deep_4_r.mpl_colors
+    cpal = palettable.cmocean.sequential.Deep_7_r.mpl_colors
     for i, beta in enumerate(beta_list):
         if beta == 'inf':
             label = 'Hydro'
@@ -61,17 +61,20 @@ def plot_cold_fraction(model, beta_list = ['inf'], tctf_list = None, output_list
     ax.set_ylabel('Cold Fraction')
     ax.legend()
     fig.tight_layout()
-    plt.savefig('../../plots/cold_fraction_tcool_%.1f_%s.png'%(np.mean(output_list)/10, model), dpi = 300)
+    figname = '../../plots/cold_fraction_tcool_%.1f_%s'%(np.mean(output_list)/10, model)
+    if compare == 'beta':
+        figname += '_beta_compare'
+    plt.savefig(figname+'.png', dpi = 300)
 
-
-tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
-tctf_list = [1.0, 3.0]
-#beta_list = [4, 100, 'inf']
-beta_list = [3, 10, 30, 100]
+compare = 'beta'
+if compare == 'beta':
+    tctf_list = [0.1, 0.3, 1.0, 3.0,  10]
+    beta_list = [3, 10, 30, 100, 300, 'inf']
+    cr_list = 6*[0]
                                                                 
 Tmin = 1e6 / 3.0
-model = sys.argv[1]
-output_list = [90, 95, 100]
-#output_list = [40, 45, 50, 55, 60]
+model = 'isothermal'
+output_list = [90,92, 95,97, 100]
+output_list = [40, 45, 50, 55, 60]
 plot_cold_fraction(model, output_list = output_list, \
                    beta_list = beta_list, tctf_list = tctf_list, Tmin = Tmin)
