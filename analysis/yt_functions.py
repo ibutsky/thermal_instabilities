@@ -5,8 +5,8 @@ from astropy import constants as const
 
 import numpy as np
 
-#ds = yt.load('../../simulations/isothermal_tctf_1.0/DD0000/DD0000')
-ds = yt.load('../../simulations/isocool_tctf_1.0_beta_10.0/DD0000/DD0000')
+ds = yt.load('../../simulations/isothermal_tctf_10.0/DD0000/DD0000')
+#ds = yt.load('../../simulations/isocool_tctf_1.0_beta_10.0/DD0000/DD0000')
 
 def _gasentropy(field, data):
     gamma = 5./3.
@@ -65,35 +65,36 @@ def _total_cr_pressure(field, data):
     return data[('gas', 'pressure')] + data[('gas', 'magnetic_pressure')] + data[('gas', 'cr_pressure')]
 
 
-def load(output_location):
+def load(output_location, load_accel = True, load_cr = False):
     ds = yt.load(output_location)
-    ds.add_field(('gas', 'external_acceleration_z'), function = _accel_z, \
+    if load_accel:
+        ds.add_field(('gas', 'external_acceleration_z'), function = _accel_z,  sampling_type = 'cell',\
                 display_name = 'External Acceleration Z', units = 'cm/s**2')
-
-    ds.add_field(('gas', 'free_fall_time'), function = _ff_time, \
+        
+        ds.add_field(('gas', 'free_fall_time'), function = _ff_time,  sampling_type = 'cell',\
                 display_name = 'Free Fall Time', units = 's')
 
-    ds.add_field(('gas', 'tcool_tff_ratio'), function = _cool_ff_ratio, \
+        ds.add_field(('gas', 'tcool_tff_ratio'), function = _cool_ff_ratio,  sampling_type = 'cell',\
                 display_name = 'Cooling Time / Free Fall Time', units = '')
-    ds.add_field(('gas', 'total_pressure_mhd'), function = _total_pressure, \
+    ds.add_field(('gas', 'total_pressure_mhd'), function = _total_pressure,  sampling_type = 'cell',\
                  display_name = 'Total Pressure', units = 'dyne/cm**2')
-    ds.add_field(('gas', 'gas_entropy'), function = _gasentropy,\
+    ds.add_field(('gas', 'gas_entropy'), function = _gasentropy, sampling_type = 'cell',\
                  display_name = 'Gas Entropy', units = 'cm**2 * keV')
 
-    ds.add_field(('gas', 'log_total_entropy'), function = _log_gas_entropy, \
+    ds.add_field(('gas', 'log_total_entropy'), function = _log_gas_entropy,  sampling_type = 'cell',\
                  display_name = 'Log(Total Entropy)', units = '')
 
-    if output_location.__contains__('_cr_') or output_location.__contains__('isochoric'):
-        ds.add_field(('gas', 'cr_energy'), function = _crenergy, \
+    if output_location.__contains__('_cr_') or load_cr:
+        ds.add_field(('gas', 'cr_energy'), function = _crenergy, sampling_type = 'cell',\
                      display_name = 'Cosmic Ray Energy', units = 'erg/g')
-        ds.add_field(('gas', 'cr_pressure'), function = _crpressure, \
+        ds.add_field(('gas', 'cr_pressure'), function = _crpressure,  sampling_type = 'cell',\
                      display_name = 'Cosmic Ray Pressure', units = 'dyne/cm**2')
-        ds.add_field(('gas', 'cr_eta'), function = _creta, \
+        ds.add_field(('gas', 'cr_eta'), function = _creta,  sampling_type = 'cell',\
                      display_name = 'P$_c$ / P$_g$', units = '')
-        ds.add_field(('gas', 'cr_entropy'), function = _crentropy, \
+        ds.add_field(('gas', 'cr_entropy'), function = _crentropy,  sampling_type = 'cell',\
                      display_name = 'Cosmic Ray Entropy', units = 'cm**2 * dyne')
-        ds.add_field(('gas', 'log_total_entropy_cr'), function= _log_total_entropy, \
+        ds.add_field(('gas', 'log_total_entropy_cr'), function= _log_total_entropy,  sampling_type = 'cell',\
                      display_name ='Log(Total Entropy)', units = '')
-        ds.add_field(('gas', 'total_pressure_mhdcr'), function = _total_cr_pressure, \
+        ds.add_field(('gas', 'total_pressure_mhdcr'), function = _total_cr_pressure,  sampling_type = 'cell',\
                      display_name = 'Total Pressure', units = 'dyne/cm**2')
     return ds

@@ -83,16 +83,16 @@ def create_constants_and_parameters_file(fn, tcool_tff_ratio, halo_profile, pert
     f.close()
 
 
-num = 4
-tctf_list = num*[3.0]
-tctf_list = [0.1, 0.3, 1.0, 3.0]#, 10.0]
-halo_prof_list = num*[3]
-perturb_list = num*[2]
+num = 5
+tctf_list = num*[10.0]
+#tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0]
+halo_prof_list = num*[1]
+perturb_list = num*[1]
 beta_list = num*[10.0]
 #beta_list = ['inf', 300, 100, 30, 10, 3]
-#cr_list = [0.01, 0.1, 1.0, 10.0, 100.0]
-cr_list = num*[0.001]
-wall_time = '10:00:00'
+cr_list = [0.01, 0.1, 1.0, 10.0, 100.0]
+#cr_list = num*[0]
+wall_time = '24:00:00'
 
 
 for i in range(len(tctf_list)):

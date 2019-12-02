@@ -28,8 +28,8 @@ def calculate_rms_fluctuation(sim_folder, output_list, field = 'density'):
 
             if os.path.isfile(ds_path):
                 ds = yt.load(ds_path)
-                region1 = ds.r[0, 0, 0.9:1.1]
-                region2 = ds.r[0, 0, -1.1:-0.9]
+                region1 = ds.r[0, 0, zstart:zend]
+                region2 = ds.r[0, 0, -zend:-zstart]
                 zlist    = np.append(region1[('gas', 'z')].in_units('kpc'),\
                                      region2[('gas', 'z')].in_units('kpc'))
                 
@@ -104,17 +104,17 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
             else:
                 sim_location += '_cr_%0.1f'%(cr)
         if nocool:
-            sim_location += '_nocool'
+            sim_location += '_nocool_2'
         print(sim_location)
         if not os.path.isdir(sim_location):
             continue
 
         label = '$t_{cool}/t_{ff}$ = %.1f'%tctf
-        if cr_compare:
+        if compare == 'cr':
             label = 'P$_c$ / P$_g$ = %.1f'%cr
             if cr < 0.1:
                 label = 'P$_c$ / P$_g$ = %.2f'%cr
-        if beta_compare:
+        if compare == 'beta':
             if beta_list[i] == 'inf':
                 label = 'Hydro'
             else:
@@ -122,9 +122,9 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
         time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field)
         ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 3, label = label, color = cpal[i])
 
-        if tctf == 1.0 and beta == 'inf' and beta_compare == 0 and cr_compare == 0:
+        if tctf == 1.0 and beta == 'inf' and sim == 'isothermal' and do_test == True:
             for res, linestyle in zip([64, 256], ['dashed', 'dotted']):
-                sim_location = '%s/%s_%i'%(work_dir, sim, res)
+                sim_location = '%s/no_center_heating/%s_%i'%(work_dir, sim, res)
                 time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field)
                 ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 1, alpha = 0.7, color = cpal[i], \
                         linestyle = linestyle, label = label + ', res = %i$^3$'%res)
@@ -143,9 +143,9 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
         plot_name = '../../plots/%s_fluctuation_growth_%s'%(field, sim)
     else:
         plot_name = '../../plots/%s_fluctuation_growth_%s_beta_%.1f'%(field, sim, beta)
-    if beta_compare:
+    if compare == 'beta':
         plot_name = '../../plots/%s_fluctuation_growth_%s_tctf_%.1f_beta_compare'%(field, sim,tctf_list[0])
-    if cr_compare:
+    elif compare == 'cr':
         plot_name += '_tctf_%.2f_beta_%.1f_cr'%(tctf_list[0], beta_list[0])
     plot_name += '.png'
     print(plot_name)
@@ -153,35 +153,40 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
     plt.savefig(plot_name, dpi = 300)
 
 
+
+def generate_lists(compare, tctf):
+    if compare == 'tctf':
+        tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
+        cr_list = 5*[0]
+        beta_list = 5*['inf']
+    elif compare == 'beta':
+        tctf_list = 6*[tctf]
+        cr_list = 6*[0]
+        beta_list = [3, 10, 30, 100, 300, 'inf']
+    elif compare == 'cr':
+        tctf_list = 6*[tctf]
+        cr_list = [0.001, 0.01, 0.1, 1.0, 10.0, 100]
+        beta_list = 6*[10.0]
+        
+    return tctf_list, beta_list, cr_list
+        
 do_test = False
 test_sim_location = '../../simulations/isocool_tctf_0.1_beta_3.0_constB'
 tctf_test = 0.1
-
-tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
-cr_list = None
-
-#cr_list = [0.01, 0.1, 0.3, 0.6, 0.9, 1.0, 1.1, 2.0, 3.0, 10.0, 30.0]
-cr_list = [0.1, 0.3, 1.0, 3.0, 10.0]
-cr_list = [0.01, 0.1, 1.0, 10.0, 100.0]
-tctf_list = len(cr_list) * [3.0]
-beta_list = len(cr_list)* [10.0]
-
-tctf_list = 6*[3.0]
-cr_list = [0, 0, 0, 0, 0, 0]
-beta_list = [3, 10, 30, 100, 300, 'inf']
-#beta_list = [10, 'inf']
-
-sim = 'isocool_isochoric'
-sim = 'isocool'
-#sim = 'isothermal'
 nocool = False
-
-beta_compare = 1
-cr_compare = 0
 field = 'density'
-#field = 'temperature'
-save = False
-load = True 
+zstart = 0.9
+zend = 1.1
+save = True
+load = False
 
+sim = sys.argv[1]
+compare = sys.argv[2]
+
+if sys.argv[3]:
+    tctf = float(sys.argv[3])
+
+print(compare)
+tctf_list, beta_list, cr_list = generate_lists(compare, tctf)
 
 plot_density_fluctuation_growth(sim, tctf_list = tctf_list, beta_list = beta_list, cr_list = cr_list, field = field)

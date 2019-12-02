@@ -12,38 +12,46 @@ def calculate_density(rho0, z, a, H, profile, inv_beta, eta, T_power_law_index):
     zscale = z/a
     total_pressure_factor = (1.0 + inv_beta + eta)
     halo_scale = a * (np.sqrt(1.0 + zscale*zscale)-1.0) / H / total_pressure_factor
+    halo_scale_H = a * (np.sqrt(1.0 + H*H/a/a)-1.0) / H / total_pressure_factor
+
     if profile == 1:
         # isothermal
-        rho =  rho0 * np.exp(-halo_scale) 
+        rho0_scale = rho0 / np.exp(-halo_scale_H)
+        rho =  rho0_scale * np.exp(-halo_scale) 
         return rho
 
     elif profile == 2:
         # isentropic
         base = (1 - (gamma - 1)/(gamma) * halo_scale)
-        return rho0 * np.power(base, 1.0 / (gamma-1))
+        rho0_scale = rho0 / np.power((1 - (gamma - 1)/(gamma) * halo_scale_H), 1.0 / (gamma-1))
+        return rho0_scale * np.power(base, 1.0 / (gamma-1))
 
     elif profile == 3:
         # isocool
         alpha = T_power_law_index
         base = (1 - halo_scale/(2-alpha)) 
-        return rho0 * np.power(base, 1-alpha)
+        rho0_scale = rho0 / (1 - halo_scale_H/(2-alpha))
+        return rho0_scale * np.power(base, 1-alpha)
         
 
 def calculate_temperature(T0, z, a, H, profile, inv_beta, eta, T_power_law_index):
     zscale = z/a
     total_pressure_factor = (1.0 + inv_beta + eta)
     halo_scale = a * (np.sqrt(1.0 + zscale*zscale)-1.0) / H / total_pressure_factor
+    halo_scale_H = a * (np.sqrt(1.0 + H*H/a/a)-1.0) / H / total_pressure_factor
     if profile == 1:
         # isothermal
         return T0
     elif profile == 2:
         # isentropic
         scale = np.sqrt(1 +(z/a)**2) - 1
-        return T0 * (1 - (gamma - 1)/(gamma)*halo_scale )
+        T0_scale = T0 / (1 - (gamma - 1)/(gamma)*halo_scale_H)
+        return T0_scale * (1 - (gamma - 1)/(gamma)*halo_scale)
     elif profile == 3:
         # isocool
         alpha = T_power_law_index
-        return T0 * (1 - halo_scale / (2 - alpha)) 
+        T0_scale = T0 / (1 - halo_scale_H / (2 - alpha))
+        return T0_scale * (1 - halo_scale / (2 - alpha)) 
 
 def calculate_free_fall_time(z, g0):
     return np.sqrt(2*z / g0)
@@ -195,7 +203,7 @@ def generate_enzo_input_file():
     if cr_pressure_ratio > 0 :
         outf.write("TICosmicRayPressureRatio \t =%e\n"%(cr_pressure_ratio))
         outf.write("CRModel\t\t = 1\n")
-        outf.write("CRCourantSafetyFactor\t = 0.2\n")
+        outf.write("CRCourantSafetyNumber\t = 0.2\n")
     outf.close()
 
 
