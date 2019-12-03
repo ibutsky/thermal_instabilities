@@ -27,6 +27,14 @@ def get_folder_name(tctf, halo_prof, perturb, beta, cr):
         else:
             folder_name += '_cr_%.2f'%cr
 
+        if cr_diffusion:
+            folder_name += '_diff_%.1f'%(cr_kappa/1e28)
+
+        if cr_streaming:
+            folder_name += '_stream'
+
+        if cr_heating:
+            folder_name += '_heat'
     return folder_name
     
 
@@ -45,6 +53,12 @@ def create_constants_and_parameters_file(fn, tcool_tff_ratio, halo_profile, pert
     else:
         f.write('magnetic_pressure_ratio = %f \n'%(1.0 / beta))
     f.write('cr_pressure_ratio       = %f\n\n' %eta)
+
+    f.write('cr_diffusion = %i\n'%cr_diffusion)
+    f.write('cr_kappa     = %e\n'%cr_kappa)
+    f.write('cr_streaming = %i\n'%cr_streaming)
+    f.write('cr_heating = %i\n'%cr_heating)
+    
     
     f.write('########### These parameters don\'t really need to change ###########\n')
     f.write('bfield_direction    = [0, 1, 0]\n')
@@ -84,7 +98,7 @@ def create_constants_and_parameters_file(fn, tcool_tff_ratio, halo_profile, pert
 
 
 num = 5
-tctf_list = num*[10.0]
+tctf_list = num*[0.1]
 #tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0]
 halo_prof_list = num*[1]
 perturb_list = num*[1]
@@ -92,8 +106,12 @@ beta_list = num*[10.0]
 #beta_list = ['inf', 300, 100, 30, 10, 3]
 cr_list = [0.01, 0.1, 1.0, 10.0, 100.0]
 #cr_list = num*[0]
-wall_time = '24:00:00'
+wall_time = '4:00:00'
 
+cr_diffusion = 2
+cr_kappa     = 3e28
+cr_streaming = 0
+cr_heating   = 0
 
 for i in range(len(tctf_list)):
     folder_basename = get_folder_name(tctf_list[i], halo_prof_list[i], perturb_list[i], beta_list[i], cr_list[i])

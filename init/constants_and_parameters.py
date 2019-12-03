@@ -11,9 +11,9 @@ perturb_type    = 1
 magnetic_pressure_ratio = 0
 cr_pressure_ratio       = 0
 
-cr_stream = 0
-cr_heat = 0
-cr_diff = 0
+cr_streaming = 0
+cr_heating   = 0
+cr_diffusion = 0
 
 ########### These parameters don't really need to change ###########
 bfield_direction    = [0, 1, 0]

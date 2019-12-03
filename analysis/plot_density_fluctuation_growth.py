@@ -28,6 +28,7 @@ def calculate_rms_fluctuation(sim_folder, output_list, field = 'density'):
 
             if os.path.isfile(ds_path):
                 ds = yt.load(ds_path)
+                print(zstart, zend)
                 region1 = ds.r[0, 0, zstart:zend]
                 region2 = ds.r[0, 0, -zend:-zstart]
                 zlist    = np.append(region1[('gas', 'z')].in_units('kpc'),\
@@ -175,9 +176,11 @@ test_sim_location = '../../simulations/isocool_tctf_0.1_beta_3.0_constB'
 tctf_test = 0.1
 nocool = False
 field = 'density'
-zstart = 0.9
-zend = 1.1
-save = True
+
+
+zstart = 0.8
+zend = 1.2
+save = False
 load = False
 
 sim = sys.argv[1]
