@@ -57,14 +57,16 @@ def calculate_rms_fluctuation(sim_folder, output_list, field = 'density'):
 
 
 
-def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list = None, \
-                                    field = 'density', beta_list = None, work_dir = '../../simulations'):
+def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list = None, diff_list = None, \
+                                    field = 'density', beta_list = None, work_dir = '../../simulations/'):
     if tctf_list == None:
         tctf_list = [0.1, 0.3, 1.0, 10.0]
     if beta_list == None:
         beta_list = len(tctf_list)*['inf']
     if cr_list == None:
         cr_list = len(tctf_list) * [0]
+    if diff_list == None:
+        diff_list = len(tctf_list)*[0]
     fig, ax = plt.subplots(figsize = (6, 6))
     ax.set_yscale('log')
     ax.set_ylim(5e-3, 5)
@@ -94,32 +96,14 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
     #output_list = np.linspace(0, 100, 10)
     output_list = np.arange(0, 210, 10)
     for i, tctf in enumerate(tctf_list):
-        if beta_list[i] == 'inf':
-            sim_location = '%s/%s_tctf_%.1f'%(work_dir, sim, tctf)
-        else:
-            sim_location =  '%s/%s_tctf_%.1f_beta_%.1f'%(work_dir, sim, tctf, beta_list[i])
-        cr = cr_list[i]
-        if cr > 0:
-            if cr < 0.1:
-                sim_location += '_cr_%.2f'%(cr)
-            else:
-                sim_location += '_cr_%0.1f'%(cr)
-        if nocool:
-            sim_location += '_nocool_2'
+        sim_location = pt.get_sim_location(sim, tctf, beta_list[i], cr_list[i], diff = diff_list[i], work_dir = work_dir)
+
         print(sim_location)
         if not os.path.isdir(sim_location):
             continue
 
-        label = '$t_{cool}/t_{ff}$ = %.1f'%tctf
-        if compare == 'cr':
-            label = 'P$_c$ / P$_g$ = %.1f'%cr
-            if cr < 0.1:
-                label = 'P$_c$ / P$_g$ = %.2f'%cr
-        if compare == 'beta':
-            if beta_list[i] == 'inf':
-                label = 'Hydro'
-            else:
-                label = '$\\beta = $%.1f'%beta_list[i]
+        label = pt.get_label_name(compare, tctf, beta_list[i], cr_list[i])
+
         time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field)
         ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 3, label = label, color = cpal[i])
 
@@ -148,28 +132,13 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
         plot_name = '../../plots/%s_fluctuation_growth_%s_tctf_%.1f_beta_compare'%(field, sim,tctf_list[0])
     elif compare == 'cr':
         plot_name += '_tctf_%.2f_beta_%.1f_cr'%(tctf_list[0], beta_list[0])
+        if diff_list[-1] > 0:
+            plot_name += '_diff_%.1f'%diff_list[-1]
     plot_name += '.png'
     print(plot_name)
 
     plt.savefig(plot_name, dpi = 300)
 
-
-
-def generate_lists(compare, tctf):
-    if compare == 'tctf':
-        tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
-        cr_list = 5*[0]
-        beta_list = 5*['inf']
-    elif compare == 'beta':
-        tctf_list = 6*[tctf]
-        cr_list = 6*[0]
-        beta_list = [3, 10, 30, 100, 300, 'inf']
-    elif compare == 'cr':
-        tctf_list = 6*[tctf]
-        cr_list = [0.001, 0.01, 0.1, 1.0, 10.0, 100]
-        beta_list = 6*[10.0]
-        
-    return tctf_list, beta_list, cr_list
         
 do_test = False
 test_sim_location = '../../simulations/isocool_tctf_0.1_beta_3.0_constB'
@@ -183,6 +152,8 @@ zend = 1.2
 save = False
 load = False
 
+crdiff = 0
+
 sim = sys.argv[1]
 compare = sys.argv[2]
 
@@ -190,6 +161,8 @@ if sys.argv[3]:
     tctf = float(sys.argv[3])
 
 print(compare)
-tctf_list, beta_list, cr_list = generate_lists(compare, tctf)
+tctf_list, beta_list, cr_list, diff_list = pt.generate_lists(compare, tctf, crdiff = crdiff)
+print(tctf_list, beta_list, cr_list, diff_list)
 
-plot_density_fluctuation_growth(sim, tctf_list = tctf_list, beta_list = beta_list, cr_list = cr_list, field = field)
+plot_density_fluctuation_growth(sim, tctf_list = tctf_list, beta_list = beta_list, \
+                                cr_list = cr_list, diff_list = diff_list, field = field)

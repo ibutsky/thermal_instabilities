@@ -208,6 +208,7 @@ def generate_enzo_input_file():
         outf.write("CRkappa\t = %e\n"%cr_kappa)
         outf.write("CRStreaming\t = %i\n"%cr_streaming)
         outf.write("CRHeating\t = %i\n"%cr_heating)
+        outf.write("CRdensFloor = 1e-20\n")
     outf.close()
 
 
