@@ -3,7 +3,7 @@ import shutil
 
 sim_dir = '../../simulations'
 
-def get_folder_name(tctf, halo_prof, perturb, beta, cr):
+def get_folder_name(tctf, halo_prof, perturb, beta, cr, grid_rank = 3, resolution = 128):
     if halo_prof == 1:
         sim = 'isothermal'
     elif halo_prof == 2:
@@ -35,11 +35,14 @@ def get_folder_name(tctf, halo_prof, perturb, beta, cr):
 
         if cr_heating:
             folder_name += '_heat'
+    if grid_rank == 2:
+        folder_name += '_2d_%i'%resolution
     return folder_name
     
 
 
-def create_constants_and_parameters_file(fn, tcool_tff_ratio, halo_profile, perturb_type, beta, eta, wall_time = '16:00:00'):
+def create_constants_and_parameters_file(fn, tcool_tff_ratio, halo_profile, perturb_type, beta, eta, \
+                                         grid_rank = 3, ndim = 128, wall_time = '16:00:00'):
     f = open(fn, 'w')
     f.write('from yt import YTQuantity\n')
     f.write('from yt import YTArray\n\n')
@@ -62,7 +65,8 @@ def create_constants_and_parameters_file(fn, tcool_tff_ratio, halo_profile, pert
     
     f.write('########### These parameters don\'t really need to change ###########\n')
     f.write('bfield_direction    = [0, 1, 0]\n')
-    f.write('resolution          = 128  # resolution along z-axis; scaled for x-y axes\n')
+    f.write('resolution          = %i  # resolution along z-axis; scaled for x-y axes\n'%ndim)
+    f.write('grid_rank           = %i\n'%grid_rank)
 
     f.write('# cooling function parameters\n')
     f.write('# Tmin should be ~ T0/20    \n')
@@ -82,7 +86,7 @@ def create_constants_and_parameters_file(fn, tcool_tff_ratio, halo_profile, pert
     f.write('perturbation_amplitude = 0.02\n')
     f.write('default_n              = resolution\n')
     f.write('default_kmin           = 4\n')
-    f.write('default_kmax           = 32\n')
+    f.write('default_kmax           = int(resolution / 2)\n')
     f.write('default_f_solenoidal   = 2./3.\n')
     f.write('default_alpha          = 0\n')
     f.write('default_seed           = 4085281318\n')
@@ -97,24 +101,28 @@ def create_constants_and_parameters_file(fn, tcool_tff_ratio, halo_profile, pert
     f.close()
 
 
+grid_rank = 2
+ndim = 256 
+
 num = 5
-tctf_list = num*[1.0]
-#tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0]
+#tctf_list = num*[1.0]
+tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0]
 halo_prof_list = num*[1]
 perturb_list = num*[1]
-beta_list = num*[10.0]
+beta_list = num*['inf']
 #beta_list = ['inf', 300, 100, 30, 10, 3]
-cr_list = [0.01, 0.1, 1.0, 10.0, 100.0]
-#cr_list = num*[0]
-wall_time = '10:00:00'
+#cr_list = [0.01, 0.1, 1.0, 10.0, 100.0]
+cr_list = num*[0]
+wall_time = '3:00:00'
 
-cr_diffusion = 2
-cr_kappa     = 3e29 #1e28
+cr_diffusion = 0
+cr_kappa     = 0 #3e29 #1e28
 cr_streaming = 0
 cr_heating   = 0
 
 for i in range(len(tctf_list)):
-    folder_basename = get_folder_name(tctf_list[i], halo_prof_list[i], perturb_list[i], beta_list[i], cr_list[i])
+    folder_basename = get_folder_name(tctf_list[i], halo_prof_list[i], perturb_list[i], \
+                                      beta_list[i], cr_list[i], grid_rank = grid_rank, resolution = ndim)
     folder_path = '%s/%s'%(sim_dir, folder_basename)
 
     if not os.path.isdir(folder_path):
@@ -126,12 +134,12 @@ for i in range(len(tctf_list)):
 
     cwd = os.getcwd()
     os.chdir(folder_path)
-    shutil.copyfile('%s/perturbation.py'%cwd, 'perturbation.py')
+    shutil.copyfile('%s/perturbation_%i.in'%(cwd, ndim), 'perturbation.in')
     shutil.copyfile('%s/generate_initial_conditions.py'%cwd, 'generate_initial_conditions.py')
 
     create_constants_and_parameters_file('constants_and_parameters.py', tctf_list[i],\
                                          halo_prof_list[i], perturb_list[i], beta_list[i], cr_list[i], \
-                                         wall_time = wall_time)
+                                         grid_rank = grid_rank, ndim = ndim, wall_time = wall_time)
 
     os.system('python generate_initial_conditions.py')
     os.system('sbatch submit.sbatch')

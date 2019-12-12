@@ -22,7 +22,6 @@ def calculate_rms_fluctuation(sim_folder, output_list, field = 'density'):
         time_list, dzfield_rms_list = np.loadtxt(out_name, unpack=True)
     
     else:
-
         for output in output_list:
             ds_path = "%s/DD%04d/DD%04d"%(sim_folder, output, output)
 
@@ -106,7 +105,25 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
 
         time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field)
         ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 3, label = label, color = cpal[i])
+        
+        if tctf == 0.3:
+             sim_location = '%s/isothermal_tctf_%.1f_2d_128'%(work_dir, tctf)
+             time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field)
+             ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 2, alpha = 0.7, color = cpal[i], \
+                        linestyle = 'solid', label = label + ', 2D 128')
 
+             sim_location = '%s/isothermal_tctf_%.1f_2d_256'%(work_dir, tctf)
+             time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field)
+             ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 2, alpha = 0.7, color = cpal[i], \
+                        linestyle = 'dashed', label = label + ', 2D 256')
+             sim_location = '%s/isothermal_tctf_%.1f_2d_512'%(work_dir, tctf)
+             time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field)
+             ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 2, alpha = 0.7, color = cpal[i], \
+                                 linestyle = 'dashdot', label = label + ', 2D 512')
+             sim_location = '%s/isothermal_tctf_%.1f_2d_1024'%(work_dir, tctf)
+             time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field)
+             ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 2, alpha = 0.7, color = cpal[i], \
+                                 linestyle = 'dotted', label = label + ', 2D 1024')
         if tctf == 1.0 and beta == 'inf' and sim == 'isothermal' and do_test == True:
             for res, linestyle in zip([64, 256], ['dashed', 'dotted']):
                 sim_location = '%s/no_center_heating/%s_%i'%(work_dir, sim, res)

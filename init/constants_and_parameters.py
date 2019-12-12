@@ -18,6 +18,7 @@ cr_diffusion = 0
 ########### These parameters don't really need to change ###########
 bfield_direction    = [0, 1, 0]
 resolution          = 128  # resolution along z-axis; scaled for x-y axes
+grid_rank           = 3
 
 # cooling function parameters
 # Tmin should be ~ T0/20    
@@ -37,7 +38,7 @@ gsoft_scale     = 0.1    # units of scale height
 perturbation_amplitude = 0.02
 default_n              = resolution
 default_kmin           = 4
-default_kmax           = 32
+default_kmax           = int(resolution / 2)
 default_f_solenoidal   = 2./3.
 default_alpha          = 0
 default_seed           = 4085281318

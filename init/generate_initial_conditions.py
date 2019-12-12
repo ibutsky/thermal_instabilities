@@ -5,53 +5,45 @@ import numpy as np
 import shutil
 import os
 
-import perturbation as pert
 from constants_and_parameters import *
 
 def calculate_density(rho0, z, a, H, profile, inv_beta, eta, T_power_law_index):
     zscale = z/a
     total_pressure_factor = (1.0 + inv_beta + eta)
     halo_scale = a * (np.sqrt(1.0 + zscale*zscale)-1.0) / H / total_pressure_factor
-    halo_scale_H = a * (np.sqrt(1.0 + H*H/a/a)-1.0) / H / total_pressure_factor
 
     if profile == 1:
         # isothermal
-        rho0_scale = rho0 / np.exp(-halo_scale_H)
-        rho =  rho0_scale * np.exp(-halo_scale) 
+        rho =  rho0 * np.exp(-halo_scale) 
         return rho
 
     elif profile == 2:
         # isentropic
         base = (1 - (gamma - 1)/(gamma) * halo_scale)
-        rho0_scale = rho0 / np.power((1 - (gamma - 1)/(gamma) * halo_scale_H), 1.0 / (gamma-1))
-        return rho0_scale * np.power(base, 1.0 / (gamma-1))
+        return rho0 * np.power(base, 1.0 / (gamma-1))
 
     elif profile == 3:
         # isocool
         alpha = T_power_law_index
         base = (1 - halo_scale/(2-alpha)) 
-        rho0_scale = rho0 / (1 - halo_scale_H/(2-alpha))
-        return rho0_scale * np.power(base, 1-alpha)
+        return rho0 * np.power(base, 1-alpha)
         
 
 def calculate_temperature(T0, z, a, H, profile, inv_beta, eta, T_power_law_index):
     zscale = z/a
     total_pressure_factor = (1.0 + inv_beta + eta)
     halo_scale = a * (np.sqrt(1.0 + zscale*zscale)-1.0) / H / total_pressure_factor
-    halo_scale_H = a * (np.sqrt(1.0 + H*H/a/a)-1.0) / H / total_pressure_factor
     if profile == 1:
         # isothermal
         return T0
     elif profile == 2:
         # isentropic
         scale = np.sqrt(1 +(z/a)**2) - 1
-        T0_scale = T0 / (1 - (gamma - 1)/(gamma)*halo_scale_H)
-        return T0_scale * (1 - (gamma - 1)/(gamma)*halo_scale)
+        return T0 * (1 - (gamma - 1)/(gamma)*halo_scale)
     elif profile == 3:
         # isocool
         alpha = T_power_law_index
-        T0_scale = T0 / (1 - halo_scale_H / (2 - alpha))
-        return T0_scale * (1 - halo_scale / (2 - alpha)) 
+        return T0 * (1 - halo_scale / (2 - alpha)) 
 
 def calculate_free_fall_time(z, g0):
     return np.sqrt(2*z / g0)
@@ -121,12 +113,18 @@ def generate_enzo_input_file():
     outf.write("# Initialization Parameters\n")
     outf.write("ProblemType \t\t = 417\n")
     outf.write("TopGridRank \t\t = 3\n\n")
-    
+
     res_x = int(resolution * box_x / box_z)
     res_y = int(resolution * box_y / box_z)
-    outf.write("TopGridDimensions \t = %i %i %i\n"%(res_x,  res_y, resolution))
-    outf.write("DomainLeftEdge \t\t = %i %i %i\n"%(-box_x, -box_y, -box_z))
-    outf.write("DomainRightEdge \t = %i %i %i\n\n"%(box_x,  box_y,  box_z))
+    
+    if grid_rank == 2:
+        outf.write("TopGridDimensions \t = %i %i %i\n"%(4,  res_y, resolution))
+        outf.write("DomainLeftEdge \t\t = %f %i %i\n"%(-box_x*4. / resolution, -box_y, -box_z))
+        outf.write("DomainRightEdge \t = %f %i %i\n\n"%(box_x*4. / resolution,  box_y,  box_z))
+    else:
+        outf.write("TopGridDimensions \t = %i %i %i\n"%(res_x,  res_y, resolution))
+        outf.write("DomainLeftEdge \t\t = %f %i %i\n"%(-box_x, -box_y, -box_z))
+        outf.write("DomainRightEdge \t = %f %i %i\n\n"%(box_x,  box_y,  box_z))
     
     outf.write("LeftFaceBoundaryCondition   = 3 3 6 # 3 = Periodic, 6 = hydrostatic\n")
     outf.write("RightFaceBoundaryCondition  = 3 3 6\n\n")
@@ -287,17 +285,18 @@ rho_H = calculate_density(rho0, H, a, H, halo_profile, \
 T_H = calculate_temperature(T0, H, a, H, halo_profile, magnetic_pressure_ratio, \
                             cr_pressure_ratio, T_power_law_index)
 
+print(rho_H, T_H)
+
 tcool_over_L0_H = calculate_cooling_time(1, rho0, T0, H, a, H, halo_profile,\
             T_power_law_index, magnetic_pressure_ratio, cr_pressure_ratio, smooth_factor)
 Lambda0 = tcool_over_L0_H / (tcool_tff_ratio * tff_H)
 
 print(rho_H, T_H, Lambda0)
 
-if halo_profile == 1:
+
+if halo_profile < 2:
     box_x, box_y, box_z   = [3, 3, 3]  # box dimensions are (2*box_x*box_y*box_z)**3  
-elif halo_profile == 2:
-    box_x, box_y, box_z   = [2, 2, 2]
-elif halo_profile == 3:
+else:
     box_x, box_y, box_z   = [2, 2, 2]
 
 LengthScale  = 1    # in units of scale height H
@@ -319,7 +318,7 @@ ethermal_test =  kb*T0 / mu / mh / (gamma - 1) / VelocityUnits**2
 ethermal_min = kb*T_min / mu / mh / (gamma - 1) / VelocityUnits**2
 
 # generate perturbation input file: 
-pert.generate_perturbation_infile()
+# pert.generate_perturbation_infile()
 
 plot_cooling_rate(Lambda0, T_power_law_index, smooth_factor, T_min, T_max)
 
