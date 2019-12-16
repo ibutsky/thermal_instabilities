@@ -92,7 +92,7 @@ def create_constants_and_parameters_file(fn, tcool_tff_ratio, halo_profile, pert
     f.write('default_seed           = 4085281318\n')
 
     f.write('###### computing parameters\n')
-    f.write('nodes              = 1\n')
+    f.write('nodes              = %i\n'%nodes)
     f.write('tasks_per_node     = 32\n')
     f.write('num_cooling_cycles = 10  # simulation stop time = 10 * t_cool\n')
     f.write('num_outputs        = 100\n')
@@ -102,7 +102,8 @@ def create_constants_and_parameters_file(fn, tcool_tff_ratio, halo_profile, pert
 
 
 grid_rank = 2
-ndim = 256 
+ndim = 256
+nodes = 2
 
 num = 5
 #tctf_list = num*[1.0]

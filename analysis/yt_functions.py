@@ -46,6 +46,11 @@ def _crpressure(field, data):
 def _creta(field, data):
     return data[('gas', 'cr_pressure')] / data[('gas', 'pressure')]
     
+def _accel_y(field, data):
+    accel_unit = ds.length_unit.value / ds.time_unit.value**2
+    accel = data[('enzo', 'External_Acceleration_y')] * accel_unit
+    return YTArray(accel, 'cm/s**2')
+
 def _accel_z(field, data):
     accel_unit = ds.length_unit.value / ds.time_unit.value**2
     accel = data[('enzo', 'External_Acceleration_z')] * accel_unit
@@ -54,6 +59,10 @@ def _accel_z(field, data):
 def _ff_time(field, data):
     z = data[('gas', 'z')]
     return np.sqrt(abs(2.0 * z / data[('gas', 'external_acceleration_z')]))
+
+def _ff_time_2d(field, data):
+    y = data[('gas', 'y')]
+    return np.sqrt(abs(2.0 * y / data[('gas', 'external_acceleration_y')]))
 
 def _cool_ff_ratio(field, data):
     return data[('gas', 'cooling_time')] / data[('gas', 'free_fall_time')]
@@ -65,13 +74,23 @@ def _total_cr_pressure(field, data):
     return data[('gas', 'pressure')] + data[('gas', 'magnetic_pressure')] + data[('gas', 'cr_pressure')]
 
 
-def load(output_location, load_accel = True, load_cr = False):
+def load(output_location, load_accel = True, load_cr = False, grid_rank = 3):
     ds = yt.load(output_location)
+    if output_location.__contains__('_2d_'):
+        grid_rank = 2
+
     if load_accel:
+        ds.add_field(('gas', 'external_acceleration_y'), function = _accel_y,  sampling_type = 'cell',\
+                display_name = 'External Acceleration Y', units = 'cm/s**2')
+
         ds.add_field(('gas', 'external_acceleration_z'), function = _accel_z,  sampling_type = 'cell',\
                 display_name = 'External Acceleration Z', units = 'cm/s**2')
         
-        ds.add_field(('gas', 'free_fall_time'), function = _ff_time,  sampling_type = 'cell',\
+        if (grid_rank == 3):
+            ds.add_field(('gas', 'free_fall_time'), function = _ff_time,  sampling_type = 'cell',\
+                display_name = 'Free Fall Time', units = 's')
+        else:
+            ds.add_field(('gas', 'free_fall_time'), function = _ff_time_2d,  sampling_type = 'cell',\
                 display_name = 'Free Fall Time', units = 's')
 
         ds.add_field(('gas', 'tcool_tff_ratio'), function = _cool_ff_ratio,  sampling_type = 'cell',\

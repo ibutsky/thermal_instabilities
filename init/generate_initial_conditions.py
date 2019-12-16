@@ -199,14 +199,15 @@ def generate_enzo_input_file():
     outf.write("TIMagneticFieldInverseBeta      = %e\n"%(magnetic_pressure_ratio))
     outf.write("TestProblemUseMetallicityField\t = 0 \n")
     if cr_pressure_ratio > 0 :
-        outf.write("TICosmicRayPressureRatio \t =%e\n"%(cr_pressure_ratio))
-        outf.write("CRModel\t\t = 1\n")
-        outf.write("CRCourantSafetyNumber\t = 0.2\n")
-        outf.write("CRDiffusion\t = %i\n"%cr_diffusion)
-        outf.write("CRkappa\t = %e\n"%cr_kappa)
-        outf.write("CRStreaming\t = %i\n"%cr_streaming)
-        outf.write("CRHeating\t = %i\n"%cr_heating)
-        outf.write("CRdensFloor = 1e-20\n")
+        outf.write("TICosmicRayPressureRatio   = %e\n"%(cr_pressure_ratio))
+        outf.write("CRModel                    = 1\n")
+        outf.write("CRCourantSafetyNumber      = 0.2\n")
+        outf.write("CRDiffusion                = %i\n"%cr_diffusion)
+        outf.write("CRkappa                    = %e\n"%cr_kappa)
+        outf.write("CRStreaming                = %i\n"%cr_streaming)
+        outf.write("CRStreamingStabilityFactor = %e\n"%cr_streaming_stability)
+        outf.write("CRHeating\t                = %i\n"%cr_heating)
+        outf.write("CRdensFloor                = 1e-20\n")
     outf.close()
 
 
@@ -285,13 +286,9 @@ rho_H = calculate_density(rho0, H, a, H, halo_profile, \
 T_H = calculate_temperature(T0, H, a, H, halo_profile, magnetic_pressure_ratio, \
                             cr_pressure_ratio, T_power_law_index)
 
-print(rho_H, T_H)
-
 tcool_over_L0_H = calculate_cooling_time(1, rho0, T0, H, a, H, halo_profile,\
             T_power_law_index, magnetic_pressure_ratio, cr_pressure_ratio, smooth_factor)
 Lambda0 = tcool_over_L0_H / (tcool_tff_ratio * tff_H)
-
-print(rho_H, T_H, Lambda0)
 
 
 if halo_profile < 2:
