@@ -83,10 +83,9 @@ def load(output_location, load_accel = True, load_cr = False, grid_rank = 3):
         ds.add_field(('gas', 'external_acceleration_y'), function = _accel_y,  sampling_type = 'cell',\
                 display_name = 'External Acceleration Y', units = 'cm/s**2')
 
-        ds.add_field(('gas', 'external_acceleration_z'), function = _accel_z,  sampling_type = 'cell',\
-                display_name = 'External Acceleration Z', units = 'cm/s**2')
-        
         if (grid_rank == 3):
+            ds.add_field(('gas', 'external_acceleration_z'), function = _accel_z,  sampling_type = 'cell',\
+                display_name = 'External Acceleration Z', units = 'cm/s**2')
             ds.add_field(('gas', 'free_fall_time'), function = _ff_time,  sampling_type = 'cell',\
                 display_name = 'Free Fall Time', units = 's')
         else:

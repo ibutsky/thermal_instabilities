@@ -112,28 +112,30 @@ def generate_enzo_input_file():
 
     outf.write("# Initialization Parameters\n")
     outf.write("ProblemType \t\t = 417\n")
-    outf.write("TopGridRank \t\t = 3\n\n")
+    outf.write("TopGridRank \t\t = %i\n\n"%grid_rank)
 
     res_x = int(resolution * box_x / box_z)
     res_y = int(resolution * box_y / box_z)
     
     if grid_rank == 2:
-        outf.write("TopGridDimensions \t = %i %i %i\n"%(4,  res_y, resolution))
-        outf.write("DomainLeftEdge \t\t = %f %i %i\n"%(-box_x*4. / resolution, -box_y, -box_z))
-        outf.write("DomainRightEdge \t = %f %i %i\n\n"%(box_x*4. / resolution,  box_y,  box_z))
+        outf.write("TopGridDimensions \t = %i %i\n"%(res_x, resolution))
+        outf.write("DomainLeftEdge \t\t = %i %i\n"%(-box_x, -box_y))
+        outf.write("DomainRightEdge \t = %i %i\n\n"%(box_x,  box_y))
+        outf.write("UserDefinedRootGridLayout = 1 %i"%(int(resolution/2)))
+        outf.write(" # note: can't have fewer grid divisions than number of cores\n\n")
     else:
         outf.write("TopGridDimensions \t = %i %i %i\n"%(res_x,  res_y, resolution))
         outf.write("DomainLeftEdge \t\t = %f %i %i\n"%(-box_x, -box_y, -box_z))
         outf.write("DomainRightEdge \t = %f %i %i\n\n"%(box_x,  box_y,  box_z))
-    
+        outf.write("UserDefinedRootGridLayout = 1 1 %i"%(int(resolution/2)))
+        outf.write(" # note: can't have fewer grid divisions than number of cores\n\n")
+
     outf.write("LeftFaceBoundaryCondition   = 3 3 6 # 3 = Periodic, 6 = hydrostatic\n")
     outf.write("RightFaceBoundaryCondition  = 3 3 6\n\n")
     
     outf.write("# Hierarchy Control Parameters\n")
     outf.write("StaticHierarchy           = 1      # 0 = AMR, 1 = No AMR\n")
     outf.write("MaximumRefinementLevel    = 0\n")
-    outf.write("UserDefinedRootGridLayout = 1 1 %i"%(int(resolution/2)))
-    outf.write(" # note: can't have fewer grid divisions than number of cores\n\n")
 
     outf.write("# Hydrodynamics Parameters\n")
     outf.write("UseHydro \t\t = 1\n")

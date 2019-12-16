@@ -64,7 +64,7 @@ def create_constants_and_parameters_file(fn, tcool_tff_ratio, halo_profile, pert
     
     
     f.write('########### These parameters don\'t really need to change ###########\n')
-    f.write('bfield_direction    = [0, 1, 0]\n')
+    f.write('bfield_direction    = [1, 0, 0]\n')
     f.write('resolution          = %i  # resolution along z-axis; scaled for x-y axes\n'%ndim)
     f.write('grid_rank           = %i\n'%grid_rank)
 
@@ -108,13 +108,13 @@ nodes = 2
 num = 5
 #tctf_list = num*[1.0]
 tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0]
-halo_prof_list = num*[1]
+halo_prof_list = num*[3]
 perturb_list = num*[1]
-beta_list = num*['inf']
+beta_list = num*[10]
 #beta_list = ['inf', 300, 100, 30, 10, 3]
 #cr_list = [0.01, 0.1, 1.0, 10.0, 100.0]
 cr_list = num*[0]
-wall_time = '3:00:00'
+wall_time = '0:20:00'
 
 cr_diffusion = 0
 cr_kappa     = 0 #3e29 #1e28

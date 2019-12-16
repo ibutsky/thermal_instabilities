@@ -12,6 +12,7 @@ import astropy.constants as const
 
 import multiprocessing as mp
 
+import yt_functions as ytf
 import plotting_tools as pt
 
 sim = sys.argv[1]
@@ -31,9 +32,9 @@ output_list = glob.glob('%s/%s/DD*'%(workdir, sim))
 
 def plot_density_slices(ds, folder = '.'):
 
-    s = yt.SlicePlot(ds, 'y', [('gas', 'density'), ('gas', 'pressure')])
+    s = yt.SlicePlot(ds, 'x', [('gas', 'density'), ('gas', 'pressure')])
     frb_s = s.frb
-    p = yt.ProjectionPlot(ds, 'y', [('gas', 'density'), ('gas', 'velocity_z')], weight_field = 'ones')
+    p = yt.ProjectionPlot(ds, 'x', [('gas', 'density'), ('gas', 'velocity_z')], weight_field = 'ones')
     p.set_unit(('gas', 'velocity_z'), 'km/s')
     frb_p = p.frb
 
@@ -52,8 +53,8 @@ def plot_density_slices(ds, folder = '.'):
 
     for i, frb in enumerate([frb_s, frb_p]):
         print(i)
-        xbins = frb[x_axis].in_units('kpc')
-        ybins = frb[z_axis].in_units('kpc')
+        xbins = frb['y'].in_units('kpc')
+        ybins = frb['z'].in_units('kpc')
         rho   = frb['density']
 
         data = rho/rho0
@@ -64,8 +65,8 @@ def plot_density_slices(ds, folder = '.'):
             cbar.set_label('Normalized Density (Slice)')
         elif i == 1:
             cbar.set_label('Normalized Density (Projection)')
-        ax[i][0].set_xlabel('%s (kpc)'%y_axis)
-        ax[i][0].set_ylabel('%s (kpc)'%z_axis)
+        ax[i][0].set_xlabel('y (kpc)')
+        ax[i][0].set_ylabel('z (kpc)')
     
         
         # calculate density fluctuation
@@ -81,8 +82,8 @@ def plot_density_slices(ds, folder = '.'):
             cbar.set_label('Density Fluctuation (Slice)')
         elif i == 1:
             cbar.set_label('Density Fluctuation (Projection)')
-        ax[i][1].set_xlabel('%s (kpc)'%y_axis)
-        ax[i][1].set_ylabel('%s (kpc)'%z_axis)
+        ax[i][1].set_xlabel('y (kpc)')
+        ax[i][1].set_ylabel('z (kpc)')
 
     # plot pressure
 #    data = []
@@ -99,8 +100,8 @@ def plot_density_slices(ds, folder = '.'):
                                    vmin = -half_range, vmax = half_range)
     cbar = fig.colorbar(pcm, ax = ax[0][2], pad=0)
     cbar.set_label('Gas Pressure Fluctuation (Slice)')
-    ax[0][2].set_xlabel('%s (kpc)'%y_axis)
-    ax[0][2].set_ylabel('%s (kpc)'%z_axis)
+    ax[0][2].set_xlabel('y (kpc)')
+    ax[0][2].set_ylabel('z (kpc)')
 
     # plot velocity
     pcm = ax[1][2].pcolormesh(xbins, ybins, frb_p[('gas', 'velocity_z')], norm=SymLogNorm(1), \
@@ -157,7 +158,7 @@ def make_movie_plots(output):
     basename = os.path.basename(output)
     figname = '%s/%s.png'%(plot_folder, basename[2:])
     if not os.path.isfile(figname):
-        ds = yt.load('%s/%s'%(output, basename))
+        ds = ytf.load('%s/%s'%(output, basename))
         fig, ax = plot_density_slices(ds)
         plt.savefig(figname, dpi = 300)
 
