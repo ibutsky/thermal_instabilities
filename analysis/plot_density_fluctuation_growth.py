@@ -41,10 +41,11 @@ def calculate_rms_fluctuation(sim_folder, output_list, field = 'density', grid_r
                         zfield     = zslice[('gas', field)]
                         zfield_ave = np.mean(zfield)
                         dzfield    = np.append(dzfield, (zfield - zfield_ave) / zfield_ave)
-                elif (grid_rank == 2):
+                else:
                     all_y = ds.ortho_ray('y', (0, 0))[('gas', 'y')].in_units('kpc')
-                    ymask = np.abs(all_y / ds.length_units('kpc') > zstart) & np.abs(all_y / ds.length_units('kpc') < zend)
+                    ymask = np.abs(all_y / ds.length_unit.in_units('kpc') > zstart) & np.abs(all_y / ds.length_unit.in_units('kpc') < zend)
                     ylist = all_y[ymask]
+                    dzfield = np.array([])
                     for y in ylist:
                         yray = ds.ortho_ray('x', (y, 0))
                         zfield = yray[('gas', field)]
@@ -68,7 +69,7 @@ def calculate_rms_fluctuation(sim_folder, output_list, field = 'density', grid_r
 
 
 def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list = None, diff_list = None, \
-                                    field = 'density', beta_list = None, work_dir = '../../simulations/'):
+                                    field = 'density', beta_list = None, work_dir = '../../simulations/', grid_rank = 3):
     if tctf_list == None:
         tctf_list = [0.1, 0.3, 1.0, 10.0]
     if beta_list == None:
@@ -98,24 +99,23 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
     for i, tctf in enumerate(tctf_list):
         sim_location = pt.get_sim_location(sim, tctf, beta_list[i], cr_list[i], diff = diff_list[i], work_dir = work_dir)
 
-        print(sim_location)
         if not os.path.isdir(sim_location):
             continue
 
         label = pt.get_label_name(compare, tctf, beta_list[i], cr_list[i])
 
-        time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field)
+        time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field, grid_rank = grid_rank)
         ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 3, label = label, color = cpal[i])
         
-        if tctf > 0:
-#             sim_location = '%s/%s_tctf_%.1f_2d_128'%(work_dir, sim, tctf)
-#             time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field)
-#             ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 2, alpha = 0.7, color = cpal[i], \
-#                        linestyle = 'solid', label = label + ', 2D 128')
-
-             sim_location = '%s/%s_tctf_%.1f_2d_256'%(work_dir, sim, tctf)
-             time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field)
-             ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 2, alpha = 0.7, color = cpal[i], \
+        if tctf < 0:
+            for res in [256]:
+                sim_location = '%s/%s_tctf_%.1f'%(work_dir, sim, tctf)
+                if beta_list[i] != 'inf':
+                    sim_location += '_beta_%.1f'%beta_list[i]
+                sim_location += '_2d_%i'%(res)
+                time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field, grid_rank = 2)
+                print(time_list, dzfield_rms_list)
+                ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 2, alpha = 0.7, color = cpal[i], \
                         linestyle = 'dashed', label = label + ', 2D 256')
      
     ax.set_xlabel('t/t$_{cool}$')
@@ -142,10 +142,13 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
 
         
 
+work_dir = '../../simulations/2d_256'
+grid_rank = 2
+
 field = 'density'
 zstart = 0.8
 zend = 1.2
-save = False
+save = True
 load = False
 
 crdiff = 0
@@ -156,10 +159,11 @@ compare = sys.argv[2]
 if sys.argv[3]:
     tctf = float(sys.argv[3])
 
+
 print(compare)
 tctf_list, beta_list, cr_list, diff_list = pt.generate_lists(compare, tctf, crdiff = crdiff)
-beta_list = len(tctf_list)*[10.0]
+#beta_list = len(tctf_list)*[10.0]
 print(tctf_list, beta_list, cr_list, diff_list)
 
-plot_density_fluctuation_growth(sim, tctf_list = tctf_list, beta_list = beta_list, \
-                                cr_list = cr_list, diff_list = diff_list, field = field)
+plot_density_fluctuation_growth(sim, tctf_list = tctf_list, beta_list = beta_list, grid_rank = grid_rank,\
+                                cr_list = cr_list, diff_list = diff_list, field = field, work_dir = work_dir)

@@ -56,19 +56,22 @@ def calculate_cold_fraction(ds, T_min = 3.333333e5, z_min = 0.1, z_max = 1.2):
     ad = ds.all_data()
     z_min = 0.1
 #    z_max = 1.2                                                                                                                                           
+    if (grid_rank == 3):
+        region1 = ds.r[:, :, z_min:]
+        region2 = ds.r[:, :, :-z_min]
 
-    region1 = ds.r[:, :, z_min:]
-    region2 = ds.r[:, :, :-z_min]
+        total_mass = np.sum(region1[('gas', 'cell_mass')].in_units('Msun')) + \
+                     np.sum(region2[('gas', 'cell_mass')].in_units('Msun'))
 
-    total_mass = np.sum(region1[('gas', 'cell_mass')].in_units('Msun')) + \
-                 np.sum(region2[('gas', 'cell_mass')].in_units('Msun'))
-
-    cold1 = region1[('gas', 'temperature')] <= T_min
-    cold2 = region2[('gas', 'temperature')] <= T_min
+        cold1 = region1[('gas', 'temperature')] <= T_min
+        cold2 = region2[('gas', 'temperature')] <= T_min
 
 
-    cold_mass = np.sum(region1[('gas', 'cell_mass')][cold1].in_units('Msun'))+ \
-                np.sum(region2[('gas', 'cell_mass')][cold2].in_units('Msun'))
+        cold_mass = np.sum(region1[('gas', 'cell_mass')][cold1].in_units('Msun'))+ \
+                    np.sum(region2[('gas', 'cell_mass')][cold2].in_units('Msun'))
+    
+#    elif (grid_rank == 2):
+        
 
     return cold_mass / total_mass
 
