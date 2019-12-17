@@ -26,7 +26,6 @@ sim = 'isothermal'
 tctf = float(sys.argv[1])
 cr_list = [0.01, 0.1, 1.0, 10.0]
 beta_list = [10, 10, 10, 10]
-
 diff = 3.0
 
 title_list = []

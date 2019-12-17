@@ -52,7 +52,7 @@ def calculate_averaged_drho_rms(output_list, sim_location = '.', zmin = 0.9, zma
             drho_rms_list.append(0)
     return np.mean(drho_rms_list)
 
-def calculate_cold_fraction(ds, T_min = 3.333333e5, z_min = 0.1, z_max = 1.2):
+def calculate_cold_fraction(ds, T_min = 3.333333e5, z_min = 0.1, z_max = 1.2, grid_rank = 3):
     ad = ds.all_data()
     z_min = 0.1
 #    z_max = 1.2                                                                                                                                           
@@ -70,18 +70,24 @@ def calculate_cold_fraction(ds, T_min = 3.333333e5, z_min = 0.1, z_max = 1.2):
         cold_mass = np.sum(region1[('gas', 'cell_mass')][cold1].in_units('Msun'))+ \
                     np.sum(region2[('gas', 'cell_mass')][cold2].in_units('Msun'))
     
-#    elif (grid_rank == 2):
-        
+    elif (grid_rank == 2):
+        ad = ds.all_data()
+        ymask = np.abs(ad[('gas', 'y')] / ds.length_unit.in_units('kpc') > z_min)
+        total_mass = np.sum(ad[('gas', 'cell_mass')][ymask].in_units('Msun'))
 
+        cold_mask = (ymask) & (ad[('gas', 'temperature')] <= T_min)
+        cold_mass = np.sum(ad[('gas', 'cell_mass')][cold_mask].in_units('Msun'))
+
+    print(cold_mass, total_mass)
     return cold_mass / total_mass
 
-def calculate_averaged_cold_fraction(output_list, sim_location = '.', T_min = 3.333333e5, z_min =0.1):
+def calculate_averaged_cold_fraction(output_list, sim_location = '.', T_min = 3.333333e5, z_min =0.1, grid_rank = 3):
     cold_fraction_list = []
     for output in output_list:
         ds_path = '%s/DD%04d/DD%04d'%(sim_location, output, output)
         if os.path.isfile(ds_path):
             ds = yt.load(ds_path)
-            cold_fraction_list.append(calculate_cold_fraction(ds, T_min = T_min, z_min = z_min))
+            cold_fraction_list.append(calculate_cold_fraction(ds, T_min = T_min, z_min = z_min, grid_rank = grid_rank))
         else:
             print("warning: no such file '%s'"%(ds_path))
             cold_fraction_list.append(0)

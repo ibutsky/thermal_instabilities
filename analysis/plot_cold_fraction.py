@@ -10,19 +10,19 @@ import palettable
 import plotting_tools as pt
 
 
-def calculate_cold_fraction_list(sim, beta, cr, diff = 0, T_min = 3.333333e5, z_min = 0.1,\
-                                 tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0], work_dir = '../../simulations'):
+def calculate_cold_fraction_list(sim, beta, cr, diff = 0, T_min = 3.333333e5, z_min = 0.1, \
+                                 tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0]):
     cold_fraction_list = np.array([])
     for i, tctf in enumerate(tctf_list):
         sim_location = pt.get_sim_location(sim, tctf, beta, cr, diff = diff, work_dir = work_dir)
         if os.path.isdir(sim_location):
             cold_fraction_list = np.append(cold_fraction_list, \
-                                           pt.calculate_averaged_cold_fraction(output_list, \
-                                           sim_location, T_min = T_min, z_min = z_min))
+                                  pt.calculate_averaged_cold_fraction(output_list, \
+                                  sim_location, T_min = T_min, z_min = z_min, grid_rank = grid_rank))
     return cold_fraction_list
 
 def plot_cold_fraction(model, beta_list = ['inf'], tctf_list = None, output_list = [50], compare = False,\
-                              cr_list = None, diff_list = None,  work_dir = '../../simulations', T_min = 3.3333333e5, z_min = 0.1):
+                              cr_list = None, diff_list = None, T_min = 3.3333333e5, z_min = 0.1):
     if tctf_list == None:
         tctf_list = np.array([0.1, 0.3, 1.0, 3.0, 10.0])
     else:
@@ -38,7 +38,7 @@ def plot_cold_fraction(model, beta_list = ['inf'], tctf_list = None, output_list
     cpal = palettable.cmocean.sequential.Deep_7_r.mpl_colors
     for i, beta in enumerate(beta_list):
         cold_fraction_list = calculate_cold_fraction_list(model, beta, cr_list[i], diff_list[i], tctf_list = tctf_list, \
-                                                          work_dir = work_dir, T_min = T_min, z_min = z_min)
+                                                          T_min = T_min, z_min = z_min)
         label = pt.get_label_name(compare, tctf_list[0], beta, cr_list[i])
         mask = cold_fraction_list > 0
         ax.plot(tctf_list[mask], cold_fraction_list[mask], color = cpal[i], label = label, linewidth = 3, marker = 'o')
@@ -53,6 +53,9 @@ def plot_cold_fraction(model, beta_list = ['inf'], tctf_list = None, output_list
     figname = pt.get_fig_name('cold_fraction', sim, compare, tctf_list[0], beta_list[0], \
                               cr_list[0], diff_list[0], time = time)
     plt.savefig(figname, dpi = 300)
+
+work_dir = '../../simulations/2d_256'
+grid_rank = 2
 
 sim = sys.argv[1]
 compare = sys.argv[2]
