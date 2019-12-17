@@ -26,7 +26,7 @@ def get_folder_name(halo_prof, tctf, perturb, beta, cr, grid_rank = 3, resolutio
             folder_name += '_cr_%.2f'%cr
 
         if cr_diffusion:
-            folder_name += '_diff_%.1f'%(cr_kappa/1e29)
+            folder_name += '_tdiff_%.1f'%(tcr_tff_ratio)
 
         if cr_streaming:
             folder_name += '_stream'
@@ -53,8 +53,8 @@ def create_constants_and_parameters_file(fn, halo_profile, tcool_tff_ratio, pert
         f.write('magnetic_pressure_ratio = %f \n'%(1.0 / beta))
     f.write('cr_pressure_ratio       = %f\n\n' %eta)
 
-    f.write('cr_diffusion = %i\n'%cr_diffusion)
-    f.write('cr_kappa     = %e\n'%cr_kappa)
+    f.write('cr_diffusion       = %i\n'%cr_diffusion)
+    f.write('tcr_tff_ratio    = %e\n'%tcr_tff_ratio)
     f.write('cr_streaming = %i\n'%cr_streaming)
     f.write('cr_streaming_stability = %f\n'%cr_streaming_stability)
     f.write('cr_heating = %i\n'%cr_heating)
@@ -129,22 +129,24 @@ nodes = 2
 
 perturb_type = 1
 
-nodes = 2
+nodes = 1
 wall_time = '0:20:00'
 
-cr_diffusion = 0
-cr_kappa     = 0 #3e29 #1e28                                                                                                                                                                          
+cr_diffusion = 0#2
+tcr_tff_ratio = 0#1.0
+
 cr_streaming = 0
-cr_streaming_stability = 0
+cr_streaming_stability = 100
 cr_heating   = 0
 
 
 
-halo_prof_list = [1, 3]
-tctf_list = [0.1, 0.3, 1.0]
-beta_list = [10.0]
-cr_list = [0.01, 0.1, 1.0, 10.0]
-
+halo_prof_list = [1]
+tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0]
+beta_list = [100, 30, 3]
+cr_list = [0]
+#cr_list = [0.01, 0.1, 1.0, 10.0]
+#cr_list = [1.0]
 
 for halo_prof in halo_prof_list:
     for tctf in tctf_list:

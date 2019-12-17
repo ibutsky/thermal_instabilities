@@ -123,15 +123,17 @@ def generate_enzo_input_file():
         outf.write("DomainRightEdge \t = %i %i\n\n"%(box_x,  box_y))
         outf.write("UserDefinedRootGridLayout = 1 %i"%(int(resolution/2)))
         outf.write(" # note: can't have fewer grid divisions than number of cores\n\n")
+
+        outf.write("LeftFaceBoundaryCondition   = 3 6 # 3 = Periodic, 6 = hydrostatic\n")
+        outf.write("RightFaceBoundaryCondition  = 3 6\n\n")
     else:
         outf.write("TopGridDimensions \t = %i %i %i\n"%(res_x,  res_y, resolution))
         outf.write("DomainLeftEdge \t\t = %f %i %i\n"%(-box_x, -box_y, -box_z))
         outf.write("DomainRightEdge \t = %f %i %i\n\n"%(box_x,  box_y,  box_z))
         outf.write("UserDefinedRootGridLayout = 1 1 %i"%(int(resolution/2)))
         outf.write(" # note: can't have fewer grid divisions than number of cores\n\n")
-
-    outf.write("LeftFaceBoundaryCondition   = 3 3 6 # 3 = Periodic, 6 = hydrostatic\n")
-    outf.write("RightFaceBoundaryCondition  = 3 3 6\n\n")
+        outf.write("LeftFaceBoundaryCondition   = 3 3 6 # 3 = Periodic, 6 = hydrostatic\n")
+        outf.write("RightFaceBoundaryCondition  = 3 3 6\n\n")
     
     outf.write("# Hierarchy Control Parameters\n")
     outf.write("StaticHierarchy           = 1      # 0 = AMR, 1 = No AMR\n")
@@ -207,7 +209,7 @@ def generate_enzo_input_file():
         outf.write("CRDiffusion                = %i\n"%cr_diffusion)
         outf.write("CRkappa                    = %e\n"%cr_kappa)
         outf.write("CRStreaming                = %i\n"%cr_streaming)
-        outf.write("CRStreamingStabilityFactor = %e\n"%cr_streaming_stability)
+        outf.write("CRStreamStabilityFactor = %e\n"%cr_streaming_stability)
         outf.write("CRHeating\t                = %i\n"%cr_heating)
         outf.write("CRdensFloor                = 1e-20\n")
     outf.close()
@@ -291,6 +293,10 @@ T_H = calculate_temperature(T0, H, a, H, halo_profile, magnetic_pressure_ratio, 
 tcool_over_L0_H = calculate_cooling_time(1, rho0, T0, H, a, H, halo_profile,\
             T_power_law_index, magnetic_pressure_ratio, cr_pressure_ratio, smooth_factor)
 Lambda0 = tcool_over_L0_H / (tcool_tff_ratio * tff_H)
+
+# calculate cr diffusion coefficient
+tcr = tcr_tff_ratio * tff_H
+cr_kappa = H * H / tcr
 
 
 if halo_profile < 2:
