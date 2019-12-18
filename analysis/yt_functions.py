@@ -76,7 +76,7 @@ def _total_cr_pressure(field, data):
 
 def load(output_location, load_accel = True, load_cr = False, grid_rank = 3):
     ds = yt.load(output_location)
-    if output_location.__contains__('_2d_'):
+    if output_location.__contains__('2d_'):
         grid_rank = 2
 
     if load_accel:

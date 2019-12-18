@@ -24,10 +24,15 @@ p0 = (rho0 / mu / mh) * kb*T0
 workdir = '../../simulations'
 sim = 'isothermal'
 tctf = float(sys.argv[1])
-cr_list = [0, 0, 0.1, 1.0, 10.0, 100.0]
-beta_list = ['inf', 10, 10, 10, 10, 10]
+cr_list = [0, 0.1, 1.0, 1.0, 1.0, 1.0]
+beta_list = [10, 10, 10, 10, 10, 10]
+diff_list = [0, 0, 0, 3.0, 0, 0] 
+stream_list = [0, 0, 0, 0, 1, 1]
+heat_list = [0, 0, 0, 0, 0, 1]
 
-diff = 3.0
+title_list = ['No CR', 'P$_c$/P$_g$ = 0.1', 'P$_c$/P$_g$ = 1', \
+              'P$_c$/P$_g$ = 1 + diff', 'P$_c$/P$_g$ = 1 + stream', \
+              'P$_c$/P$_g$ = 1 + stream + heat'] 
 
 title_list = []
 for cr, beta in zip(cr_list, beta_list):
@@ -41,7 +46,12 @@ for cr, beta in zip(cr_list, beta_list):
         else:
             title_list.append('P$_c$/P$_g$ = %.1f'%cr)
 
+title_list = ['No CR', 'P$_c$/P$_g$ = 0.1', 'P$_c$/P$_g$ = 1', \
+              'P$_c$/P$_g$ = 1 + diff', 'P$_c$/P$_g$ = 1 + stream', \
+              'P$_c$/P$_g$ = 1 + stream + heat']
 print(title_list)
+
+
     
 def plot_phase(output, folder = '.'):
 
@@ -51,7 +61,8 @@ def plot_phase(output, folder = '.'):
     fig, ax = plt.subplots(ncols = ncols, nrows = nrows, figsize=(4*ncols, 4.4*nrows))
 
     for i, cr in enumerate(cr_list):
-        sim_loc = pt.get_sim_location(sim, tctf, beta_list[i], cr, diff = diff)
+        sim_loc = pt.get_sim_location(sim, tctf, beta_list[i], cr, \
+                diff = diff_list[i], stream = stream_list[i], heat = heat_list[i])
         ds = ytf.load('%s/DD%04d/DD%04d'%(sim_loc, output, output))
 
         ad = ds.all_data()
@@ -85,9 +96,10 @@ def plot_phase(output, folder = '.'):
 
     
     figname = '../../plots/phase_density_temperature_mass_tctf_%.1f_%.1f.png'%(tctf, output)
-    if diff > 0: 
+    if diff_list[0] > 0: 
         figname = '../../plots/phase_density_temperature_mass_tctf_%.1f_cr_diff_%.1f_%.1f.png'%(tctf, diff, output)
     fig.tight_layout()
+    print(figname)
     plt.savefig(figname, dpi = 300)
 
 

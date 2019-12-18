@@ -326,26 +326,40 @@ def make_power_spectrum(ds, field = 'drho'):
     return k, P_spectrum
 
 
-def generate_lists(compare, tctf, crdiff = 0):
+def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0):
     if compare == 'tctf':
         tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
         cr_list = 5*[0]
         beta_list = 5*['inf']
-        diff_list = 6*[0]
+        diff_list = 5*[crdiff]
+        stream_list = 5*[crstream]
+        heat_list = 5*[crheat]
     elif compare == 'beta':
         tctf_list = 6*[tctf]
         cr_list = 6*[0]
         beta_list = [3, 10, 30, 100, 300, 'inf']
-        diff_list = 6*[0]
+        diff_list = 5*[crdiff]
+        stream_list = 5*[crstream]
+        heat_list = 5*[crheat]
     elif compare == 'cr':
         tctf_list = 6*[tctf]
         cr_list = [0, 0.01, 0.1, 1.0, 10.0, 100]
         beta_list = 6*[10.0]
-        diff_list = 6*[crdiff]
+        diff_list = 5*[crdiff]
+        stream_list = 5*[crstream]
+        heat_list = 5*[crheat]
+    elif compare == 'transport':
+        tctf_list = [0.1, 0.1, 0.1, 0.1, 0.1]
+        cr_list  = [0, 1, 1, 1, 1]
+        beta_list = 5*[10.0]
+        diff_list = [0, 0, 3, 0, 0]
+        stream_list = [0, 0, 0, 1, 1]
+        heat_list = [0, 0, 0, 0, 1]
 
-    return tctf_list, beta_list, cr_list, diff_list
+    return tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list
 
-def get_sim_location(sim, tctf, beta, cr, diff = 0, work_dir = '../../simulations/'):
+def get_sim_location(sim, tctf, beta, cr, diff = 0, \
+            stream = 0, heat = 0, work_dir = '../../simulations/'):
     if beta == 'inf':
         sim_location = '%s/%s_tctf_%.1f'%(work_dir, sim, tctf)
     else:
@@ -357,10 +371,15 @@ def get_sim_location(sim, tctf, beta, cr, diff = 0, work_dir = '../../simulation
             sim_location += '_cr_%0.1f'%(cr)
         if diff > 0:
             sim_location += '_diff_%0.1f'%(diff)
+        if stream > 0:
+            sim_location += '_stream'
+        if heat > 0:
+            sim_location += '_heat'
     print(sim_location)
     return sim_location
 
-def get_label_name(compare, tctf, beta, cr):
+def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
+                   crstream = 0, crheat = 0):
     label = '$t_{cool}/t_{ff}$ = %.1f'%tctf
     print(compare)
     if compare == 'cr':
@@ -372,6 +391,18 @@ def get_label_name(compare, tctf, beta, cr):
             label = 'Hydro'
         else:
             label = '$\\beta = $%.1f'%beta
+    elif compare == 'transport':
+        if cr > 0:
+            label = 'P$_c$ / P$_g$ = %.1f'%cr
+        else:
+            label = 'No CR'
+        if crdiff > 0:
+            label = 'diffusion'
+        if crstream > 0:
+            label = 'streaming'
+        if crheat > 0:
+            label = 'stream + heat'
+            
     return label
 
 def get_fig_name(base, sim, compare, tctf, beta, cr, diff, time = -1, use_tctf = 0, loc = '../../plots'):
@@ -387,6 +418,8 @@ def get_fig_name(base, sim, compare, tctf, beta, cr, diff, time = -1, use_tctf =
         plot_name += '_beta_%.1f_cr_compare'%(beta)
         if diff > 0:
             plot_name += '_diff_%.1f'%diff
+    elif compare == 'transport':
+        plot_name += '_transport_compare'
     if time > 0:
         plot_name += '_%.1f'%time
 

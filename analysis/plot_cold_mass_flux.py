@@ -9,15 +9,15 @@ import palettable
 
 import plotting_tools as pt
 
-def calculate_mass_flux(sim_folder, output_list, field = 'density', grid_rank = 3, Tcold = 3.33333e5):
+def calculate_mass_flux(sim_folder, tctf, output_list, grid_rank = 3, Tcold = 3.33333e5):
     time_list     = np.array([])
     mass_flux_list = np.array([])
     if not os.path.isdir(sim_folder):
-        return time_list, dzfield_rms_list
+        return time_list, mass_flux_list
     sim_base = os.path.basename(sim_folder)
     print(sim_base)
     
-    out_name = '../../data/mass_flux_%s_%s'%(sim_base, field)
+    out_name = '../../data/mass_flux_%s'%(sim_base)
     if os.path.isfile(out_name) and load == True:
         time_list, mass_flux_list = np.loadtxt(out_name, unpack=True)
     
@@ -30,18 +30,27 @@ def calculate_mass_flux(sim_folder, output_list, field = 'density', grid_rank = 
                 print(zstart, zend)
 
                 if (grid_rank == 3):
-                    region1 = ds.r[0, 0, zstart:zend]
-                    region2 = ds.r[0, 0, -zend:-zstart]
-                    zlist    = np.append(region1[('gas', 'z')].in_units('kpc'),\
-                                         region2[('gas', 'z')].in_units('kpc'))
-                
-                    mass_flux = np.array([])
-                    for z in zlist:
-                        zslice  = ds.r[:, :, YTQuantity(z, 'kpc')]
-                        zfield     = zslice[('gas', field)]
-                        zfield_ave = np.mean(zfield)
-                        dzfield    = np.append(dzfield, (zfield - zfield_ave) / zfield_ave)
+                    ad = ds.all_data()
+                    all_z = ad[('gas', 'z')]
+                    zmask1 = (all_z / ds.length_unit.in_units('kpc') > zstart) & (all_z / ds.length_unit.in_units('kpc') < zend)
+                    zmask2 = (all_z / ds.length_unit.in_units('kpc') < -zstart) & (all_z / ds.length_unit.in_units('kpc') > -zend)
+
+                    v_cool_flow = ds.length_unit / (tctf * ds.time_unit) # H / tff
+                    print(v_cool_flow.in_units('km/s'))
+                    cool_flow_flux = (ad[('gas', 'density')] * v_cool_flow).in_units('Msun / kpc**2 / yr')
+
+                    all_flux = (ad[('gas', 'density')] * ad[('gas', 'velocity_z')]).in_units('Msun / kpc**2 / yr')
+                    
+                    flux_mask1 = (zmask1) &  (ad[('gas', 'velocity_z')] < 0) & (ad[('gas', 'temperature')] <= Tcold)
+                    flux_mask2 = (zmask2) &  (ad[('gas', 'velocity_z')] > 0) & (ad[('gas', 'temperature')] <= Tcold)
+                    
+#                    mass_flux = -np.sum(all_flux[flux_mask1] / cool_flow_flux[flux_mask1])
+#                    mass_flux += np.sum(all_flux[flux_mask2] / cool_flow_flux[flux_mask2])
+
+                    mass_flux = -all_flux[flux_mask1] / cool_flow_flux[flux_mask1]
+                    mass_flux = np.append(mass_flux, (all_flux[flux_mask2] / cool_flow_flux[flux_mask2]))
                 else:
+
                     ad = ds.all_data()
                     all_y = ad[('gas', 'y')]
                     ymask1 = (all_y / ds.length_unit.in_units('kpc') > zstart) & (all_y / ds.length_unit.in_units('kpc') < zend)
@@ -60,8 +69,9 @@ def calculate_mass_flux(sim_folder, output_list, field = 'density', grid_rank = 
                     mass_flux += np.sum(all_flux[cold_flux_mask2])
 
 
-                time_list      = np.append(time_list,    ds.current_time)
-                mass_flux_list = np.append(mass_flux_list, mass_flux)
+                time_list      = np.append(time_list,    ds.current_time / tctf)
+                mass_flux_rms = np.sqrt(np.nanmean(mass_flux**2))
+                mass_flux_list = np.append(mass_flux_list, mass_flux_rms)
 
         if save:
             outf = open(out_name, 'w')
@@ -75,8 +85,8 @@ def calculate_mass_flux(sim_folder, output_list, field = 'density', grid_rank = 
 
 
 
-def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list = None, diff_list = None, \
-                                    field = 'density', beta_list = None, work_dir = '../../simulations/', grid_rank = 3):
+def plot_mass_flux(sim, beta = 'inf', tctf_list = None, cr_list = None, diff_list = None, \
+                                 beta_list = None, work_dir = '../../simulations/', grid_rank = 3):
 
     fig, ax = plt.subplots(figsize = (6, 6))
     ax.set_yscale('log')
@@ -92,8 +102,8 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
             continue
 
         label = pt.get_label_name(compare, tctf, beta_list[i], cr_list[i])
-        time_list, mass_flux_list = calculate_mass_flux(sim_location, output_list, field = field, grid_rank = grid_rank)
-        ax.plot(time_list/tctf, mass_flux_list, linewidth = 3, label = label, color = cpal[i])
+        time_list, mass_flux_list = calculate_mass_flux(sim_location, tctf, output_list, grid_rank = grid_rank)
+        ax.plot(time_list, mass_flux_list, linewidth = 3, label = label, color = cpal[i])
              
 
     ax.set_xlabel('t / t$_{cool}$')    
@@ -108,12 +118,11 @@ def plot_density_fluctuation_growth(sim, beta = 'inf', tctf_list = None, cr_list
 
         
 
-work_dir = '../../simulations/2d_256'
-grid_rank = 2
+work_dir = '../../simulations'
+grid_rank = 3
 
-field = 'density'
-zstart = 0.5
-zend = 1.5
+zstart = 0.9
+zend = 1.1
 save = False
 load = False
 
@@ -137,5 +146,5 @@ beta_list = len(tctf_list)*[10.0]
 
 print(tctf_list, beta_list, cr_list, diff_list)
 
-plot_density_fluctuation_growth(sim, tctf_list = tctf_list, beta_list = beta_list, grid_rank = grid_rank,\
-                                cr_list = cr_list, diff_list = diff_list, field = field, work_dir = work_dir)
+plot_mass_flux(sim, tctf_list = tctf_list, beta_list = beta_list, grid_rank = grid_rank,\
+                                cr_list = cr_list, diff_list = diff_list, work_dir = work_dir)

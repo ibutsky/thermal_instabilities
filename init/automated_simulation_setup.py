@@ -125,7 +125,7 @@ def setup_simulation(halo_prof, tctf, beta, cr):
 sim_dir = '../../simulations/2d_256'
 grid_rank = 2
 ndim = 256
-nodes = 2
+nodes = 1
 
 perturb_type = 1
 
@@ -141,9 +141,10 @@ cr_heating   = 0
 
 
 
-halo_prof_list = [1]
+halo_prof_list = [3]
 tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0]
-beta_list = [100, 30, 3]
+#beta_list = [100, 30, 10, 3]
+beta_list = ['inf']
 cr_list = [0]
 #cr_list = [0.01, 0.1, 1.0, 10.0]
 #cr_list = [1.0]

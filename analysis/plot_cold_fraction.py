@@ -54,8 +54,8 @@ def plot_cold_fraction(model, beta_list = ['inf'], tctf_list = None, output_list
                               cr_list[0], diff_list[0], time = time)
     plt.savefig(figname, dpi = 300)
 
-work_dir = '../../simulations/2d_256'
-grid_rank = 2
+work_dir = '../../simulations'
+grid_rank = 3
 
 sim = sys.argv[1]
 compare = sys.argv[2]
