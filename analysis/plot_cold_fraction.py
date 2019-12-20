@@ -11,18 +11,22 @@ import plotting_tools as pt
 
 
 def calculate_cold_fraction_list(sim, beta, cr, diff = 0, T_min = 3.333333e5, z_min = 0.1, \
-                                 tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0]):
+                                 tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0], grid_rank = 3, \
+                                  work_dir = '../../simulations'):
     cold_fraction_list = np.array([])
+    tctf_out = np.array([])
     for i, tctf in enumerate(tctf_list):
         sim_location = pt.get_sim_location(sim, tctf, beta, cr, diff = diff, work_dir = work_dir)
         if os.path.isdir(sim_location):
             cold_fraction_list = np.append(cold_fraction_list, \
                                   pt.calculate_averaged_cold_fraction(output_list, \
                                   sim_location, T_min = T_min, z_min = z_min, grid_rank = grid_rank))
-    return cold_fraction_list
+            tctf_out = np.append(tctf_out, tctf)
+    return tctf_out, cold_fraction_list
 
 def plot_cold_fraction(model, beta_list = ['inf'], tctf_list = None, output_list = [50], compare = False,\
-                              cr_list = None, diff_list = None, T_min = 3.3333333e5, z_min = 0.1):
+                       grid_rank = 3, cr_list = None, diff_list = None, stream_list = None, heat_list = None, \
+                       T_min = 3.3333333e5, z_min = 0.1):
     if tctf_list == None:
         tctf_list = np.array([0.1, 0.3, 1.0, 3.0, 10.0])
     else:
@@ -37,11 +41,23 @@ def plot_cold_fraction(model, beta_list = ['inf'], tctf_list = None, output_list
     
     cpal = palettable.cmocean.sequential.Deep_7_r.mpl_colors
     for i, beta in enumerate(beta_list):
-        cold_fraction_list = calculate_cold_fraction_list(model, beta, cr_list[i], diff_list[i], tctf_list = tctf_list, \
+        tctf_out, cold_fraction_list = calculate_cold_fraction_list(model, beta, cr_list[i], diff_list[i], tctf_list = tctf_list, \
                                                           T_min = T_min, z_min = z_min)
         label = pt.get_label_name(compare, tctf_list[0], beta, cr_list[i])
+
         mask = cold_fraction_list > 0
-        ax.plot(tctf_list[mask], cold_fraction_list[mask], color = cpal[i], label = label, linewidth = 3, marker = 'o')
+        ax.plot(tctf_out[mask], cold_fraction_list[mask], color = cpal[i], label = label, linewidth = 3, marker = 'o')
+        if (compare_2d):
+            res = 128
+            tctf_out, cold_fraction_list = calculate_cold_fraction_list(model, beta, cr_list[i], \
+                                                              diff_list[i], tctf_list = tctf_list, \
+                                                              T_min = T_min, z_min = z_min, grid_rank = 2, 
+                                                              work_dir = '../../simulations/2d_%i'%res)
+            label = pt.get_label_name(compare, tctf_list[0], beta, cr_list[i])
+            mask = cold_fraction_list > 0
+            ax.plot(tctf_out[mask], cold_fraction_list[mask], color = cpal[i], label = label + ' 2D', \
+                    linewidth = 2, linestyle = 'dashed', marker = 'o')
+            
 
     
     ax.set_xlabel('t$_{cool}$ / t$_{ff}$')
@@ -57,17 +73,19 @@ def plot_cold_fraction(model, beta_list = ['inf'], tctf_list = None, output_list
 work_dir = '../../simulations'
 grid_rank = 3
 
+compare_2d = True
+
 sim = sys.argv[1]
 compare = sys.argv[2]
 time = int(sys.argv[3])
 tctf = 0.1
 crdiff = 0
 
-tctf_list, beta_list, cr_list, diff_list = pt.generate_lists(compare, tctf, crdiff = crdiff)
+tctf_list, beta_list, cr_list, diff_list, heat_list, stream_list  = pt.generate_lists(compare, tctf, crdiff = crdiff)
                                                                 
 T_min = 1e6 / 3.0
 z_min = 0.1
 output_list = [time]
 plot_cold_fraction(sim, output_list = output_list, beta_list = beta_list, \
-                   cr_list = cr_list, diff_list = diff_list, \
+                   cr_list = cr_list, diff_list = diff_list, heat_list = heat_list, stream_list = stream_list,\
                    T_min = T_min, z_min = z_min, compare = compare)

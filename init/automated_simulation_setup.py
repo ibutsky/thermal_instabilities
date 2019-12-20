@@ -110,7 +110,10 @@ def setup_simulation(halo_prof, tctf, beta, cr):
 
     cwd = os.getcwd()
     os.chdir(folder_path)
-    shutil.copyfile('%s/perturbation_%i.in'%(cwd, ndim), 'perturbation.in')
+    if kmax > 0:
+        shutil.copyfile('%s/perturbation_%i_kmax_%i.in'%(cwd, ndim, kmax), 'perturbation.in')
+    else:
+        shutil.copyfile('%s/perturbation_%i.in'%(cwd, ndim), 'perturbation.in')
     shutil.copyfile('%s/generate_initial_conditions.py'%cwd, 'generate_initial_conditions.py')
 
     create_constants_and_parameters_file('constants_and_parameters.py', halo_prof,  tctf,\
@@ -122,15 +125,22 @@ def setup_simulation(halo_prof, tctf, beta, cr):
     os.chdir(cwd)
 
 
-sim_dir = '../../simulations/2d_256'
-grid_rank = 2
-ndim = 256
+sim_dir = '../../simulations/'
+grid_rank = 3
+ndim = 128
+kmax = 0
+#kmax = 128
+
+if grid_rank == 2:
+    sim_dir += '/2d_%i'%ndim
 nodes = 1
+#if kmax > 0:
+#    sim_dir = '../../simulations/kmax_%i'%kmax
 
 perturb_type = 1
 
-nodes = 1
-wall_time = '0:20:00'
+nodes = 2
+wall_time = '12:00:00'
 
 cr_diffusion = 0#2
 tcr_tff_ratio = 0#1.0
@@ -143,9 +153,9 @@ cr_heating   = 0
 
 halo_prof_list = [3]
 tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0]
-#beta_list = [100, 30, 10, 3]
-beta_list = ['inf']
-cr_list = [0]
+#beta_list = ['inf', 300, 100, 30, 10, 3]
+beta_list = [10]
+cr_list = [0, 1.0]
 #cr_list = [0.01, 0.1, 1.0, 10.0]
 #cr_list = [1.0]
 

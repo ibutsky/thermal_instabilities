@@ -57,18 +57,12 @@ def calculate_cold_fraction(ds, T_min = 3.333333e5, z_min = 0.1, z_max = 1.2, gr
     z_min = 0.1
 #    z_max = 1.2                                                                                                                                           
     if (grid_rank == 3):
-        region1 = ds.r[:, :, z_min:]
-        region2 = ds.r[:, :, :-z_min]
+        ad = ds.all_data()
+        zmask = np.abs(ad[('gas', 'z')] / ds.length_unit.in_units('kpc') > z_min)
+        total_mass = np.sum(ad[('gas', 'cell_mass')][zmask].in_units('Msun'))
 
-        total_mass = np.sum(region1[('gas', 'cell_mass')].in_units('Msun')) + \
-                     np.sum(region2[('gas', 'cell_mass')].in_units('Msun'))
-
-        cold1 = region1[('gas', 'temperature')] <= T_min
-        cold2 = region2[('gas', 'temperature')] <= T_min
-
-
-        cold_mass = np.sum(region1[('gas', 'cell_mass')][cold1].in_units('Msun'))+ \
-                    np.sum(region2[('gas', 'cell_mass')][cold2].in_units('Msun'))
+        cold_mask = (zmask) & (ad[('gas', 'temperature')] <= T_min)
+        cold_mass = np.sum(ad[('gas', 'cell_mass')][cold_mask].in_units('Msun'))
     
     elif (grid_rank == 2):
         ad = ds.all_data()
@@ -329,25 +323,28 @@ def make_power_spectrum(ds, field = 'drho'):
 def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0):
     if compare == 'tctf':
         tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
-        cr_list = 5*[0]
-        beta_list = 5*['inf']
-        diff_list = 5*[crdiff]
-        stream_list = 5*[crstream]
-        heat_list = 5*[crheat]
+        num = len(tctf_list)
+        cr_list = num*[0]
+        beta_list = num*['inf']
+        diff_list = num*[crdiff]
+        stream_list = num*[crstream]
+        heat_list = num*[crheat]
     elif compare == 'beta':
-        tctf_list = 6*[tctf]
-        cr_list = 6*[0]
         beta_list = [3, 10, 30, 100, 300, 'inf']
-        diff_list = 5*[crdiff]
-        stream_list = 5*[crstream]
-        heat_list = 5*[crheat]
+        num = len(beta_list)
+        tctf_list = num*[tctf]
+        cr_list = num*[0]
+        diff_list = num*[crdiff]
+        stream_list = num*[crstream]
+        heat_list = num*[crheat]
     elif compare == 'cr':
-        tctf_list = 6*[tctf]
         cr_list = [0, 0.01, 0.1, 1.0, 10.0, 100]
-        beta_list = 6*[10.0]
-        diff_list = 5*[crdiff]
-        stream_list = 5*[crstream]
-        heat_list = 5*[crheat]
+        num = len(cr_list)
+        tctf_list = num*[tctf]
+        beta_list = num*[10.0]
+        diff_list = num*[crdiff]
+        stream_list = num*[crstream]
+        heat_list = num*[crheat]
     elif compare == 'transport':
         tctf_list = [0.1, 0.1, 0.1, 0.1, 0.1]
         cr_list  = [0, 1, 1, 1, 1]
@@ -421,7 +418,7 @@ def get_fig_name(base, sim, compare, tctf, beta, cr, diff, time = -1, use_tctf =
     elif compare == 'transport':
         plot_name += '_transport_compare'
     if time > 0:
-        plot_name += '_%.1f'%time
+        plot_name += '_%i'%time
 
     plot_name += '.png'
     print(plot_name)

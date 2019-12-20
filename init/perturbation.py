@@ -242,9 +242,9 @@ def read_parameters_from_command_line():
         print(kmin, kmax)
         print("kmin must be < kmax, with kmin > 0, kmax > 0.  See --help.")
         sys.exit(0)
-    if kmax > floor(np.min(n))/2:
-        print("kmax must be <= floor(size/2).  See --help.")
-        sys.exit(0)
+#    if kmax > floor(np.min(n))/2:
+#        print("kmax must be <= floor(size/2).  See --help.")
+#        sys.exit(0)
     f_solenoidal = options.f_solenoidal
     if f_solenoidal == "None" or f_solenoidal == "none":
         f_solenoidal = None
@@ -322,4 +322,4 @@ def generate_perturbation_infile():
     outf.close()
 
 
-#generate_perturbation_infile()
+generate_perturbation_infile()

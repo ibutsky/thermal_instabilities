@@ -23,7 +23,7 @@ mh = const.m_p.cgs.value
 kb = const.k_B.cgs.value
 p0 = (rho0 / mu / mh) * kb*T0
 
-workdir = '../../simulations/'
+workdir = '../../simulations/2d_256'
 plot_folder = '../../movies/temp'
 
 
@@ -169,7 +169,7 @@ pool.close()
 cwd = os.getcwd()
 os.chdir(plot_folder)
 os.system('ffmpeg -r 10 -f image2 -s 1920x1080 -i %04d.png -vcodec libx264 -crf 25 -pix_fmt yuv420p density.mov')
-os.rename('density.mov', '../%s_density.mov'%(sim))
+os.rename('density.mov', '../%s_density_2d_256.mov'%(sim))
 png_files = glob.glob('*.png')
 for pic in png_files:
     os.remove(pic)

@@ -27,6 +27,7 @@ plot_folder = '../../movies/temp'
 
 sim = sys.argv[1]
 orient = sys.argv[2]
+last_output = int(sys.argv[3])
 
 def plot_density_slices(output, folder = '.'):
     cmap_list = [palettable.cmocean.sequential.Tempo_20.mpl_colormap]
@@ -45,7 +46,7 @@ def plot_density_slices(output, folder = '.'):
 
 
 output_list = np.arange(0, 201, 1) 
-output_list = np.arange(0, 149, 1)
+output_list = np.arange(0, last_output, 1)
 pool = mp.Pool(mp.cpu_count())
 print("Number of processors: ", mp.cpu_count())
 
@@ -56,7 +57,7 @@ pool.close()
 
 cwd = os.getcwd()
 os.chdir(plot_folder)
-os.system('ffmpeg -r 10 -f image2 -s 1920x1080 -q:v 0 -i %04d.png -vcodec libx264 -crf 25 -pix_fmt yuv420p density.mov')
+os.system('ffmpeg -r 10 -f image2 -s 1920x1080 -i %04d.png -vcodec libx264 -crf 25 -pix_fmt yuv420p density.mov')
 os.rename('density.mov', '../%s_density_only.mov'%sim)
 png_files = glob.glob('*.png')
 for pic in png_files:

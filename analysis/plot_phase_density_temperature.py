@@ -66,7 +66,8 @@ def plot_phase(output, folder = '.'):
         ds = ytf.load('%s/DD%04d/DD%04d'%(sim_loc, output, output))
 
         ad = ds.all_data()
-        ph = yt.PhasePlot(ad, ('gas', 'density'), ('gas', 'temperature'), ('gas', 'cell_mass'),\
+        ad_cut = ad.cut_region(["(obj[('gas', 'z')].in_units('kpc') > 4.3) & (obj[('gas', 'z')].in_units('kpc') < -4.3)"])
+        ph = yt.PhasePlot(ad_cut, ('gas', 'density'), ('gas', 'temperature'), ('gas', 'cell_mass'),\
                           weight_field = None, fractional = True)
         prof = ph.profile
         xbins = prof.x
