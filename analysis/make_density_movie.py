@@ -24,7 +24,7 @@ mh = const.m_p.cgs.value
 kb = const.k_B.cgs.value
 p0 = (rho0 / mu / mh) * kb*T0
 
-workdir = '../../simulations/'
+workdir = '../../simulations/production'
 plot_folder = '../../movies/temp2'
 
 
@@ -50,15 +50,19 @@ def plot_density_slices(ds, folder = '.'):
                  palettable.cmocean.diverging.Curl_9.mpl_colormap]
 
     fig, ax = plt.subplots(ncols = 4, nrows = 2, figsize=(30,14))
+    for row in range(2):
+        for col in range(3):
+            ax[row][col].set_aspect('equal')
 
     for i, frb in enumerate([frb_s, frb_p]):
         print(i)
+        
         xbins = frb['y'].in_units('kpc')
         ybins = frb['z'].in_units('kpc')
         rho   = frb['density']
 
         data = rho/rho0
-
+        
         pcm = ax[i][0].pcolormesh(xbins, ybins, data, norm = LogNorm(), cmap = cmap_list[0], vmin = 3e-2, vmax = 1)
         cbar = fig.colorbar(pcm, ax = ax[i][0], pad=0)
         if i == 0:

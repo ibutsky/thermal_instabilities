@@ -41,7 +41,7 @@ default_kmin           = 4
 default_kmax           = int(resolution / 2)
 default_f_solenoidal   = 2./3.
 default_alpha          = 0
-default_seed           = 4085281318
+default_seed           = 4088338814
 
 
 ###### computing parameters

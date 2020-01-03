@@ -87,7 +87,7 @@ def create_constants_and_parameters_file(fn, halo_profile, tcool_tff_ratio, pert
     f.write('default_kmax           = int(resolution / 2)\n')
     f.write('default_f_solenoidal   = 2./3.\n')
     f.write('default_alpha          = 0\n')
-    f.write('default_seed           = 4085281318\n')
+    f.write('default_seed           = 4088338814\n')
 
     f.write('###### computing parameters\n')
     f.write('nodes              = %i\n'%nodes)
@@ -127,27 +127,26 @@ def setup_simulation(halo_prof, tctf, beta, cr):
     os.system('sbatch submit.sbatch')
     os.chdir(cwd)
 
+def get_sim_dir():
+    sim_dir = '../../simulations/'
+    if grid_rank == 2:
+        sim_dir += '/2d_%i'%ndim
 
-sim_dir = '../../simulations/'
+    elif kmax > 0: 
+        sim_dir = '../../simulations/kmax_%i'%kmax
+    elif skinny:
+        sim_dir = '../../simulations/skinny'
+
+
+sim_dir = '../../simulations/production'
 grid_rank = 3
-ndim = 128
+ndim = 256
 kmax = 0
-#kmax = 128
 skinny = 1
 
-if grid_rank == 2:
-    sim_dir += '/2d_%i'%ndim
-nodes = 1
-#if kmax > 0:
-#    sim_dir = '../../simulations/kmax_%i'%kmax
-if skinny:
-    sim_dir = '../../simulations/skinny'
-
-
 perturb_type = 1
-
 nodes = 1
-wall_time = '0:20:00'
+wall_time = '4:00:00'
 
 cr_diffusion = 0#2
 tcr_tff_ratio = 0#1.0
@@ -158,11 +157,11 @@ cr_heating   = 0#1
 
 
 
-halo_prof_list = [1]
-tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0]
+halo_prof_list = [1, 3]
+tctf_list = [0.1, 0.3, 1.0, 3.0] #, 10.0]
 #beta_list = ['inf', 300, 100, 30, 10, 3]
-beta_list = [10]
-cr_list = [1]
+beta_list = [100]
+cr_list = [0, 0.01, 0.1, 1.0, 10.0]
 #cr_list = [0.01, 0.1, 1.0, 10.0]
 #cr_list = [1.0]
 

@@ -279,9 +279,9 @@ def read_parameters_from_command_line():
 
 def generate_perturbation_infile(skinny_ratio = 1):
     n, kmin, kmax, alpha, f_solenoidal, seed, dtype = read_parameters_from_command_line()
-    n = [32, 32, 128]
+    n = [64, 64, 256]
     kmin = 4
-    kmax = 64
+    kmax = 32
 
     np.random.seed(seed=seed)      
     pertx, perty, pertz = make_perturbations(n, kmin, kmax, alpha, f_solenoidal, skinny_ratio = skinny_ratio)
@@ -304,8 +304,7 @@ def generate_perturbation_infile(skinny_ratio = 1):
     outf.write('# Dimensions: %i\n' % len(n))
     outf.write('# Grid size:')
 
-    ncopies = [32, 32, 128]
-    for component in ncopies:
+    for component in n:
         outf.write(' %i' % component)
     outf.write('\n')
 
@@ -313,7 +312,7 @@ def generate_perturbation_infile(skinny_ratio = 1):
     outf.write('%i\n' % len(n))
 
     # Second non commented line is the grid size
-    for component in ncopies:
+    for component in n:
         outf.write('%i ' % component)
     outf.write('\n')
 
@@ -331,4 +330,4 @@ def generate_perturbation_infile(skinny_ratio = 1):
     outf.close()
 
 
-generate_perturbation_infile()
+generate_perturbation_infile(skinny_ratio = 4)
