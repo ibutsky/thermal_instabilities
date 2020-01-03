@@ -113,6 +113,8 @@ def setup_simulation(halo_prof, tctf, beta, cr):
     os.chdir(folder_path)
     if kmax > 0:
         shutil.copyfile('%s/perturbation_%i_kmax_%i.in'%(cwd, ndim, kmax), 'perturbation.in')
+    elif skinny:
+        shutil.copyfile('%s/perturbation_%i_skinny.in'%(cwd, ndim), 'perturbation.in')
     else:
         shutil.copyfile('%s/perturbation_%i.in'%(cwd, ndim), 'perturbation.in')
     shutil.copyfile('%s/generate_initial_conditions.py'%cwd, 'generate_initial_conditions.py')
@@ -145,22 +147,22 @@ if skinny:
 perturb_type = 1
 
 nodes = 1
-wall_time = '4:00:00'
+wall_time = '0:20:00'
 
 cr_diffusion = 0#2
 tcr_tff_ratio = 0#1.0
 
-cr_streaming = 1
+cr_streaming = 0#1
 cr_streaming_stability = 100
-cr_heating   = 1
+cr_heating   = 0#1
 
 
 
-halo_prof_list = [1, 3]
-tctf_list = [0.1, 0.3, 1.0]#, 3.0, 10.0]
+halo_prof_list = [1]
+tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0]
 #beta_list = ['inf', 300, 100, 30, 10, 3]
 beta_list = [10]
-cr_list = [1.0]
+cr_list = [1]
 #cr_list = [0.01, 0.1, 1.0, 10.0]
 #cr_list = [1.0]
 

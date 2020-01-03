@@ -15,7 +15,8 @@ import matplotlib.pylab as plt
 
 from constants_and_parameters import *
 
-def init_perturbations(n, kmin, kmax, alpha, dtype):
+def init_perturbations(n, kmin, kmax, alpha, dtype, skinny_ratio = 1):
+    print('skinny_ratio = %i'%skinny_ratio)
     kx = np.zeros(n, dtype=dtype)
     ky = np.zeros(n, dtype=dtype)
     kz = np.zeros(n, dtype=dtype)
@@ -31,8 +32,11 @@ def init_perturbations(n, kmin, kmax, alpha, dtype):
             kz[i,j,:] = n[2]*np.fft.fftfreq(n[2])
             
     kx = np.array(kx, dtype=dtype)
+    kx *= skinny_ratio
     ky = np.array(ky, dtype=dtype)
+    ky *= skinny_ratio
     kz = np.array(kz, dtype=dtype)
+
     k = np.sqrt(np.array(kx**2+ky**2+kz**2, dtype=dtype))
 
     # only use the positive frequencies
@@ -85,8 +89,8 @@ def normalize(n, fx, fy, fz):
     return fx, fy, fz
 
 
-def make_perturbations(n, kmin, kmax, alpha, f_solenoidal, dtype=np.float64):
-    fx, fy, fz, kx, ky, kz = init_perturbations(n, kmin, kmax, alpha, dtype)
+def make_perturbations(n, kmin, kmax, alpha, f_solenoidal, dtype=np.float64, skinny_ratio = 1):
+    fx, fy, fz, kx, ky, kz = init_perturbations(n, kmin, kmax, alpha, dtype, skinny_ratio = skinny_ratio)
     if f_solenoidal != None:
         k2 = kx**2+ky**2+kz**2
         # solenoidal part
@@ -106,7 +110,7 @@ def make_perturbations(n, kmin, kmax, alpha, f_solenoidal, dtype=np.float64):
         # get a different random cube for the compressive part
         # so that we can target the RMS solenoidal fraction,
         # instead of setting a constant solenoidal fraction everywhere.
-        fx, fy, fz, kx, ky, kz = init_perturbations(n, kmin, kmax, alpha, dtype)
+        fx, fy, fz, kx, ky, kz = init_perturbations(n, kmin, kmax, alpha, dtype, skinny_ratio = skinny_ratio)
         fxc = 0.; fyc =0.; fzc = 0.
         if f_solenoidal != 1.0:
             fxc = np.real(kx*(kx*fx+ky*fy+kz*fz)/np.maximum(k2,1e-16))
@@ -273,10 +277,14 @@ def read_parameters_from_command_line():
 
 
 
-def generate_perturbation_infile():
+def generate_perturbation_infile(skinny_ratio = 1):
     n, kmin, kmax, alpha, f_solenoidal, seed, dtype = read_parameters_from_command_line()
+    n = [32, 32, 128]
+    kmin = 4
+    kmax = 64
+
     np.random.seed(seed=seed)      
-    pertx, perty, pertz = make_perturbations(n, kmin, kmax, alpha, f_solenoidal)
+    pertx, perty, pertz = make_perturbations(n, kmin, kmax, alpha, f_solenoidal, skinny_ratio = skinny_ratio)
 #    erot_ke_ratio = get_erot_ke_ratio(n, pertx, perty, pertz)
 #    print("erot_ke_ratio = ", erot_ke_ratio)
     plot_spectrum1D(n, pertx, perty, pertz, kmin, kmax, dtype = dtype)
@@ -296,7 +304,8 @@ def generate_perturbation_infile():
     outf.write('# Dimensions: %i\n' % len(n))
     outf.write('# Grid size:')
 
-    for component in n:
+    ncopies = [32, 32, 128]
+    for component in ncopies:
         outf.write(' %i' % component)
     outf.write('\n')
 
@@ -304,7 +313,7 @@ def generate_perturbation_infile():
     outf.write('%i\n' % len(n))
 
     # Second non commented line is the grid size
-    for component in n:
+    for component in ncopies:
         outf.write('%i ' % component)
     outf.write('\n')
 
