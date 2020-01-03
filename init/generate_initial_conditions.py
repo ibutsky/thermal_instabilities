@@ -114,11 +114,8 @@ def generate_enzo_input_file():
     outf.write("ProblemType \t\t = 417\n")
     outf.write("TopGridRank \t\t = %i\n\n"%grid_rank)
 
-    res_x = int(resolution * box_x / box_z)
-    res_y = int(resolution * box_y / box_z)
-    
     if grid_rank == 2:
-        outf.write("TopGridDimensions \t = %i %i\n"%(res_x, resolution))
+        outf.write("TopGridDimensions \t = %i %i\n"%(resolution, resolution))
         outf.write("DomainLeftEdge \t\t = %i %i\n"%(-box_x, -box_y))
         outf.write("DomainRightEdge \t = %i %i\n\n"%(box_x,  box_y))
         outf.write("UserDefinedRootGridLayout = 1 %i"%(int(resolution/2)))
@@ -127,9 +124,20 @@ def generate_enzo_input_file():
         outf.write("LeftFaceBoundaryCondition   = 3 6 # 3 = Periodic, 6 = hydrostatic\n")
         outf.write("RightFaceBoundaryCondition  = 3 6\n\n")
     else:
+        if skinny:
+            res_x = int(resolution / 4);
+            res_y = res_x
+            box_x = box_z / 4.
+            box_y = box_z / 4.
+        else:
+            res_x = resolution
+            res_y = res_x
+            box_x = box_z
+            box_y = box_z
+
         outf.write("TopGridDimensions \t = %i %i %i\n"%(res_x,  res_y, resolution))
-        outf.write("DomainLeftEdge \t\t = %f %i %i\n"%(-box_x, -box_y, -box_z))
-        outf.write("DomainRightEdge \t = %f %i %i\n\n"%(box_x,  box_y,  box_z))
+        outf.write("DomainLeftEdge \t\t = %f %f %f\n"%(-box_x, -box_y, -box_z))
+        outf.write("DomainRightEdge \t = %f %f %f\n\n"%(box_x,  box_y,  box_z))
         outf.write("UserDefinedRootGridLayout = 1 1 %i"%(int(resolution/2)))
         outf.write(" # note: can't have fewer grid divisions than number of cores\n\n")
         outf.write("LeftFaceBoundaryCondition   = 3 3 6 # 3 = Periodic, 6 = hydrostatic\n")

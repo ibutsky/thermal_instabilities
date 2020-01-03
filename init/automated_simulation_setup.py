@@ -64,6 +64,7 @@ def create_constants_and_parameters_file(fn, halo_profile, tcool_tff_ratio, pert
     f.write('bfield_direction    = [1, 0, 0]\n')
     f.write('resolution          = %i  # resolution along z-axis; scaled for x-y axes\n'%ndim)
     f.write('grid_rank           = %i\n'%grid_rank)
+    f.write('skinny              = %i\n'%skinny)
 
     f.write('# cooling function parameters\n')
     f.write('# Tmin should be ~ T0/20    \n')
@@ -130,32 +131,36 @@ grid_rank = 3
 ndim = 128
 kmax = 0
 #kmax = 128
+skinny = 1
 
 if grid_rank == 2:
     sim_dir += '/2d_%i'%ndim
 nodes = 1
 #if kmax > 0:
 #    sim_dir = '../../simulations/kmax_%i'%kmax
+if skinny:
+    sim_dir = '../../simulations/skinny'
+
 
 perturb_type = 1
 
-nodes = 2
-wall_time = '12:00:00'
+nodes = 1
+wall_time = '4:00:00'
 
 cr_diffusion = 0#2
 tcr_tff_ratio = 0#1.0
 
-cr_streaming = 0
+cr_streaming = 1
 cr_streaming_stability = 100
-cr_heating   = 0
+cr_heating   = 1
 
 
 
-halo_prof_list = [3]
-tctf_list = [0.1, 0.3, 1.0, 3.0, 10.0]
+halo_prof_list = [1, 3]
+tctf_list = [0.1, 0.3, 1.0]#, 3.0, 10.0]
 #beta_list = ['inf', 300, 100, 30, 10, 3]
 beta_list = [10]
-cr_list = [0, 1.0]
+cr_list = [1.0]
 #cr_list = [0.01, 0.1, 1.0, 10.0]
 #cr_list = [1.0]
 

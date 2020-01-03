@@ -239,7 +239,6 @@ def add_plot(ax, ds, field, field_type = 'slice', view = 'x', cmap = 'viridis', 
         ax[i][0].set_xlabel('y (kpc)')
         ax[i][0].set_ylabel('z (kpc)')
         
-
         
 
 def make_movie_plots(output):
@@ -252,21 +251,27 @@ def make_movie_plots(output):
 
 
 def fft_comp(ds, field, level = 0 ):
+
     cube = ds.covering_grid(level, left_edge=ds.domain_left_edge,
                             dims=ds.domain_dimensions)
+  #  cube = ds.arbitrary_grid(ds.domain_left_edge, ds.domain_right_edge, ds.domain_dimensions)
 
     rho = cube[('gas', 'density')].d
+    nx, ny, nz = rho.shape
     if field == 'rho':
         fft_field = rho
     elif field == 'drho':
         drho = np.ndarray(shape = rho.shape)
         for i in range(len(rho)):
-            rho_slice = rho[:, :, i]
-            rho_ave = np.mean(rho_slice)
-            drho[:, :, i]  = (rho_slice - rho_ave) / rho_ave
+            if nz == 1:
+                rho_slice = rho[:, i, 0]
+                rho_ave = np.mean(rho_slice)
+                drho[:, i, 0]  = (rho_slice - rho_ave) / rho_ave
+            else:
+                rho_slice = rho[:, :, i]
+                rho_ave = np.mean(rho_slice)
+                drho[:, :, i]  = (rho_slice - rho_ave) / rho_ave
         fft_field = drho
-
-    nx, ny, nz = rho.shape
 
     # do the FFTs -- note that since our data is real, there will be 
     # too much information here.  fftn puts the positive freq terms in
@@ -282,6 +287,7 @@ def fft_comp(ds, field, level = 0 ):
 
 def make_power_spectrum(ds, field = 'drho'):
     dims = ds.domain_dimensions
+
     nx, ny, nz = dims
 
     Kk = np.zeros( (nx//2+1, ny//2+1, nz//2+1))
@@ -289,6 +295,10 @@ def make_power_spectrum(ds, field = 'drho'):
 
     # wavenumbers in units of box length 
     L = np.array([1.0, 1.0, 1.0])
+    L = (ds.domain_right_edge - ds.domain_left_edge).d
+    L = np.divide(L, L[-1])
+    print(L)
+    
 
     kx = np.fft.rfftfreq(nx)*nx/L[0]
     ky = np.fft.rfftfreq(ny)*ny/L[1]
@@ -296,7 +306,11 @@ def make_power_spectrum(ds, field = 'drho'):
 
     # physical limits to the wavenumbers
     kmin = np.min(1.0/L)
-    kmax = np.min(0.5*np.array(dims)/L)
+ #   kmax = np.min(0.5*np.array(dims)/L)
+    kmax = 0.5*dims[-1]/L[-1]
+    print(kmin, kmax)
+    if nz == 1:
+        kmax = np.max(0.5*np.array(dims)/L)
 
 
     kbins = np.arange(kmin, kmax, kmin)
@@ -367,7 +381,7 @@ def get_sim_location(sim, tctf, beta, cr, diff = 0, \
         else:
             sim_location += '_cr_%0.1f'%(cr)
         if diff > 0:
-            sim_location += '_diff_%0.1f'%(diff)
+            sim_location += '_tdiff_%0.1f'%(diff)
         if stream > 0:
             sim_location += '_stream'
         if heat > 0:
@@ -402,11 +416,15 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
             
     return label
 
-def get_fig_name(base, sim, compare, tctf, beta, cr, diff, time = -1, use_tctf = 0, loc = '../../plots'):
+def get_fig_name(base, sim, compare, tctf, beta, cr=0, diff=0, time = -1, use_tctf = 0, loc = '../../plots'):
     plot_name = '%s/%s_%s'%(loc, base, sim)
     if compare == 'tctf':
         if beta != 'inf':
             plot_name += '_beta_%.1f'%(beta)
+        if cr >0:
+            plot_name += '_cr_%.1f'%(cr)
+        if diff > 0:
+            plot_name += '_diff_%.1f'%diff
     if time < 0 or use_tctf:
         plot_name += '_tctf_%.1f'%tctf
     if compare == 'beta':

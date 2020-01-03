@@ -109,3 +109,14 @@ init/*.in
 init/*.png
 init/*.out
 init/*.dat
+
+2d_compare/
+skinny_compare/
+kmax_compare/
+
+
+estd.out*
+
+*~
+
+slurm*

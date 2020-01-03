@@ -25,7 +25,7 @@ kb = const.k_B.cgs.value
 p0 = (rho0 / mu / mh) * kb*T0
 
 workdir = '../../simulations/'
-plot_folder = '../../movies/temp'
+plot_folder = '../../movies/temp2'
 
 
 output_list = glob.glob('%s/%s/DD*'%(workdir, sim))
