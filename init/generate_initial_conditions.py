@@ -118,7 +118,7 @@ def generate_enzo_input_file():
         outf.write("TopGridDimensions \t = %i %i\n"%(resolution, resolution))
         outf.write("DomainLeftEdge \t\t = %i %i\n"%(-box_x, -box_y))
         outf.write("DomainRightEdge \t = %i %i\n\n"%(box_x,  box_y))
-        outf.write("UserDefinedRootGridLayout = 1 %i"%(int(resolution/2)))
+        outf.write("UserDefinedRootGridLayout = 1 64\n")
         outf.write(" # note: can't have fewer grid divisions than number of cores\n\n")
 
         outf.write("LeftFaceBoundaryCondition   = 3 6 # 3 = Periodic, 6 = hydrostatic\n")
@@ -138,7 +138,7 @@ def generate_enzo_input_file():
         outf.write("TopGridDimensions \t = %i %i %i\n"%(res_x,  res_y, resolution))
         outf.write("DomainLeftEdge \t\t = %f %f %f\n"%(-box_x, -box_y, -box_z))
         outf.write("DomainRightEdge \t = %f %f %f\n\n"%(box_x,  box_y,  box_z))
-        outf.write("UserDefinedRootGridLayout = 1 1 %i"%(int(resolution/2)))
+        outf.write("UserDefinedRootGridLayout = 1 1 64\n")
         outf.write(" # note: can't have fewer grid divisions than number of cores\n\n")
         outf.write("LeftFaceBoundaryCondition   = 3 3 6 # 3 = Periodic, 6 = hydrostatic\n")
         outf.write("RightFaceBoundaryCondition  = 3 3 6\n\n")
@@ -180,7 +180,7 @@ def generate_enzo_input_file():
     outf.write("MetalCooling \t\t = 0\n")
     outf.write("CIECooling \t\t = 0\n")
     outf.write("UseCoolingTimestep \t = 1\n")
-    outf.write("CoolingTimestepSafetyFactor \t = 0.2\n")
+    outf.write("CoolingTimestepSafetyFactor \t = 0.4\n")
     outf.write("CoolingTimestepMinimumTimestep = 0 # years\n\n")
 
     outf.write("# Global Parameters\n")
@@ -213,7 +213,7 @@ def generate_enzo_input_file():
     if cr_pressure_ratio > 0 :
         outf.write("TICosmicRayPressureRatio   = %e\n"%(cr_pressure_ratio))
         outf.write("CRModel                    = 1\n")
-        outf.write("CRCourantSafetyNumber      = 0.2\n")
+        outf.write("CRCourantSafetyNumber      = 0.4\n")
         outf.write("CRDiffusion                = %i\n"%cr_diffusion)
         outf.write("CRkappa                    = %e\n"%cr_kappa)
         outf.write("CRStreaming                = %i\n"%cr_streaming)
@@ -340,6 +340,6 @@ generate_enzo_input_file()
 check_units()
 
 # generate submit.sbatch file
-generate_sbatch_file(nodes = nodes, tasks_per_node = 32)
+generate_sbatch_file(nodes = nodes, tasks_per_node = tasks_per_node)
 
 generate_clean_file()

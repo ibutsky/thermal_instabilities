@@ -91,7 +91,7 @@ def create_constants_and_parameters_file(fn, halo_profile, tcool_tff_ratio, pert
 
     f.write('###### computing parameters\n')
     f.write('nodes              = %i\n'%nodes)
-    f.write('tasks_per_node     = 32\n')
+    f.write('tasks_per_node     = 48\n')
     f.write('num_cooling_cycles = 10  # simulation stop time = 10 * t_cool\n')
     f.write('num_outputs        = 100\n')
     f.write('wall_time          = \'%s\'\n'%(wall_time))
@@ -146,24 +146,24 @@ skinny = 1
 
 perturb_type = 1
 nodes = 1
-wall_time = '4:00:00'
+wall_time = '24:00:00'
 
-cr_diffusion = 0#2
-tcr_tff_ratio = 0#1.0
+cr_diffusion = 2
+tcr_tff_ratio = 1.0
 
 cr_streaming = 0#1
-cr_streaming_stability = 100
-cr_heating   = 0#1
+cr_streaming_stability = 50
+cr_heating   = 0
 
 
 
 halo_prof_list = [1, 3]
 tctf_list = [0.1, 0.3, 1.0, 3.0] #, 10.0]
+#tctf_list = [0.3]
 #beta_list = ['inf', 300, 100, 30, 10, 3]
 beta_list = [100]
-cr_list = [0, 0.01, 0.1, 1.0, 10.0]
-#cr_list = [0.01, 0.1, 1.0, 10.0]
-#cr_list = [1.0]
+cr_list = [0.01, 0.1, 1.0, 10.0]
+#cr_list = [0]
 
 for halo_prof in halo_prof_list:
     for tctf in tctf_list:

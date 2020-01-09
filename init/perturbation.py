@@ -186,11 +186,23 @@ def plot_spectrum1D(n, pertx, perty, pertz, kmin, kmax, dtype):
     plt.savefig("spectrum1D.png", bbox_inches='tight', dpi=200)
     plt.clf()
 
-def plot_slice(pertx,name):
-    plt.pcolormesh(pertx[:,:,0])
+def plot_slice(pertx,perty, pertz,name):
+    plt.pcolormesh(pertx[0,:,:])
     ax = plt.gca()
-    ax.set_aspect(1.0)
-    plt.savefig("pert_slice_%s.png" %name, bbox_inches='tight', dpi=200)
+    ax.set_aspect('equal')
+    plt.savefig("pertx_slice_%s.png" %name, bbox_inches='tight', dpi=200)
+    plt.clf()
+
+    plt.pcolormesh(perty[0,:,:])
+    ax = plt.gca()
+    ax.set_aspect('equal')
+    plt.savefig("perty_slice_%s.png" %name, bbox_inches='tight', dpi=200)
+    plt.clf()
+
+    plt.pcolormesh(pertz[0,:,:])
+    ax = plt.gca()
+    ax.set_aspect('equal')
+    plt.savefig("pertz_slice_%s.png" %name, bbox_inches='tight', dpi=200)
     plt.clf()
 
 
@@ -280,6 +292,7 @@ def read_parameters_from_command_line():
 def generate_perturbation_infile(skinny_ratio = 1):
     n, kmin, kmax, alpha, f_solenoidal, seed, dtype = read_parameters_from_command_line()
     n = [64, 64, 256]
+    n = [128, 128, 512]
     kmin = 4
     kmax = 32
 
@@ -288,7 +301,7 @@ def generate_perturbation_infile(skinny_ratio = 1):
 #    erot_ke_ratio = get_erot_ke_ratio(n, pertx, perty, pertz)
 #    print("erot_ke_ratio = ", erot_ke_ratio)
     plot_spectrum1D(n, pertx, perty, pertz, kmin, kmax, dtype = dtype)
-    plot_slice(pertx, "kmin%i_kmax%i_alpha%i"%(kmin, kmax, alpha))
+    plot_slice(pertx, perty, pertz, "kmin%i_kmax%i_alpha%i"%(kmin, kmax, alpha))
 
 
     # Write the perturbations to a file.
