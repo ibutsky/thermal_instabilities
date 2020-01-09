@@ -52,21 +52,25 @@ def calculate_averaged_drho_rms(output_list, sim_location = '.', zmin = 0.9, zma
             drho_rms_list.append(0)
     return np.mean(drho_rms_list)
 
-def calculate_cold_fraction(ds, T_min = 3.333333e5, z_min = 0.1, z_max = 1.2, grid_rank = 3):
+def calculate_cold_fraction(ds, T_min = 3.333333e5, z_min = 0.1, z_max = None, grid_rank = 3):
     ad = ds.all_data()
-    z_min = 0.1
-#    z_max = 1.2                                                                                                                                           
+    
     if (grid_rank == 3):
-        ad = ds.all_data()
-        zmask = np.abs(ad[('gas', 'z')] / ds.length_unit.in_units('kpc') > z_min)
+        z_abs_code = np.abs(ad[('gas', 'z')] / ds.length_unit.in_units('kpc'))
+
+        if z_max == None:
+            z_max = ds.domain_right_edge[2].d
+        zmask = (z_abs_code >= z_min) & (z_abs_code <= z_max)
         total_mass = np.sum(ad[('gas', 'cell_mass')][zmask].in_units('Msun'))
 
         cold_mask = (zmask) & (ad[('gas', 'temperature')] <= T_min)
         cold_mass = np.sum(ad[('gas', 'cell_mass')][cold_mask].in_units('Msun'))
     
     elif (grid_rank == 2):
-        ad = ds.all_data()
-        ymask = np.abs(ad[('gas', 'y')] / ds.length_unit.in_units('kpc') > z_min)
+        y_abs_code = np.abs(ad[('gas', 'y')] / ds.length_unit.in_units('kpc'))
+        if z_max == None:
+            z_max = ds.domain_right_edge[1].d
+        ymaxk = (y_abs_code >= z_min) & (y_abs_code <= z_max)
         total_mass = np.sum(ad[('gas', 'cell_mass')][ymask].in_units('Msun'))
 
         cold_mask = (ymask) & (ad[('gas', 'temperature')] <= T_min)
@@ -355,14 +359,14 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0):
         cr_list = [0, 0.01, 0.1, 1.0, 10.0, 100]
         num = len(cr_list)
         tctf_list = num*[tctf]
-        beta_list = num*[10.0]
+        beta_list = num*[100.0]
         diff_list = num*[crdiff]
         stream_list = num*[crstream]
         heat_list = num*[crheat]
     elif compare == 'transport':
         tctf_list = [0.1, 0.1, 0.1, 0.1, 0.1]
         cr_list  = [0, 1, 1, 1, 1]
-        beta_list = 5*[10.0]
+        beta_list = 5*[100.0]
         diff_list = [0, 0, 3, 0, 0]
         stream_list = [0, 0, 0, 1, 1]
         heat_list = [0, 0, 0, 0, 1]
@@ -416,7 +420,7 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
             
     return label
 
-def get_fig_name(base, sim, compare, tctf, beta, cr=0, diff=0, time = -1, use_tctf = 0, loc = '../../plots'):
+def get_fig_name(base, sim, compare, tctf, beta, cr=0, diff=0, time = -1, use_tctf = 0, loc = '../../plots/'):
     plot_name = '%s/%s_%s'%(loc, base, sim)
     if compare == 'tctf':
         if beta != 'inf':
@@ -441,3 +445,69 @@ def get_fig_name(base, sim, compare, tctf, beta, cr=0, diff=0, time = -1, use_tc
     plot_name += '.png'
     print(plot_name)
     return plot_name
+
+
+def get_cr_eta(ds):
+    base = ds.directory
+    if base.__contains__('cr_0.01'):
+        cr_eta = 0.01
+    elif base.__contains__('cr_0.1'):
+        cr_eta = 0.1
+    elif base.__contains__('cr_1.0'):
+        cr_eta = 1.0
+    elif base.__contains__('cr_10.0'):
+        cr_eta = 10.0
+    else:
+        cr_eta = 0
+    return cr_eta
+
+def get_title(field, cr_frac = 1):
+    if field == 'density':
+        title = '$\\rho$'
+    elif field == 'pressure':
+        title = 'P$_g$'
+    elif field == 'temperature':
+        title = 'T'
+    elif field == 'cr_eta':
+        title = 'P$_c$/P$_g$'
+    elif field == 'cr_pressure':
+        title = 'P$_c$'
+    elif field == 'velocity_z':
+        title = 'V$_z$'
+    elif field == 'magnetic_field_strength':
+        title = '|B|'
+    return title
+
+def get_zlims(field, cr_frac = 1):
+    if field == 'density':
+        zlims = (rho0*3e-2, rho0)
+    elif field == 'pressure':
+        zlims = (p0*1e-2, p0*1e2)
+    elif field == 'temperature':
+        zlims = (T0 / 20, T0*10)
+    elif field == 'cr_eta':
+        zlims = (cr_frac*1e-2, cr_frac*1e2)
+    elif field == 'cr_pressure':
+        zlims = (p0*cr_frac / 50, p0*cr_frac*50)
+    elif field == 'velocity_z':
+        zlims = (-200, 200)
+    elif field == 'magnetic_field_strength':
+        zlims = (3e-8, 5e-7)
+    return zlims
+
+def get_cmap(field):
+    if field =='density':
+        cmap = palettable.cmocean.sequential.Tempo_20.mpl_colormap
+    elif field == 'pressure':
+        cmap = 'magma'
+    elif field == 'temperature':
+        cmap = palettable.scientific.sequential.LaJolla_20_r.mpl_colormap
+    elif field == 'cr_eta':
+        cmap = palettable.scientific.sequential.Tokyo_20.mpl_colormap
+    elif field == 'cr_pressure':
+        cmap = palettable.scientific.sequential.Turku_20.mpl_colormap
+    elif field == 'velocity_z':
+        cmap = palettable.scientific.diverging.Vik_20.mpl_colormap
+    elif field == 'magnetic_field_strength':
+        cmap = palettable.scientific.sequential.LaPaz_20.mpl_colormap
+    return cmap

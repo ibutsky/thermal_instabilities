@@ -60,7 +60,7 @@ os.chdir(plot_folder)
 os.system('ffmpeg -r 10 -f image2 -s 1920x1080 -i %04d.png -vcodec libx264 -crf 25 -pix_fmt yuv420p density.mov')
 os.rename('density.mov', '../%s_density_only.mov'%sim)
 png_files = glob.glob('*.png')
-for pic in png_files:
-    os.remove(pic)
+#for pic in png_files:
+#    os.remove(pic)
 os.chdir(cwd)
 

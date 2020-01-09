@@ -103,17 +103,6 @@ def plot_density_fluctuation_growth(sim, tctf_list = [1.0], cr_list = [0], diff_
 
         time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field, grid_rank = grid_rank)
         ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 3, label = label, color = cpal[i])
-        
-        if tctf > 0:
-            for res in [128]:
-                sim_location = '../../simulations/2d_%i/%s_tctf_%.1f'%(res, sim, tctf)
-                if beta_list[i] != 'inf':
-                    sim_location += '_beta_%.1f'%beta_list[i]
-                time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, \
-                                                                        field = field, grid_rank = 2)
-                print(time_list, dzfield_rms_list)
-                ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 2, alpha = 0.7, color = cpal[i], \
-                        linestyle = 'dashed', label = label + ', 2D %i'%res)
      
     ax.set_xlabel('t/t$_{cool}$')
     if field == 'density':
@@ -122,19 +111,20 @@ def plot_density_fluctuation_growth(sim, tctf_list = [1.0], cr_list = [0], diff_
         ax.set_ylabel('RMS Temperature Fluctuation')
     ax.legend()
     fig.tight_layout()
-    figname = pt.get_fig_name('density_fluctuation_growth', sim, compare, tctf_list[0], beta_list[0], \
-                              cr_list[0], diff_list[0])
+    figname = pt.get_fig_name('density_fluctuation_growth', sim, compare, \
+                              tctf_list[0], beta_list[0], cr_list[0], diff_list[0], \
+                              loc = '../../plots/production')
     plt.savefig(figname, dpi = 300)
 
         
 
-work_dir = '../../simulations/'
+work_dir = '../../simulations/production'
 grid_rank = 3
 
 field = 'density'
 zstart = 0.8
 zend = 1.2
-save = True
+save = False
 load = False
 
 crdiff = 0
@@ -145,12 +135,12 @@ compare = sys.argv[2]
 if sys.argv[3]:
     tctf = float(sys.argv[3])
 
-
 print(compare)
 tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list\
     = pt.generate_lists(compare, tctf, crdiff = crdiff)
 
-beta_list = len(tctf_list) * [10]
+#if compare == 'tctf':
+#    beta_list = len(tctf_list) * [100]
 print(tctf_list, beta_list, cr_list, diff_list)
 
 plot_density_fluctuation_growth(sim, tctf_list = tctf_list, beta_list = beta_list, \
