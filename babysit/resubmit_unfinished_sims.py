@@ -2,7 +2,7 @@ import os
 import glob
 import numpy as np
 
-def generate_restart_sbatch_file(sim_loc, output, nodes = 1, tasks_per_node = 32, wall_time = '12:00:00'):
+def generate_restart_sbatch_file(sim_loc, output, nodes = 1, tasks_per_node = 48, wall_time = '24:00:00'):
     cwd = os.getcwd()
     sim_basename = os.path.basename(sim_loc)
     outf = open('%s/resubmit.sbatch'%sim_loc, 'w')
@@ -33,7 +33,7 @@ def find_last_output(sim_loc):
     return os.path.basename(DD_list[-2])
 
 
-def resubmit_unfinished_sims(nodes = 1, tasks_per_node = 32, wall_time = '4:00:00'):
+def resubmit_unfinished_sims(nodes = 1, tasks_per_node = 48, wall_time = '24:00:00'):
     unfinished_sim_list = np.loadtxt('unfinished_sims.dat', dtype = 'str', \
                                      usecols = 1, skiprows = 1)
     workdir = np.loadtxt('unfinished_sims.dat', dtype = 'str', max_rows = 1) 
@@ -44,7 +44,7 @@ def resubmit_unfinished_sims(nodes = 1, tasks_per_node = 32, wall_time = '4:00:0
         generate_restart_sbatch_file(sim_loc, last_output, nodes = nodes, \
                                      tasks_per_node = tasks_per_node, wall_time = wall_time)
         
-        cw = os.cwd()
+        cw = os.getcwd()
         os.chdir('%s'%sim_loc)
         os.system('sbatch resubmit.sbatch')
         os.chdir(cw)

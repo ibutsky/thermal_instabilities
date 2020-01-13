@@ -8,8 +8,9 @@ import matplotlib.pylab as plt
 import palettable
 
 import plotting_tools as pt
+import yt_functions as ytf
 
-def calculate_rms_fluctuation(sim_folder, output_list, field = 'density', grid_rank = 3):
+def calculate_rms_fluctuation(sim_folder, output_list, field = 'density', grid_rank = 3, zstart = 0.8, zend = 1.2):
     time_list     = np.array([])
     dzfield_rms_list = np.array([])
     if not os.path.isdir(sim_folder):
@@ -26,7 +27,7 @@ def calculate_rms_fluctuation(sim_folder, output_list, field = 'density', grid_r
             ds_path = "%s/DD%04d/DD%04d"%(sim_folder, output, output)
 
             if os.path.isfile(ds_path):
-                ds = yt.load(ds_path)
+                ds = ytf.load(ds_path)
                 print(zstart, zend)
 
                 if (grid_rank == 3):
@@ -68,9 +69,20 @@ def calculate_rms_fluctuation(sim_folder, output_list, field = 'density', grid_r
 
 
 
-def plot_density_fluctuation_growth(sim, tctf_list = [1.0], cr_list = [0], diff_list = [0], \
-                                    stream_list = [0], heat_list = [0], field = 'density', \
-                                    beta_list = ['inf'], work_dir = '../../simulations/', grid_rank = 3):
+def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stream = 0, heat = 0, 
+                                    field = 'density', work_dir = '../../simulations/', grid_rank = 3):
+
+    tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list\
+                        = pt.generate_lists(compare, tctf, crdiff = crdiff, cr = cr)
+    if field == 'cr_pressure':
+        mask = cr_list > 0
+        tctf_list = tctf_list[mask]
+        beta_list = beta_list[mask]
+        cr_list = cr_list[mask]
+        diff_list = diff_list[mask]
+        stream_list = stream_list[mask]
+        heat_list = heat_list[mask]
+    print(tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list)
 
     fig, ax = plt.subplots(figsize = (6, 6))
     ax.set_yscale('log')
@@ -109,41 +121,37 @@ def plot_density_fluctuation_growth(sim, tctf_list = [1.0], cr_list = [0], diff_
         ax.set_ylabel('$ \\langle \\delta \\rho / \\rho\\rangle_{\\mathrm{rms}}$ ')
     elif field == 'temperature':
         ax.set_ylabel('RMS Temperature Fluctuation')
+    elif field == 'cr_pressure':
+        ax.set_ylabel('RMS CR Pressure Fluctuation')
     ax.legend()
     fig.tight_layout()
-    figname = pt.get_fig_name('density_fluctuation_growth', sim, compare, \
+    figname = pt.get_fig_name('%s_fluctuation_growth'%field, sim, compare, \
                               tctf_list[0], beta_list[0], cr_list[0], diff_list[0], \
                               loc = '../../plots/production')
     plt.savefig(figname, dpi = 300)
 
-        
+
+def make_all_plots(compare, beta = 100, cr = 0.1, field = 'density'):
+    all_tctf = [.1, 0.3, 1, 3]
+    all_cr = [0.01, .1, 1, 10]
+    for sim in ['isothermal', 'isocool']:
+        if compare == 'diff' or compare == 'stream':
+            for tctf in all_tctf:
+                for cr in all_cr:
+                    plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, work_dir = work_dir, field = field)
+
+        elif compare == 'cr':
+            for tctf in all_tctf:
+                plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, work_dir = work_dir, field = field)
+
 
 work_dir = '../../simulations/production'
-grid_rank = 3
-
-field = 'density'
-zstart = 0.8
-zend = 1.2
-save = False
-load = False
+save = True
+load = True
 
 crdiff = 0
+compare = sys.argv[1]
 
-sim = sys.argv[1]
-compare = sys.argv[2]
+field = 'cr_pressure'
 
-if sys.argv[3]:
-    tctf = float(sys.argv[3])
-
-print(compare)
-tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list\
-    = pt.generate_lists(compare, tctf, crdiff = crdiff)
-
-#if compare == 'tctf':
-#    beta_list = len(tctf_list) * [100]
-print(tctf_list, beta_list, cr_list, diff_list)
-
-plot_density_fluctuation_growth(sim, tctf_list = tctf_list, beta_list = beta_list, \
-                                grid_rank = grid_rank, stream_list = stream_list, \
-                                heat_list = heat_list, cr_list = cr_list, diff_list = diff_list, \
-                                field = field, work_dir = work_dir)
+make_all_plots(compare, field = field)

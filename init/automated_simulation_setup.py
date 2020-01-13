@@ -148,12 +148,12 @@ perturb_type = 1
 nodes = 1
 wall_time = '24:00:00'
 
-cr_diffusion = 2
-tcr_tff_ratio = 1.0
+cr_diffusion = 0#2
+tcr_tff_ratio = 0#3.0
 
-cr_streaming = 0#1
+cr_streaming = 1
 cr_streaming_stability = 50
-cr_heating   = 0
+cr_heating   = 1
 
 
 
@@ -161,9 +161,9 @@ halo_prof_list = [1, 3]
 tctf_list = [0.1, 0.3, 1.0, 3.0] #, 10.0]
 #tctf_list = [0.3]
 #beta_list = ['inf', 300, 100, 30, 10, 3]
-beta_list = [100]
+beta_list = [10]
 cr_list = [0.01, 0.1, 1.0, 10.0]
-#cr_list = [0]
+#cr_list = [0.1]
 
 for halo_prof in halo_prof_list:
     for tctf in tctf_list:

@@ -120,3 +120,6 @@ estd.out*
 *~
 
 slurm*
+
+babysit/unfinished_sims.dat
+init/old_perturbation_inputs/

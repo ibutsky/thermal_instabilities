@@ -338,7 +338,7 @@ def make_power_spectrum(ds, field = 'drho'):
     return k, P_spectrum
 
 
-def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0):
+def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, beta = 100.0):
     if compare == 'tctf':
         tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
         num = len(tctf_list)
@@ -359,22 +359,61 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0):
         cr_list = [0, 0.01, 0.1, 1.0, 10.0, 100]
         num = len(cr_list)
         tctf_list = num*[tctf]
-        beta_list = num*[100.0]
+        beta_list = num*[beta]
         diff_list = num*[crdiff]
         stream_list = num*[crstream]
         heat_list = num*[crheat]
+    elif compare == 'diff':
+        diff_list = [0, 0, 3, 1]
+        num = len(diff_list)
+        tctf_list = num*[tctf]
+        beta_list = num*[beta]
+        cr_list = num*[cr]
+        cr_list[0]=0
+        stream_list = num*[0]
+        heat_list = num*[0]
+    elif compare == 'stream':
+        beta_list = [100, 100, 100]
+        num = len(beta_list)
+        cr_list = num*[cr]
+        cr_list[0] = 0
+        tctf_list = num*[tctf]
+        stream_list = num*[1]
+        stream_list[0] = 0
+        diff_list = num*[0]
+        heat_list = num*[crheat]
+        heat_list[-1] = 1
     elif compare == 'transport':
         tctf_list = [0.1, 0.1, 0.1, 0.1, 0.1]
         cr_list  = [0, 1, 1, 1, 1]
-        beta_list = 5*[100.0]
+        beta_list = 5*[beta]
         diff_list = [0, 0, 3, 0, 0]
         stream_list = [0, 0, 0, 1, 1]
         heat_list = [0, 0, 0, 0, 1]
-
+    tctf_list = np.array(tctf_list)
+    beta_list = np.array(beta_list)
+    cr_list = np.array(cr_list)
+    diff_list = np.array(diff_list)
+    stream_list = np.array(stream_list)
+    heat_list = np.array(heat_list)
     return tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list
 
+
+def generate_sim_list(sim, compare, tctf, crdiff = 0, crstream = 0, crheat=0, \
+                      cr = 1.0, beta = 100.0, work_dir = '../../simulations'):
+    tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list = \
+                    generate_lists(compare, tctf, crdiff = crdiff, crstream = crstream,\
+                                   crheat=crheat, cr = cr, beta = beta)
+    sim_list = []
+    for i in range(len(tctf)):
+        sim_list.append(get_sim_location(sim, tctf_list[i], beta_list[i], cr_list[i], \
+                                         stream_list[i], heat_list[i], work_dir = work_dir))
+
+    return sim_list
+                                         
+
 def get_sim_location(sim, tctf, beta, cr, diff = 0, \
-            stream = 0, heat = 0, work_dir = '../../simulations/'):
+            stream = 0, heat = 0, work_dir = '../../simulations'):
     if beta == 'inf':
         sim_location = '%s/%s_tctf_%.1f'%(work_dir, sim, tctf)
     else:
@@ -417,26 +456,47 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
             label = 'streaming'
         if crheat > 0:
             label = 'stream + heat'
+    elif compare == 'diff':
+        if cr == 0:
+            label = 'No CRs'
+        elif crdiff == 0:
+            label = 't$_{diff}$/t$_{ff}$ = $\infty$'
+        else:
+            label = 't$_{diff}$/t$_{ff}$ = %.1f'%crdiff
+    elif compare == 'stream':
+        if cr == 0:
+            label = 'No CRs'
+        elif crstream:
+            label = 'stream'
+            if crheat:
+                label += ' + heat'
+            label += ', $\\beta = %i$'%beta
             
     return label
 
-def get_fig_name(base, sim, compare, tctf, beta, cr=0, diff=0, time = -1, use_tctf = 0, loc = '../../plots/'):
+def get_fig_name(base, sim, compare, tctf, beta, cr=0, crdiff=0, crheat=0, time = -1, use_tctf = 0, loc = '../../plots/'):
     plot_name = '%s/%s_%s'%(loc, base, sim)
     if compare == 'tctf':
         if beta != 'inf':
             plot_name += '_beta_%.1f'%(beta)
         if cr >0:
             plot_name += '_cr_%.1f'%(cr)
-        if diff > 0:
-            plot_name += '_diff_%.1f'%diff
+        if crdiff > 0:
+            plot_name += '_diff_%.1f'%crdiff
     if time < 0 or use_tctf:
         plot_name += '_tctf_%.1f'%tctf
     if compare == 'beta':
         plot_name += '_beta_compare'
     elif compare == 'cr':
         plot_name += '_beta_%.1f_cr_compare'%(beta)
-        if diff > 0:
+        if crdiff > 0:
             plot_name += '_diff_%.1f'%diff
+    elif compare == 'diff':
+        plot_name += '_beta_%.1f_cr_%.1f_diff_compare'%(beta, cr)
+    elif compare == 'stream':
+        plot_name += '_beta_%.1f_cr_%.1f_stream_compare'%(beta, cr)
+        if crheat > 0:
+            plot_name += '_heat'
     elif compare == 'transport':
         plot_name += '_transport_compare'
     if time > 0:
