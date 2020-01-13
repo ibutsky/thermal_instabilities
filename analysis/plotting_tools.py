@@ -373,7 +373,7 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         stream_list = num*[0]
         heat_list = num*[0]
     elif compare == 'stream':
-        beta_list = [100, 100, 100]
+        beta_list = [100, 100, 100, 10, 10]
         num = len(beta_list)
         cr_list = num*[cr]
         cr_list[0] = 0
@@ -381,8 +381,9 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         stream_list = num*[1]
         stream_list[0] = 0
         diff_list = num*[0]
-        heat_list = num*[crheat]
+        heat_list = num*[0]
         heat_list[-1] = 1
+        heat_list[-3] = 1
     elif compare == 'transport':
         tctf_list = [0.1, 0.1, 0.1, 0.1, 0.1]
         cr_list  = [0, 1, 1, 1, 1]

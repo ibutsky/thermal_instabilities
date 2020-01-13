@@ -43,7 +43,7 @@ def plot_power_spectrum(sim, compare, tctf, beta, cr, diff = 0, stream = 0, heat
      
     ax.set_xlabel('k')
     ax.set_ylabel('P(k)')
-    ax.set_xlim(1, 1e2)
+    ax.set_xlim(1, 200)
     ax.set_ylim(1e-6, 1e2)
     ax.legend(loc = 1)
     fig.tight_layout()

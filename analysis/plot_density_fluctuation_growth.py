@@ -126,8 +126,7 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
     ax.legend()
     fig.tight_layout()
     figname = pt.get_fig_name('%s_fluctuation_growth'%field, sim, compare, \
-                              tctf_list[0], beta_list[0], cr_list[0], diff_list[0], \
-                              loc = '../../plots/production')
+                              tctf, beta, cr, diff,  loc = '../../plots/production')
     plt.savefig(figname, dpi = 300)
 
 

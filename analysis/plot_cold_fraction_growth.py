@@ -63,8 +63,7 @@ def plot_cold_fraction_growth(sim, compare, tctf, beta, cr, diff = 0, stream = 0
 
     ax.legend()
     fig.tight_layout()
-    figname = pt.get_fig_name('cold_fraction_growth', sim, compare, \
-                              tctf_list[0], beta_list[0], cr_list[0], diff_list[0], \
+    figname = pt.get_fig_name('cold_fraction_growth', sim, compare, tctf, beta, cr, diff
                               loc = '../../plots/production')
     plt.savefig(figname, dpi = 300)
 
