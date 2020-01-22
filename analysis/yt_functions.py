@@ -74,11 +74,28 @@ def _total_cr_pressure(field, data):
     return data[('gas', 'pressure')] + data[('gas', 'magnetic_pressure')] + data[('gas', 'cr_pressure')]
 
 
+def _v_dot_b(field, data):
+    vx = data[('gas', 'velocity_x')]
+    vy = data[('gas', 'velocity_y')]
+    vz = data[('gas', 'velocity_z')]
+    v_mag = data[('gas', 'velocity_magnitude')]
+
+    bx = data[('gas', 'magnetic_field_x')]
+    by = data[('gas', 'magnetic_field_y')]
+    bz = data[('gas', 'magnetic_field_z')]
+    b_mag = data[('gas', 'magnetic_field_strength')]
+    return (vx*bx + vy*by + vz*bz) / (v_mag * b_mag)
+
+
+
 def load(output_location, load_accel = True, load_cr = False, grid_rank = 3):
     ds = yt.load(output_location)
     if output_location.__contains__('2d_'):
         grid_rank = 2
 
+    ds.add_field(('gas', 'v_dot_b'), function = _v_dot_b, sampling_type = 'cell', \
+                 display_name = '$\frac{v \cdot$ B}{|v| |B|}$', units = '')
+        
     if load_accel:
         ds.add_field(('gas', 'external_acceleration_y'), function = _accel_y,  sampling_type = 'cell',\
                 display_name = 'External Acceleration Y', units = 'cm/s**2')

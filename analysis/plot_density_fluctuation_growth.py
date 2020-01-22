@@ -72,8 +72,9 @@ def calculate_rms_fluctuation(sim_folder, output_list, field = 'density', grid_r
 def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stream = 0, heat = 0, 
                                     field = 'density', work_dir = '../../simulations/', grid_rank = 3):
 
-    tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list\
-                        = pt.generate_lists(compare, tctf, crdiff = crdiff, cr = cr)
+
+    tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list \
+                        = pt.generate_lists(compare, tctf, beta = beta, crdiff = crdiff, cr = cr)
     if field == 'cr_pressure':
         mask = cr_list > 0
         tctf_list = tctf_list[mask]
@@ -84,7 +85,7 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
         heat_list = heat_list[mask]
     print(tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list)
 
-    fig, ax = plt.subplots(figsize = (6, 6))
+    fig, ax = plt.subplots(figsize = (4.4, 4))
     ax.set_yscale('log')
     ax.set_ylim(5e-3, 5)
     ax.set_xlim(0, 10)
@@ -93,7 +94,10 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
     time_list = np.arange(0, 12, 1)
     wcool = 1.0 / (gamma * 1.0)
     pi = (5./3.) * wcool
-    ax.plot(time_list, 0.02*np.exp(pi*time_list), color = 'black',\
+    linecolor = 'black'
+    if pt.dark_mode:
+        linecolor = 'white'
+    ax.plot(time_list, 0.02*np.exp(pi*time_list), color = linecolor,\
             linestyle = 'dashed', label = 'Linear Theory', linewidth = 3)
 
     cpal = palettable.cmocean.sequential.Tempo_7_r.mpl_colors
@@ -142,7 +146,10 @@ def make_all_plots(compare, beta = 100, cr = 0.1, field = 'density'):
         elif compare == 'cr':
             for tctf in all_tctf:
                 plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, work_dir = work_dir, field = field)
-
+                
+        elif compare == 'tctf':
+            tctf = 0.1
+            plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, work_dir = work_dir, field = field)
 
 work_dir = '../../simulations/production'
 save = True
@@ -151,6 +158,6 @@ load = True
 crdiff = 0
 compare = sys.argv[1]
 
-field = 'cr_pressure'
-
+#field = 'cr_pressure'
+field = 'density'
 make_all_plots(compare, field = field)

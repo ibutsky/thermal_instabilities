@@ -48,6 +48,7 @@ def plot_density_slices(ds, folder = '.'):
 
     cmap_list = [palettable.cmocean.sequential.Tempo_20.mpl_colormap, \
                  palettable.cmocean.diverging.Curl_9.mpl_colormap]
+#    cmap_list = ['bone']
 
     fig, ax = plt.subplots(ncols = 4, nrows = 2, figsize=(30,14))
     for row in range(2):
@@ -180,7 +181,7 @@ os.system('ffmpeg -r 10 -f image2 -s 1920x1080 -i %04d.png -vcodec libx264 -crf 
 os.rename('density.mov', '../%s_density.mov'%(sim))
 png_files = glob.glob('*.png')
 for pic in png_files:
-    os.remove(pic)
+#    os.remove(pic)
 os.chdir(cwd)
 
 # ffmpeg -framerate 12 -pattern_type glob -i *.png -c:v mpeg4 -pix_fmt yuv420p -q:v 0 -b 512k movie.mov

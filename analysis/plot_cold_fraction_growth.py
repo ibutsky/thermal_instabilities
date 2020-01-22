@@ -15,9 +15,11 @@ def plot_cold_fraction_growth(sim, compare, tctf, beta, cr, diff = 0, stream = 0
                               work_dir = '../../simulations/', grid_rank = 3):
 
     tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list\
-                        = pt.generate_lists(compare, tctf, crdiff = crdiff, cr = cr)
+                        = pt.generate_lists(compare, tctf, crdiff = crdiff, beta = beta, cr = cr)
 
-    fig, ax = plt.subplots(figsize = (4, 4))
+    print(tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list)
+
+    fig, ax = plt.subplots(figsize = (4.4, 4))
     ax.set_yscale('log')
     ax.set_ylim(5e-3, 5)
     ax.set_xlim(0, 10)
@@ -63,11 +65,11 @@ def plot_cold_fraction_growth(sim, compare, tctf, beta, cr, diff = 0, stream = 0
 
     ax.legend()
     fig.tight_layout()
-    figname = pt.get_fig_name('cold_fraction_growth', sim, compare, tctf, beta, cr, diff
+    figname = pt.get_fig_name('cold_fraction_growth', sim, compare, tctf, beta, cr, diff, 
                               loc = '../../plots/production')
     plt.savefig(figname, dpi = 300)
 
-def make_all_plots(compare, beta = 100, cr = 0.1):
+def make_all_plots(compare, beta = 100, cr = 0.1, tctf = 0.3):
     all_tctf = [.1, 0.3, 1, 3]
     all_cr = [0.01, .1, 1, 10]
     for sim in ['isothermal', 'isocool']:
@@ -79,7 +81,8 @@ def make_all_plots(compare, beta = 100, cr = 0.1):
         elif compare == 'cr':
             for tctf in all_tctf:
                     plot_cold_fraction_growth(sim, compare, tctf, beta, cr, work_dir = work_dir)
-
+        else:
+            plot_cold_fraction_growth(sim, compare, tctf, beta, cr, work_dir = work_dir)
         
 
 work_dir = '../../simulations/production'

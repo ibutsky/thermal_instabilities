@@ -16,6 +16,10 @@ import multiprocessing as mp
 
 import yt_functions as ytf
 
+dark_mode = 0
+
+if dark_mode:
+    plt.style.use('dark_background')
 
 
 def calculate_p(rho, T):
@@ -342,8 +346,8 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
     if compare == 'tctf':
         tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
         num = len(tctf_list)
-        cr_list = num*[0]
-        beta_list = num*['inf']
+        cr_list = num*[cr]
+        beta_list = num*[beta]
         diff_list = num*[crdiff]
         stream_list = num*[crstream]
         heat_list = num*[crheat]
@@ -438,9 +442,12 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
     label = '$t_{cool}/t_{ff}$ = %.1f'%tctf
     print(compare)
     if compare == 'cr':
-        label = 'P$_c$ / P$_g$ = %.1f'%cr
-        if cr < 0.1:
-            label = 'P$_c$ / P$_g$ = %.2f'%cr
+        if cr == 0:
+            label = 'No CR'
+        else:
+            label = 'P$_c$ / P$_g$ = %.1f'%cr
+            if cr < 0.1:
+                label = 'P$_c$ / P$_g$ = %.2f'%cr
     elif compare == 'beta':
         if beta == 'inf':
             label = 'Hydro'
@@ -572,3 +579,18 @@ def get_cmap(field):
     elif field == 'magnetic_field_strength':
         cmap = palettable.scientific.sequential.LaPaz_20.mpl_colormap
     return cmap
+
+
+def get_masked_data(ds, field, z_min = 0.8, z_max = 1.2, T_cold = 3.33333e5):
+    ad = ds.all_data()
+    z_abs_code = np.abs(ad[('gas', 'z')] / ds.length_unit.in_units('kpc'))
+    temp = np.array(ad[('gas', 'temperature')])
+    zmask_cold = (z_abs_code >= z_min) & (z_abs_code <= z_max) & (temp <= T_cold)
+    zmask_hot = (z_abs_code >= z_min) & (z_abs_code <= z_max) & (temp > T_cold)
+
+    cold = np.array(ad[('gas', field)][zmask_cold].d)
+    hot = np.array(ad[('gas', field)][zmask_hot].d)
+
+    return cold, hot
+
+
