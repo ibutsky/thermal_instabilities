@@ -8,7 +8,9 @@ halo_profile    = 3    # 1 = isothermal, 2 = isentropic, 3 = iso-tcool
 perturb_type    = 1
 
 # note: beta = p_mag / p_gas 
+constant_B_pressure     = 0
 magnetic_pressure_ratio = 0
+constant_cr_pressure    = 0
 cr_pressure_ratio       = 0
 
 cr_streaming = 0

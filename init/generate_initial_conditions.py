@@ -208,9 +208,14 @@ def generate_enzo_input_file():
     outf.write("TIPerturbationType\t\t = %i\n"%perturb_type)
     outf.write("TIHaloProfile \t\t\t = %i\n"%(halo_profile))
     outf.write("TIMagneticFieldDirection = %f %f %f\n"%(bfield_direction[0], bfield_direction[1], bfield_direction[2]))
+    if constant_B_pressure == 1:
+            outf.write("TIMagneticFieldUseConstantBeta    = 0\n")
+
     outf.write("TIMagneticFieldInverseBeta      = %e\n"%(magnetic_pressure_ratio))
     outf.write("TestProblemUseMetallicityField\t = 0 \n")
     if cr_pressure_ratio > 0 :
+        if constant_cr_pressure == 1:
+            outf.write("TICosmicRayUseConstantEta    = 0\n")
         outf.write("TICosmicRayPressureRatio   = %e\n"%(cr_pressure_ratio))
         outf.write("CRModel                    = 1\n")
         outf.write("CRCourantSafetyNumber      = 0.4\n")
@@ -220,6 +225,8 @@ def generate_enzo_input_file():
         outf.write("CRStreamStabilityFactor = %e\n"%cr_streaming_stability)
         outf.write("CRHeating\t                = %i\n"%cr_heating)
         outf.write("CRdensFloor                = 1e-20\n")
+
+            
     outf.close()
 
 

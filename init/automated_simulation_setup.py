@@ -47,10 +47,12 @@ def create_constants_and_parameters_file(fn, halo_profile, tcool_tff_ratio, pert
     f.write('halo_profile    = %i    # 1 = isothermal, 2 = isentropic, 3 = iso-tcool\n'%halo_profile)
     f.write('perturb_type    = %i \n'%perturb_type)
     
+    f.write('constant_B_pressure    = %i\n'%constant_B_pressure)
     if beta == 'inf':
         f.write('magnetic_pressure_ratio = 0.0 \n')
     else:
         f.write('magnetic_pressure_ratio = %f \n'%(1.0 / beta))
+    f.write('constant_cr_pressure    = %i\n'%constant_cr_pressure)
     f.write('cr_pressure_ratio       = %f\n\n' %eta)
 
     f.write('cr_diffusion       = %i\n'%cr_diffusion)
@@ -136,9 +138,11 @@ def get_sim_dir():
         sim_dir = '../../simulations/kmax_%i'%kmax
     elif skinny:
         sim_dir = '../../simulations/skinny'
+    elif constant_cr_pressure:
+        sim_dir = '../../simulations/production/constant_crp'
 
 
-sim_dir = '../../simulations/production'
+sim_dir = '../../simulations/production/constant_crp'
 grid_rank = 3
 ndim = 256
 kmax = 0
@@ -148,22 +152,25 @@ perturb_type = 1
 nodes = 1
 wall_time = '24:00:00'
 
+constant_B_pressure = 0
+constant_cr_pressure = 1
+
 cr_diffusion = 0#2
 tcr_tff_ratio = 0#3.0
 
-cr_streaming = 1
+cr_streaming = 0
 cr_streaming_stability = 50
-cr_heating   = 1
+cr_heating   = 0
 
 
 
-halo_prof_list = [1, 3]
+halo_prof_list = [3]
 tctf_list = [0.1, 0.3, 1.0, 3.0] #, 10.0]
-#tctf_list = [0.3]
+tctf_list = [0.3]
 #beta_list = ['inf', 300, 100, 30, 10, 3]
-beta_list = [10]
+beta_list = [100]
 cr_list = [0.01, 0.1, 1.0, 10.0]
-#cr_list = [0.1]
+cr_list = [10]
 
 for halo_prof in halo_prof_list:
     for tctf in tctf_list:
