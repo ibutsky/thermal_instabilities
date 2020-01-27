@@ -389,12 +389,16 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         heat_list[-1] = 1
         heat_list[-3] = 1
     elif compare == 'transport':
-        tctf_list = [0.1, 0.1, 0.1, 0.1, 0.1]
-        cr_list  = [0, 1, 1, 1, 1]
-        beta_list = 5*[beta]
-        diff_list = [0, 0, 3, 0, 0]
-        stream_list = [0, 0, 0, 1, 1]
-        heat_list = [0, 0, 0, 0, 1]
+        diff_list   = [0, 0, 3, 1, 0, 0, 0]
+        stream_list = [0, 0, 0, 0, 1, 1, 1]
+        heat_list   = [0, 0, 0, 0, 0, 1, 1]
+        num = len(diff_list)
+        tctf_list = num*[tctf]
+        cr_list  = num*[cr]
+        cr_list[0] = 0
+        beta_list = num*[100]
+        beta_list[-1] = 10
+
     tctf_list = np.array(tctf_list)
     beta_list = np.array(beta_list)
     cr_list = np.array(cr_list)
@@ -454,16 +458,16 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
         else:
             label = '$\\beta = $%.1f'%beta
     elif compare == 'transport':
+        if cr == 0:
+            label = 'No CR'
         if cr > 0:
             label = 'P$_c$ / P$_g$ = %.1f'%cr
-        else:
-            label = 'No CR'
-        if crdiff > 0:
-            label = 'diffusion'
-        if crstream > 0:
-            label = 'streaming'
-        if crheat > 0:
-            label = 'stream + heat'
+            if crdiff > 0:
+                label = 'tdiff = %i'%crdiff
+            if crstream > 0:
+                label = 'stream, $\\beta = %i$'%beta
+            if crheat > 0:
+                label += ' + heat'
     elif compare == 'diff':
         if cr == 0:
             label = 'No CRs'
@@ -506,7 +510,7 @@ def get_fig_name(base, sim, compare, tctf, beta, cr=0, crdiff=0, crheat=0, time 
         if crheat > 0:
             plot_name += '_heat'
     elif compare == 'transport':
-        plot_name += '_transport_compare'
+        plot_name += 'cr_%.2f_transport_compare'%cr
     if time > 0:
         plot_name += '_%i'%time
 

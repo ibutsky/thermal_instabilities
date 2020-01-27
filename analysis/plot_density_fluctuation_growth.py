@@ -102,7 +102,7 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
 
     cpal = palettable.cmocean.sequential.Tempo_7_r.mpl_colors
     cpal = palettable.scientific.sequential.Batlow_11.mpl_colors
-    cpal = palettable.scientific.sequential.Batlow_6.mpl_colors
+    cpal = palettable.scientific.sequential.Batlow_7.mpl_colors
 
     #output_list = np.linspace(0, 100, 10)
     output_list = np.arange(0, 210, 10)
@@ -138,7 +138,7 @@ def make_all_plots(compare, beta = 100, cr = 0.1, field = 'density'):
     all_tctf = [.1, 0.3, 1, 3]
     all_cr = [0.01, .1, 1, 10]
     for sim in ['isothermal', 'isocool']:
-        if compare == 'diff' or compare == 'stream':
+        if compare == 'diff' or compare == 'stream' or compare == 'transport':
             for tctf in all_tctf:
                 for cr in all_cr:
                     plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, work_dir = work_dir, field = field)
@@ -150,6 +150,7 @@ def make_all_plots(compare, beta = 100, cr = 0.1, field = 'density'):
         elif compare == 'tctf':
             tctf = 0.1
             plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, work_dir = work_dir, field = field)
+
 
 work_dir = '../../simulations/production'
 save = True

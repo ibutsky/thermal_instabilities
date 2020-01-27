@@ -45,7 +45,10 @@ def plot_cold_density(output, sim, compare, tctf, beta, cr, diff = 0, stream = 0
                 if os.path.isfile(out_name) and load == True:
                     mean_rho_cold, mean_rho_hot, median_rho_cold, median_rho_hot = np.loadtxt(out_name, unpack=True)
                     tctf_list.append(tctf)
-                    cold_dens_list.append(mean_rho_cold / mean_rho_hot)
+                    if use_mean:
+                        cold_dens_list.append(mean_rho_cold / mean_rho_hot)
+                    else:
+                        cold_dens_list.append(median_rho_cold / median_rho_hot)
 
                 else:
                     ds_loc = '%s/DD%04d/DD%04d'%(sim_location, output, output)
@@ -53,7 +56,10 @@ def plot_cold_density(output, sim, compare, tctf, beta, cr, diff = 0, stream = 0
                         ds = yt.load(ds_loc)
                         rho_cold, rho_hot = pt.get_masked_data(ds, 'density')
                         tctf_list.append(tctf)
-                        cold_dens_list.append(np.mean(rho_cold) / np.mean(rho_hot))
+                        if use_mean:
+                            cold_dens_list.append(np.mean(rho_cold) / np.mean(rho_hot))
+                        else:
+                            cold_dens_list.append(np.median(rho_cold) / np.median(rho_hot))
                         if save:
                             outf = open(out_name, 'w')
                             outf.write("%e %e %e %e\n"%(np.mean(rho_cold), np.mean(rho_hot), np.median(rho_cold), np.median(rho_hot)))
@@ -77,7 +83,11 @@ def plot_cold_density(output, sim, compare, tctf, beta, cr, diff = 0, stream = 0
     ax.set_ylabel('$\\rho_{cold} / \\rho_{hot}$')
     ax.legend(fontsize = 8)
     fig.tight_layout()
-    figname = pt.get_fig_name('density_contrast', sim, compare, \
+    if use_mean:
+        fig_basename = 'mean_density_contrast'
+    else:
+        fig_basename = 'median_density_contrast'
+    figname = pt.get_fig_name(fig_basename, sim, compare, \
                               tctf, beta, cr, diff_list[0], time = output, \
                               loc = '../../plots/production')
     print(figname)
@@ -87,6 +97,7 @@ def plot_cold_density(output, sim, compare, tctf, beta, cr, diff = 0, stream = 0
 work_dir = '../../simulations/production'
 load = True
 save = True
+use_mean = False
 def make_all_plots(output, compare, beta = 100, cr = 0.1,\
                    tctf = 0.1, crdiff = 0, crstream = 0, crheat = 0):
     for sim in ['isocool', 'isothermal']:

@@ -24,7 +24,7 @@ mh = const.m_p.cgs.value
 kb = const.k_B.cgs.value
 p0 = (rho0 / mu / mh) * kb*T0
 
-sim_family = 'production/high_res'
+sim_family = 'production/constant_crp'
 #sim_family = 'skinny'
 workdir = '../../simulations/%s'%sim_family
 plot_folder = '../../movies/temp2'
@@ -100,6 +100,7 @@ def make_movie_plots(output):
                     
 
 sim_list = glob.glob('%s/*tctf*'%workdir)
+print(sim_list)
 #sim_list = glob.glob('%s/*tdiff_3.0'%workdir)
 #sim_list = ['%s/isocool_tctf_0.1_beta_100.0_cr_1.0_tdiff_1.0'%workdir]
 #sname = sys.argv[1]
