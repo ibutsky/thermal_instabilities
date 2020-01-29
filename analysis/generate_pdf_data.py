@@ -56,7 +56,7 @@ def generate_pdf_data(sim):
     density_bins     = 0.5*(rho_bin_edges[1:] + rho_bin_edges[:-1])
 
     sim_base = os.path.basename(sim)
-    pdf_file = h5.File('../../data/production/pdf_data_%s.h5', 'a')
+    pdf_file = h5.File('../../data/production/pdf_data_%s.h5'%sim_base, 'a')
     pdf_file.create_dataset('time', data = np.array(time_list))
     pdf_file.create_dataset('temperature_bins', data = temperature_bins)
     pdf_file.create_dataset('density_bins', data = density_bins)

@@ -10,7 +10,8 @@ import palettable
 import plotting_tools as pt
 import yt_functions as ytf
 
-def calculate_rms_fluctuation(sim_folder, output_list, field = 'density', grid_rank = 3, zstart = 0.8, zend = 1.2):
+def calculate_rms_fluctuation(sim_folder, output_list, field = 'density', grid_rank = 3, zstart = 0.8, zend = 1.2, \
+                              data_loc = '../../data'):
     time_list     = np.array([])
     dzfield_rms_list = np.array([])
     if not os.path.isdir(sim_folder):
@@ -18,7 +19,7 @@ def calculate_rms_fluctuation(sim_folder, output_list, field = 'density', grid_r
     sim_base = os.path.basename(sim_folder)
     print(sim_base)
     
-    out_name = '../../data/fluctuation_growth_%s_%s'%(sim_base, field)
+    out_name = '%s/fluctuation_growth_%s_%s'%(data_loc, sim_base, field)
     if os.path.isfile(out_name) and load == True:
         time_list, dzfield_rms_list = np.loadtxt(out_name, unpack=True)
     
@@ -102,10 +103,10 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
 
     cpal = palettable.cmocean.sequential.Tempo_7_r.mpl_colors
     cpal = palettable.scientific.sequential.Batlow_11.mpl_colors
-    cpal = palettable.scientific.sequential.Batlow_7.mpl_colors
+    cpal = palettable.scientific.sequential.Batlow_8.mpl_colors
 
     #output_list = np.linspace(0, 100, 10)
-    output_list = np.arange(0, 210, 10)
+    output_list = np.arange(0, 110, 10)
     for i, tctf in enumerate(tctf_list):
         sim_location = pt.get_sim_location(sim, tctf, beta_list[i], cr_list[i], \
                                            diff = diff_list[i], stream = stream_list[i], 
@@ -119,6 +120,32 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
 
         time_list, dzfield_rms_list = calculate_rms_fluctuation(sim_location, output_list, field = field, grid_rank = grid_rank)
         ax.plot(time_list/tctf, dzfield_rms_list, linewidth = 3, label = label, color = cpal[i])
+
+        if (resolution_compare):
+            low_res_sim_location = pt.get_sim_location(sim, tctf, beta_list[i], cr_list[i], \
+                                    diff = diff_list[i], stream = stream_list[i],
+                                    heat = heat_list[i], work_dir = work_dir+'/low_res')
+
+            low_res_time_list, low_res_dzfield_rms_list = \
+                    calculate_rms_fluctuation(low_res_sim_location, output_list, \
+                    field = field, grid_rank = grid_rank, data_loc = '../../data/low_res')
+            ax.plot(low_res_time_list/tctf, low_res_dzfield_rms_list, linewidth = 3, \
+                    linestyle = 'dashed', label = None, color = cpal[i])
+
+
+            high_res_sim_location = pt.get_sim_location(sim, tctf, beta_list[i], cr_list[i], \
+                                    diff = diff_list[i], stream = stream_list[i],
+                                    heat = heat_list[i], work_dir = work_dir+'/high_res')
+
+            if not os.path.isdir(high_res_sim_location):
+                continue
+
+            high_res_time_list, high_res_dzfield_rms_list = \
+                    calculate_rms_fluctuation(high_res_sim_location, output_list, \
+                    field = field, grid_rank = grid_rank, data_loc = '../../data/high_res')
+            ax.plot(high_res_time_list/tctf, high_res_dzfield_rms_list, linewidth = 3, \
+                    linestyle = 'dotted', label = None, color = cpal[i])
+
      
     ax.set_xlabel('t/t$_{cool}$')
     if field == 'density':
@@ -155,6 +182,7 @@ def make_all_plots(compare, beta = 100, cr = 0.1, field = 'density'):
 work_dir = '../../simulations/production'
 save = True
 load = True
+resolution_compare = 1 
 
 crdiff = 0
 compare = sys.argv[1]

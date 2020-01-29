@@ -24,7 +24,7 @@ def plot_cold_fraction_growth(sim, compare, tctf, beta, cr, diff = 0, stream = 0
     ax.set_ylim(5e-3, 5)
     ax.set_xlim(0, 10)
     
-    cpal = palettable.scientific.sequential.Batlow_7.mpl_colors
+    cpal = palettable.scientific.sequential.Batlow_8.mpl_colors
 
     output_list = np.linspace(0, 100, 10)
     for i, tctf in enumerate(tctf_list):

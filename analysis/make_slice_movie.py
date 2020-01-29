@@ -24,7 +24,7 @@ mh = const.m_p.cgs.value
 kb = const.k_B.cgs.value
 p0 = (rho0 / mu / mh) * kb*T0
 
-sim_family = 'production/constant_crp'
+sim_family = 'production'
 #sim_family = 'skinny'
 workdir = '../../simulations/%s'%sim_family
 plot_folder = '../../movies/temp2'
@@ -100,16 +100,16 @@ def make_movie_plots(output):
                     
 
 sim_list = glob.glob('%s/*tctf*'%workdir)
-print(sim_list)
+#print(sim_list)
 #sim_list = glob.glob('%s/*tdiff_3.0'%workdir)
 #sim_list = ['%s/isocool_tctf_0.1_beta_100.0_cr_1.0_tdiff_1.0'%workdir]
-#sname = sys.argv[1]
-#sim_list = ['%s/%s'%(workdir, sname)]
+sname = sys.argv[1]
+sim_list = ['%s/%s'%(workdir, sname)]
 
 for sim_loc in sim_list:
     sim_base = os.path.basename(sim_loc)
     movie_name = '%s/slice_movie_%s.mov'%(movie_loc, sim_base)
-    make_movie = False
+    make_movie = True
     if not os.path.isfile(movie_name):
         if os.path.isdir('%s/DD0100'%sim_loc):
             make_movie = True

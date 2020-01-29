@@ -344,7 +344,7 @@ def make_power_spectrum(ds, field = 'drho'):
 
 def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, beta = 100.0):
     if compare == 'tctf':
-        tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
+        tctf_list = [0.1, 0.3, 1.0, 3.0]
         num = len(tctf_list)
         cr_list = num*[cr]
         beta_list = num*[beta]
@@ -397,8 +397,11 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         cr_list  = num*[cr]
         cr_list[0] = 0
         beta_list = num*[100]
+   #     beta_list[0] = 10
         beta_list[-1] = 10
-
+#        beta_list[-2] = 10
+    else:
+        print("Unrecognized compare keyword: %s"%compare)
     tctf_list = np.array(tctf_list)
     beta_list = np.array(beta_list)
     cr_list = np.array(cr_list)
@@ -408,17 +411,23 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
     return tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list
 
 
-def generate_sim_list(sim, compare, tctf, crdiff = 0, crstream = 0, crheat=0, \
-                      cr = 1.0, beta = 100.0, work_dir = '../../simulations'):
+def get_sim_list(sim, compare, tctf=1.0, crdiff = 0, crstream = 0, crheat=0, \
+                      cr = 1.0, beta = 100.0, work_dir = '../../simulations/production'):
     tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list = \
                     generate_lists(compare, tctf, crdiff = crdiff, crstream = crstream,\
                                    crheat=crheat, cr = cr, beta = beta)
+    print(tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list)
     sim_list = []
-    for i in range(len(tctf)):
+    label_list = []
+    
+    for i in range(len(tctf_list)):
         sim_list.append(get_sim_location(sim, tctf_list[i], beta_list[i], cr_list[i], \
-                                         stream_list[i], heat_list[i], work_dir = work_dir))
-
-    return sim_list
+                                         diff = diff_list[i], stream = stream_list[i], \
+                                         heat = heat_list[i], work_dir = work_dir))
+        label_list.append(get_label_name(compare, tctf_list[i], beta_list[i], cr_list[i], \
+                                         crdiff = diff_list[i], crstream = stream_list[i], \
+                                         crheat = heat_list[i]))
+    return sim_list, label_list
                                          
 
 def get_sim_location(sim, tctf, beta, cr, diff = 0, \
@@ -486,7 +495,7 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
             
     return label
 
-def get_fig_name(base, sim, compare, tctf, beta, cr=0, crdiff=0, crheat=0, time = -1, use_tctf = 0, loc = '../../plots/'):
+def get_fig_name(base, sim, compare, tctf, beta=100.0, cr=0, crdiff=0, crheat=0, time = -1, use_tctf = 0, loc = '../../plots/'):
     plot_name = '%s/%s_%s'%(loc, base, sim)
     if compare == 'tctf':
         if beta != 'inf':
@@ -510,7 +519,7 @@ def get_fig_name(base, sim, compare, tctf, beta, cr=0, crdiff=0, crheat=0, time 
         if crheat > 0:
             plot_name += '_heat'
     elif compare == 'transport':
-        plot_name += 'cr_%.2f_transport_compare'%cr
+        plot_name += '_cr_%.2f_transport_compare'%cr
     if time > 0:
         plot_name += '_%i'%time
 
