@@ -28,21 +28,32 @@ def calculate_p(rho, T):
     kb = const.k_B.cgs.value
     return (rho / mu / mh) * kb*T
 
-def calculate_drho_rms(ds, zmin = 0.9, zmax = 1.1):
-    region1 = ds.r[0, 0, zmin:zmax]
-    region2 = ds.r[0, 0, -zmax:-zmin]
-    zlist    = np.append(region1[('gas', 'z')].in_units('kpc'),\
-                         region2[('gas', 'z')].in_units('kpc'))
+def calculate_rms_fluctuation(ds, field = 'density', zstart = .8, zend = 1.2, grid_rank = 3):
+    if (grid_rank == 3):
+        region1 = ds.r[0, 0, zstart:zend]
+        region2 = ds.r[0, 0, -zend:-zstart]
+        zlist    = np.append(region1[('gas', 'z')].in_units('kpc'),\
+                             region2[('gas', 'z')].in_units('kpc'))
 
-    drho = np.array([])
-    for z in zlist:
-        zslice  = ds.r[:, :, YTQuantity(z, 'kpc')]
-        rho     = zslice[('gas', 'density')]
-        rho_ave = np.mean(rho)
-        drho    = np.append(drho, (rho - rho_ave) / rho_ave)
+        dzfield = np.array([])
+        for z in zlist:
+            zslice  = ds.r[:, :, YTQuantity(z, 'kpc')]
+            zfield     = zslice[('gas', field)]
+            zfield_ave = np.mean(zfield)
+            dzfield    = np.append(dzfield, (zfield - zfield_ave) / zfield_ave)
+    else:
+        all_y = ds.ortho_ray('y', (0, 0))[('gas', 'y')].in_units('kpc')
+        ymask = np.abs(all_y / ds.length_unit.in_units('kpc') > zstart) & np.abs(all_y / ds.length_unit.in_units('kpc') < zend)
+        ylist = all_y[ymask]
+        dzfield = np.array([])
+        for y in ylist:
+            yray = ds.ortho_ray('x', (y, 0))
+            zfield = yray[('gas', field)]
+            zfield_ave = np.mean(zfield)
+            dzfield    = np.append(dzfield, (zfield - zfield_ave) / zfield_ave)
 
-    drho_rms = np.sqrt(np.mean(drho**2))
-    return drho_rms
+    dzfield_rms = np.sqrt(np.mean(dzfield**2))
+    return dzfield_rms
 
 def calculate_averaged_drho_rms(output_list, sim_location = '.', zmin = 0.9, zmax = 1.1):
     drho_rms_list = []
@@ -352,15 +363,15 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         stream_list = num*[crstream]
         heat_list = num*[crheat]
     elif compare == 'beta':
-        beta_list = [3, 10, 30, 100, 300, 'inf']
+        beta_list = [10, 100, 'inf']
         num = len(beta_list)
         tctf_list = num*[tctf]
-        cr_list = num*[0]
+        cr_list = num*[cr]
         diff_list = num*[crdiff]
         stream_list = num*[crstream]
         heat_list = num*[crheat]
     elif compare == 'cr':
-        cr_list = [0, 0.01, 0.1, 1.0, 10.0, 100]
+        cr_list = [0, 0.01, 0.1, 1.0, 10.0]
         num = len(cr_list)
         tctf_list = num*[tctf]
         beta_list = num*[beta]
@@ -389,17 +400,17 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         heat_list[-1] = 1
         heat_list[-3] = 1
     elif compare == 'transport':
-        diff_list   = [0, 0, 3, 1, 0, 0, 0]
-        stream_list = [0, 0, 0, 0, 1, 1, 1]
-        heat_list   = [0, 0, 0, 0, 0, 1, 1]
+        diff_list   = [0, 0, 10, 3, 1, 0, 0, 0]
+        stream_list = [0, 0, 0, 0, 0, 1, 1, 1]
+        heat_list   = [0, 0, 0, 0, 0, 1, 1, 1]
         num = len(diff_list)
         tctf_list = num*[tctf]
         cr_list  = num*[cr]
         cr_list[0] = 0
         beta_list = num*[100]
    #     beta_list[0] = 10
-        beta_list[-1] = 10
-#        beta_list[-2] = 10
+        beta_list[-1] = 3
+        beta_list[-2] = 10
     else:
         print("Unrecognized compare keyword: %s"%compare)
     tctf_list = np.array(tctf_list)
@@ -432,9 +443,11 @@ def get_sim_list(sim, compare, tctf=1.0, crdiff = 0, crstream = 0, crheat=0, \
 
 def get_sim_location(sim, tctf, beta, cr, diff = 0, \
             stream = 0, heat = 0, work_dir = '../../simulations'):
+    print(beta)
     if beta == 'inf':
         sim_location = '%s/%s_tctf_%.1f'%(work_dir, sim, tctf)
     else:
+        beta = float(beta)
         sim_location =  '%s/%s_tctf_%.1f_beta_%.1f'%(work_dir, sim, tctf, beta)
     if cr > 0:
         if cr < 0.1:
@@ -465,6 +478,7 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
         if beta == 'inf':
             label = 'Hydro'
         else:
+            beta = float(beta)
             label = '$\\beta = $%.1f'%beta
     elif compare == 'transport':
         if cr == 0:
@@ -504,7 +518,8 @@ def get_fig_name(base, sim, compare, tctf, beta=100.0, cr=0, crdiff=0, crheat=0,
             plot_name += '_cr_%.1f'%(cr)
         if crdiff > 0:
             plot_name += '_diff_%.1f'%crdiff
-    if time < 0 or use_tctf:
+        plot_name += '_tctf_compare'
+    if (time < 0 or use_tctf) and compare != 'tctf':
         plot_name += '_tctf_%.1f'%tctf
     if compare == 'beta':
         plot_name += '_beta_compare'

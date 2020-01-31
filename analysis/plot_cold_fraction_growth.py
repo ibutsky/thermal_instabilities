@@ -24,7 +24,10 @@ def plot_cold_fraction_growth(sim, compare, tctf, beta, cr, diff = 0, stream = 0
     ax.set_ylim(5e-3, 5)
     ax.set_xlim(0, 10)
     
-    cpal = palettable.scientific.sequential.Batlow_8.mpl_colors
+    if compare == 'tctf':
+        cpal = palettable.cmocean.sequential.Tempo_5_r.mpl_colors
+    else:
+        cpal = palettable.scientific.sequential.Batlow_8.mpl_colors
 
     output_list = np.linspace(0, 100, 10)
     for i, tctf in enumerate(tctf_list):
@@ -69,10 +72,10 @@ def plot_cold_fraction_growth(sim, compare, tctf, beta, cr, diff = 0, stream = 0
                               loc = '../../plots/production')
     plt.savefig(figname, dpi = 300)
 
-def make_all_plots(compare, beta = 100, cr = 0.1, tctf = 0.3):
+def make_all_plots(compare, beta = 100, cr = 0, tctf = 0.3):
     all_tctf = [.1, 0.3, 1, 3]
     all_cr = [0.01, .1, 1, 10]
-    for sim in ['isothermal', 'isocool']:
+    for sim in ['isocool']:
         if compare == 'diff' or compare == 'stream' or compare == 'transport':
             for tctf in all_tctf:
                 for cr in all_cr:
@@ -93,4 +96,4 @@ crdiff = 0
 
 compare = sys.argv[1]
 
-make_all_plots(compare)
+make_all_plots(compare, beta = 10.0)

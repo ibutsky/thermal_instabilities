@@ -14,19 +14,17 @@ def calculate_rms_fluctuation(sim_folder, output_list, field = 'density', grid_r
                               data_loc = '../../data'):
     time_list     = np.array([])
     dzfield_rms_list = np.array([])
+    print(sim_folder)
     if not os.path.isdir(sim_folder):
         return time_list, dzfield_rms_list
     sim_base = os.path.basename(sim_folder)
-    print(sim_base)
     
     out_name = '%s/fluctuation_growth_%s_%s'%(data_loc, sim_base, field)
     if os.path.isfile(out_name) and load == True:
         time_list, dzfield_rms_list = np.loadtxt(out_name, unpack=True)
-    
     else:
         for output in output_list:
             ds_path = "%s/DD%04d/DD%04d"%(sim_folder, output, output)
-
             if os.path.isfile(ds_path):
                 ds = ytf.load(ds_path)
                 print(zstart, zend)
@@ -76,6 +74,7 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
 
     tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list \
                         = pt.generate_lists(compare, tctf, beta = beta, crdiff = crdiff, cr = cr)
+
     if field == 'cr_pressure':
         mask = cr_list > 0
         tctf_list = tctf_list[mask]
@@ -101,9 +100,10 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
     ax.plot(time_list, 0.02*np.exp(pi*time_list), color = linecolor,\
             linestyle = 'dashed', label = 'Linear Theory', linewidth = 3)
 
-    cpal = palettable.cmocean.sequential.Tempo_7_r.mpl_colors
-    cpal = palettable.scientific.sequential.Batlow_11.mpl_colors
-    cpal = palettable.scientific.sequential.Batlow_8.mpl_colors
+    if compare == 'tctf':
+        cpal = palettable.cmocean.sequential.Tempo_5_r.mpl_colors
+    else:
+        cpal = palettable.scientific.sequential.Batlow_8.mpl_colors
 
     #output_list = np.linspace(0, 100, 10)
     output_list = np.arange(0, 110, 10)
@@ -161,10 +161,10 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
     plt.savefig(figname, dpi = 300)
 
 
-def make_all_plots(compare, beta = 100, cr = 0.1, field = 'density'):
+def make_all_plots(compare, beta = 100, cr = 0, field = 'density'):
     all_tctf = [.1, 0.3, 1, 3]
     all_cr = [0.01, .1, 1, 10]
-    for sim in ['isothermal', 'isocool']:
+    for sim in ['isocool']:
         if compare == 'diff' or compare == 'stream' or compare == 'transport':
             for tctf in all_tctf:
                 for cr in all_cr:
@@ -177,12 +177,17 @@ def make_all_plots(compare, beta = 100, cr = 0.1, field = 'density'):
         elif compare == 'tctf':
             tctf = 0.1
             plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, work_dir = work_dir, field = field)
+            
+        elif compare == 'beta':
+            cr = 0
+            for tctf in all_tctf:
+                plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, work_dir = work_dir, field = field)
 
 
 work_dir = '../../simulations/production'
 save = True
 load = True
-resolution_compare = 1 
+resolution_compare = 0
 
 crdiff = 0
 compare = sys.argv[1]

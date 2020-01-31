@@ -86,7 +86,10 @@ def _v_dot_b(field, data):
     b_mag = data[('gas', 'magnetic_field_strength')]
     return (vx*bx + vy*by + vz*bz) / (v_mag * b_mag)
 
-
+def _v_xy(field, data):
+    vx = data[('gas', 'velocity_x')]
+    vy = data[('gas', 'velocity_y')]
+    return np.sqrt(vx**2 + vy**2)
 
 def load(output_location, load_accel = True, load_cr = False, grid_rank = 3):
     ds = yt.load(output_location)
@@ -94,7 +97,10 @@ def load(output_location, load_accel = True, load_cr = False, grid_rank = 3):
         grid_rank = 2
 
     ds.add_field(('gas', 'v_dot_b'), function = _v_dot_b, sampling_type = 'cell', \
-                 display_name = '$\frac{v \cdot$ B}{|v| |B|}$', units = '')
+                 display_name = '$\\frac{v \\cdot B}{|v| |B|}$', units = '')
+    ds.add_field(('gas', 'v_xy'), function = _v_xy, sampling_type = 'cell', \
+                 display_name = '$v_{xy}$', units = 'km/s')
+
         
     if load_accel:
         ds.add_field(('gas', 'external_acceleration_y'), function = _accel_y,  sampling_type = 'cell',\

@@ -40,14 +40,18 @@ def plot_cold_mass_flux_growth(sim, compare, tctf, beta, cr, diff = 0, stream = 
                               work_dir = '../../simulations/', grid_rank = 3):
 
     tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list\
-                        = pt.generate_lists(compare, tctf, crdiff = crdiff, cr = cr)
+                        = pt.generate_lists(compare, tctf, beta = beta, crdiff = crdiff, cr = cr)
 
+    print(tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list)
     fig, ax = plt.subplots(figsize = (4.4, 4))
     ax.set_yscale('log')
     ax.set_ylim(5e-3, 5)
     ax.set_xlim(0, 10)
     
-    cpal = palettable.scientific.sequential.Batlow_8.mpl_colors
+    if compare == 'tctf':
+        cpal = palettable.cmocean.sequential.Tempo_5_r.mpl_colors
+    else:
+        cpal = palettable.scientific.sequential.Batlow_8.mpl_colors
 
     output_list = np.linspace(0, 100, 10)
     for i, tctf in enumerate(tctf_list):
@@ -93,10 +97,10 @@ def plot_cold_mass_flux_growth(sim, compare, tctf, beta, cr, diff = 0, stream = 
                               loc = '../../plots/production')
     plt.savefig(figname, dpi = 300)
 
-def make_all_plots(compare, beta = 100, cr = 0.1):
+def make_all_plots(compare, beta = 100, cr = 0, tctf = 0.3):
     all_tctf = [.1, 0.3, 1, 3]
     all_cr = [0, 0.01, .1, 1, 10]
-    for sim in ['isothermal', 'isocool']:
+    for sim in ['isocool']:
         if compare == 'diff' or compare == 'stream' or compare == 'transport':
             for tctf in all_tctf:
                 for cr in all_cr:
@@ -105,6 +109,8 @@ def make_all_plots(compare, beta = 100, cr = 0.1):
         elif compare == 'cr':
             for tctf in all_tctf:
                     plot_cold_mass_flux_growth(sim, compare, tctf, beta, cr, work_dir = work_dir)
+        else:
+            plot_cold_mass_flux_growth(sim, compare, tctf, beta, cr, work_dir = work_dir)
 
         
 
@@ -116,4 +122,4 @@ crdiff = 0
 
 compare = sys.argv[1]
 
-make_all_plots(compare)
+make_all_plots(compare, beta = 10)
