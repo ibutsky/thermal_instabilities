@@ -49,6 +49,6 @@ def resubmit_unfinished_sims(nodes = 1, tasks_per_node = 48, wall_time = '24:00:
         os.system('sbatch resubmit.sbatch')
         os.chdir(cw)
 
-resubmit_unfinished_sims()
+resubmit_unfinished_sims(wall_time = '24:00:00')
 
     

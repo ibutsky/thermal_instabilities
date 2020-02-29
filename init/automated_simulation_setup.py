@@ -93,7 +93,7 @@ def create_constants_and_parameters_file(fn, halo_profile, tcool_tff_ratio, pert
 
     f.write('###### computing parameters\n')
     f.write('nodes              = %i\n'%nodes)
-    f.write('tasks_per_node     = 48\n')
+    f.write('tasks_per_node     = %i\n'%tasks_per_node)
     f.write('num_cooling_cycles = 10  # simulation stop time = 10 * t_cool\n')
     f.write('num_outputs        = 100\n')
     f.write('wall_time          = \'%s\'\n'%(wall_time))
@@ -142,35 +142,37 @@ def get_sim_dir():
         sim_dir = '../../simulations/production/constant_crp'
 
 
-sim_dir = '../../simulations/production/high_res'
+sim_dir = '../../simulations/production/fat'
 grid_rank = 3
-ndim = 512
+ndim = 256
 kmax = 0
-skinny = 1
+skinny = 0
 
 perturb_type = 1
 nodes = 1
-wall_time = '48:00:00'
+tasks_per_node = 48
+wall_time = '24:00:00'
 
 constant_B_pressure = 0
 constant_cr_pressure = 0
 
-cr_diffusion = 0#2
+cr_diffusion = 0
 tcr_tff_ratio = 0#3.0
 
-cr_streaming = 0#1
+cr_streaming = 0
 cr_streaming_stability = 50
-cr_heating   = 1
+cr_heating   = 0
 
 
 
-halo_prof_list = [1, 3]
-tctf_list = [0.1, 0.3, 1.0, 3.0] #, 10.0]
+halo_prof_list = [3]
+#tctf_list = [0.1, 0.3, 1.0, 3.0] #, 10.0]
 tctf_list = [0.3]
 #beta_list = ['inf', 300, 100, 30, 10, 3]
 beta_list = [100]
-cr_list = [0.01, 0.1, 1.0, 10.0]
-cr_list = [1]
+#cr_list = [0.01, 0.1, 1.0, 10.0]
+cr_list = [10]
+#cr_list = [0]
 
 for halo_prof in halo_prof_list:
     for tctf in tctf_list:

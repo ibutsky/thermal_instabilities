@@ -6,7 +6,7 @@ def find_last_output(sim_loc):
     # sometimes the last output is corrupt
     return os.path.basename(DD_list[-1])
 
-workdir = '../../simulations/production/high_res'
+workdir = '../../simulations/production'
 
 sim_loc_list = glob.glob('%s/*'%workdir)
 unfinished_sim_list = []

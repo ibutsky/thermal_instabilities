@@ -291,8 +291,11 @@ def read_parameters_from_command_line():
 
 def generate_perturbation_infile(skinny_ratio = 1):
     n, kmin, kmax, alpha, f_solenoidal, seed, dtype = read_parameters_from_command_line()
-    n = [64, 64, 256]
-    n = [128, 128, 512]
+    n = [32, 32, 128]
+#    n = [64, 64, 256]
+#    n = [128, 128, 512]
+#    n = [256, 256, 1024]
+    n = [256, 256, 256]
     kmin = 4
     kmax = 32
 
@@ -343,4 +346,4 @@ def generate_perturbation_infile(skinny_ratio = 1):
     outf.close()
 
 
-generate_perturbation_infile(skinny_ratio = 4)
+generate_perturbation_infile(skinny_ratio = 1)
