@@ -24,8 +24,11 @@ kb = const.k_B.cgs.value
 p0 = (rho0 / mu / mh) * kb*T0
 
 
-def plot_multipanel_slices(field, output, ds_loc_list, label_list, beta = 100, cr = 0, folder = '.'):
-
+def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0, \
+                           crdiff = 0, crstream = 0, crheat = 0, work_dir = '.'):
+    ds_loc_list, label_list  = pt.get_sim_list(sim, compare, tctf, beta = beta,  cr = cr, \
+                    crdiff = diff, crstream = stream, crheat = heat, work_dir = work_dir)
+    print(ds_loc_list)
     fig, ax = plt.subplots(ncols = len(ds_loc_list), nrows = 1, figsize=(1.5*len(ds_loc_list), 3.8), constrained_layout = True)    
 
     for i, ds_loc in enumerate(ds_loc_list):
@@ -94,7 +97,8 @@ def plot_multipanel_slices(field, output, ds_loc_list, label_list, beta = 100, c
 
     # figname not working right !!!!!!!!!!!!
     figname = pt.get_fig_name('%s_multipanel_slice'%field, sim, compare, tctf, beta = beta, use_tctf = 1, \
-                           cr=cr, time = output, loc = '../../plots/production')
+                           cr=cr, crdiff = crdiff, crstream = crstream, crheat = crheat, \
+                              time = output, loc = '../../plots/production')
 #    plt.subplots_adjust(wspace=0.02, top = 0.9)
 #    fig.tight_layout()
     plt.savefig(figname, dpi = 300)
@@ -112,26 +116,30 @@ def get_iteration_lists(compare, tctf = 0.1, beta = 100, cr = 0.1):
     return all_sim, all_tctf, all_cr
 
 work_dir = '../../simulations/production'
-compare = sys.argv[1]
+#compare = sys.argv[1]
+compare = 'cr'
 field = 'density'
-all_sim, all_tctf, all_cr = get_iteration_lists(compare)      
-output_list = [30, 40, 50]
-output_list = [40]
-field_list = ['density', 'temperature']
-#field_list = ['temperature']
-all_tctf = [0.1, 0.3, 1, 3]
-all_cr = [0]
-all_beta = [100]
-for sim in ['isocool']:
-    for tctf in all_tctf:
-        for cr in all_cr:
-            for field in field_list:
-                for output in output_list:
-                    for beta in all_beta:
-                        sim_list, label_list  = pt.get_sim_list(sim, compare, tctf, beta = beta,  cr = cr, \
-                                                            work_dir = work_dir)
-                        print(sim_list)
-                        plot_multipanel_slices(field, output, sim_list, label_list, beta = beta, cr = cr)
+#all_sim, all_tctf, all_cr = get_iteration_lists(compare)      
+#field_list = ['density', 'temperature']
+
+sim = 'isocool'
+tctf = 1.0
+beta = 100
+cr = 1
+
+diff_list = [3, 0]
+stream_list = [0, 1]
+stream = 0
+heat = 0
+
+for output in [30, 40, 50, 80]:
+    for field in ['temperature', 'density']:
+        for diff, stream in zip (diff_list, stream_list):
+            if stream:
+                heat = 1
+            for tctf in [0.1, 0.3, 1, 10]:
+                plot_multipanel_slices(field, output, sim, compare, tctf, beta = beta, cr = cr, \
+                       crdiff = diff, crstream = stream, crheat = heat, work_dir = work_dir)
 
 
 

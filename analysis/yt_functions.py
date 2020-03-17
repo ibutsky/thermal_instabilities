@@ -5,7 +5,7 @@ from astropy import constants as const
 
 import numpy as np
 
-ds = yt.load('/simons/scratch/ibutsky/simulations/isothermal_tctf_10.0_beta_10.0/DD0000/DD0000')
+ds = yt.load('/mnt/sdceph/users/ibutsky/simulations/isothermal_tctf_10.0_beta_10.0/DD0000/DD0000')
 #ds = yt.load('../../simulations/isocool_tctf_1.0_beta_10.0/DD0000/DD0000')
 
 def _gasentropy(field, data):

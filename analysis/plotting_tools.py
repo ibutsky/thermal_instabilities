@@ -379,7 +379,7 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         stream_list = num*[crstream]
         heat_list = num*[crheat]
     elif compare == 'diff':
-        diff_list = [0, 0, 3, 1]
+        diff_list = [0, 0, 10, 3, 1]
         num = len(diff_list)
         tctf_list = num*[tctf]
         beta_list = num*[beta]
@@ -388,17 +388,14 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         stream_list = num*[0]
         heat_list = num*[0]
     elif compare == 'stream':
-        beta_list = [100, 100, 100, 10, 10]
+        beta_list = [100, 100, 100, 10, 10, 10, 3, 3, 3]
         num = len(beta_list)
-        cr_list = num*[cr]
-        cr_list[0] = 0
         tctf_list = num*[tctf]
-        stream_list = num*[1]
-        stream_list[0] = 0
         diff_list = num*[0]
-        heat_list = num*[0]
-        heat_list[-1] = 1
-        heat_list[-3] = 1
+        cr_list     = [0, cr, cr, 0, cr, cr, 0, cr, cr]
+        stream_list = [0, 0, 1, 0, 0, 1, 0, 0, 1]
+        heat_list   = [0, 0, 1, 0, 0, 1, 0, 0, 1]
+
     elif compare == 'transport':
         diff_list   = [0, 0, 10, 3, 1, 0, 0, 0]
         stream_list = [0, 0, 0, 0, 0, 1, 1, 1]
@@ -464,7 +461,7 @@ def get_sim_location(sim, tctf, beta, cr, diff = 0, \
     return sim_location
 
 def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
-                   crstream = 0, crheat = 0):
+                   crstream = 0, crheat = 0, use_crheat = 0):
     label = '$t_{cool}/t_{ff}$ = %.1f'%tctf
     print(compare)
     if compare == 'cr':
@@ -495,7 +492,7 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
         if cr == 0:
             label = 'No CRs'
         elif crdiff == 0:
-            label = 't$_{diff}$/t$_{ff}$ = $\infty$'
+            label = 'CR Advection'
         else:
             label = 't$_{diff}$/t$_{ff}$ = %.1f'%crdiff
     elif compare == 'stream':
@@ -503,13 +500,15 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
             label = 'No CRs'
         elif crstream:
             label = 'stream'
-            if crheat:
+            if use_crheat:
                 label += ' + heat'
             label += ', $\\beta = %i$'%beta
+        else:
+            label = 'CR Advection'
             
     return label
 
-def get_fig_name(base, sim, compare, tctf, beta=100.0, cr=0, crdiff=0, crheat=0, time = -1, use_tctf = 0, loc = '../../plots/'):
+def get_fig_name(base, sim, compare, tctf, beta=100.0, cr=0, crdiff=0, crstream = 0, crheat=0, time = -1, use_tctf = 0, loc = '../../plots/'):
     plot_name = '%s/%s_%s'%(loc, base, sim)
     if compare == 'tctf':
         if beta != 'inf':
@@ -526,7 +525,11 @@ def get_fig_name(base, sim, compare, tctf, beta=100.0, cr=0, crdiff=0, crheat=0,
     elif compare == 'cr':
         plot_name += '_beta_%.1f_cr_compare'%(beta)
         if crdiff > 0:
-            plot_name += '_diff_%.1f'%diff
+            plot_name += '_diff_%.1f'%crdiff
+        if crstream > 0:
+            plot_name += '_stream'
+        if crheat > 0:
+            plot_name += '_heat'
     elif compare == 'diff':
         plot_name += '_beta_%.1f_cr_%.1f_diff_compare'%(beta, cr)
     elif compare == 'stream':
