@@ -139,9 +139,9 @@ beta = 100
 #    for cr in [.1, 1, 10]:
 #        for output in [40]:
 
-for compare in ['cr']:
-#    for cr in [0.01, 0.1, 1, 10]:
-    for cr in [1.0]:
+for compare in ['stream']:
+    for cr in [0.01, 0.1, 1, 10]:
+#    for cr in [1.0]:
         for output in [40]:
             plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = diff, stream = stream, heat = heat, \
                          work_dir = work_dir)

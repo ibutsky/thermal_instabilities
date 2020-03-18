@@ -28,6 +28,54 @@ def calculate_p(rho, T):
     kb = const.k_B.cgs.value
     return (rho / mu / mh) * kb*T
 
+def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0, 
+                                  field = 'density', zstart = 0.8, zend = 1.2, grid_rank = 3, 
+                                  T_min = 3.33333e5, save = True, load = True, data_loc = '../../data', 
+                                  work_dir = '../../simulations', sim_fam = 'production'):
+    sim_location = get_sim_location(sim, tctf, beta, cr, diff = diff, stream = stream, heat = heat,
+                                    work_dir = work_dir, sim_fam = sim_fam)
+
+    time_list = []
+    data_list = []
+    if data_type == 'rms_fluctuation':
+        out_name = '%s/%s/%s_fluctuation_growth_%s.dat'%(data_loc, sim_fam, field, os.path.basename(sim_location))
+    elif data_type == 'cold_fraction':
+        out_name = '%s/%s/cold_fraction_growth_%s.dat'%(data_loc, sim_fam, os.path.basename(sim_location))
+
+    if os.path.isfile(out_name) and load == True:
+        time_list, data_list = np.loadtxt(out_name, skiprows = 1, unpack=True)
+    else:
+        if not os.path.isdir(sim_location):
+            return time_list, data_list
+
+        args_list = []
+        output_list = glob.glob('%s/DD*'%sim_location)
+        for output_loc in output_list:
+            ds_loc = '%s/%s'%(output_loc, os.path.basename(output_loc))
+            args_list.append((ds_loc, data_type, field, T_min, zstart, zend, grid_rank))
+
+        pool = mp.Pool(mp.cpu_count())
+        results = pool.map(calculate_time_data_wrapper, args_list)
+
+        pool.close()
+        time_list, data_list = zip(*results)
+        if save and len(data_list) > 0:
+            outf = open(out_name, 'w')
+            for time, data in zip(time_list, data_list):
+                outf.write("%e %e\n"%(time, data))
+            outf.close()
+    return time_list, data_list
+
+def calculate_time_data_wrapper(args):
+    output_loc, data_type, field, T_min, zstart, zend, grid_rank = args
+    ds = yt.load(output_loc)
+    if data_type == 'rms_fluctuation':
+        data = calculate_rms_fluctuation(ds, field = field, zstart = zstart, zend = zend, grid_rank = grid_rank)
+    elif data_type == 'cold_fractoin':
+        data = calculate_cold_fraction(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank)
+    time = ds.current_time
+    return time.d, data.d
+
 def calculate_rms_fluctuation(ds, field = 'density', zstart = .8, zend = 1.2, grid_rank = 3):
     if (grid_rank == 3):
         region1 = ds.r[0, 0, zstart:zend]
@@ -55,7 +103,7 @@ def calculate_rms_fluctuation(ds, field = 'density', zstart = .8, zend = 1.2, gr
     dzfield_rms = np.sqrt(np.mean(dzfield**2))
     return dzfield_rms
 
-def calculate_averaged_drho_rms(output_list, sim_location = '.', zmin = 0.9, zmax = 1.1):
+def calculate_averaged_drho_rms(output_list, sim_location = '.', zmin = 0.8, zmax = 1.2):
     drho_rms_list = []
     for output in output_list:
         ds_path = '%s/DD%04d/DD%04d'%(sim_location, output, output)
@@ -66,6 +114,20 @@ def calculate_averaged_drho_rms(output_list, sim_location = '.', zmin = 0.9, zma
             print("warning: no such file '%s'"%ds_path)
             drho_rms_list.append(0)
     return np.mean(drho_rms_list)
+
+def calculate_cold_fraction_wrapper(args):
+    output_loc, T_min, zstart, zend, grid_rank = args
+    ds = yt.load(output_loc)
+    cold_frac = calculate_cold_fraction(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank)
+    time = ds.current_time
+    return time.d, cold_frac.d
+
+def calculate_time_cold_fraction(args):
+    output_loc, T_min, zstart, zend, grid_rank = args
+    ds = yt.load(output_loc)
+    cold_frac = calculate_cold_fraction(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank)
+    time = ds.current_time
+    return time.d, cold_frac.d
 
 def calculate_cold_fraction(ds, T_min = 3.333333e5, z_min = 0.1, z_max = None, grid_rank = 3):
     ad = ds.all_data()
@@ -420,7 +482,7 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
 
 
 def get_sim_list(sim, compare, tctf=1.0, crdiff = 0, crstream = 0, crheat=0, \
-                      cr = 1.0, beta = 100.0, work_dir = '../../simulations/production'):
+                      cr = 1.0, beta = 100.0, work_dir = '../../simulations', sim_fam = 'production'):
     tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list = \
                     generate_lists(compare, tctf, crdiff = crdiff, crstream = crstream,\
                                    crheat=crheat, cr = cr, beta = beta)
@@ -431,7 +493,7 @@ def get_sim_list(sim, compare, tctf=1.0, crdiff = 0, crstream = 0, crheat=0, \
     for i in range(len(tctf_list)):
         sim_list.append(get_sim_location(sim, tctf_list[i], beta_list[i], cr_list[i], \
                                          diff = diff_list[i], stream = stream_list[i], \
-                                         heat = heat_list[i], work_dir = work_dir))
+                                         heat = heat_list[i], work_dir = work_dir, sim_fam = sim_fam))
         label_list.append(get_label_name(compare, tctf_list[i], beta_list[i], cr_list[i], \
                                          crdiff = diff_list[i], crstream = stream_list[i], \
                                          crheat = heat_list[i]))
@@ -439,13 +501,13 @@ def get_sim_list(sim, compare, tctf=1.0, crdiff = 0, crstream = 0, crheat=0, \
                                          
 
 def get_sim_location(sim, tctf, beta, cr, diff = 0, \
-            stream = 0, heat = 0, work_dir = '../../simulations'):
+                     stream = 0, heat = 0, work_dir = '../../simulations', sim_fam = 'production'):
     print(beta)
     if beta == 'inf':
-        sim_location = '%s/%s_tctf_%.1f'%(work_dir, sim, tctf)
+        sim_location = '%s/%s/%s_tctf_%.1f'%(work_dir, sim_fam, sim, tctf)
     else:
         beta = float(beta)
-        sim_location =  '%s/%s_tctf_%.1f_beta_%.1f'%(work_dir, sim, tctf, beta)
+        sim_location =  '%s/%s/%s_tctf_%.1f_beta_%.1f'%(work_dir, sim_fam, sim, tctf, beta)
     if cr > 0:
         if cr < 0.1:
             sim_location += '_cr_%.2f'%(cr)
