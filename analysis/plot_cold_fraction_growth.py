@@ -49,7 +49,7 @@ def plot_cold_fraction_growth(sim, compare, tctf, beta, cr, diff = 0, stream = 0
     ax.legend()
     fig.tight_layout()
     figname = pt.get_fig_name('cold_fraction_growth', sim, compare, tctf, beta, cr, diff, 
-                              loc = '../../plots/%s'%sim_fam)
+                              sim_fam = sim_fam)
     plt.savefig(figname, dpi = 300)
 
 def make_all_plots(compare, beta = 100, cr = 0, tctf = 0.3):
@@ -68,8 +68,8 @@ def make_all_plots(compare, beta = 100, cr = 0, tctf = 0.3):
             plot_cold_fraction_growth(sim, compare, tctf, beta, cr, work_dir = work_dir)
         
 
-sim_fam = 'production/high_res'
-work_dir = '../../simulations/%s'%sim_fam
+sim_fam = 'production'
+work_dir = '../../simulations'
 load = True
 save = True
 

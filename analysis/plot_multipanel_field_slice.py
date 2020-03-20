@@ -98,7 +98,7 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
     # figname not working right !!!!!!!!!!!!
     figname = pt.get_fig_name('%s_multipanel_slice'%field, sim, compare, tctf, beta = beta, use_tctf = 1, \
                            cr=cr, crdiff = crdiff, crstream = crstream, crheat = crheat, \
-                              time = output, loc = '../../plots/production')
+                              time = output, loc = '../../plots/%s'%sim_fam)
 #    plt.subplots_adjust(wspace=0.02, top = 0.9)
 #    fig.tight_layout()
     plt.savefig(figname, dpi = 300)
@@ -115,29 +115,29 @@ def get_iteration_lists(compare, tctf = 0.1, beta = 100, cr = 0.1):
 
     return all_sim, all_tctf, all_cr
 
-work_dir = '../../simulations/production'
-#compare = sys.argv[1]
+sim_fam = 'production/high_res'
+work_dir = '../../simulations/%s'%sim_fam
+
 compare = 'cr'
-field = 'density'
-#all_sim, all_tctf, all_cr = get_iteration_lists(compare)      
-#field_list = ['density', 'temperature']
+
 
 sim = 'isocool'
 tctf = 1.0
 beta = 100
 cr = 1
+compare = 'cr'
 
-diff_list = [3, 0]
-stream_list = [0, 1]
+diff_list = [0]#[3, 0]
+stream_list = [0]#[0, 1]
 stream = 0
 heat = 0
 
-for output in [30, 40, 50, 80]:
+for output in [40]:
     for field in ['temperature', 'density']:
         for diff, stream in zip (diff_list, stream_list):
             if stream:
                 heat = 1
-            for tctf in [0.1, 0.3, 1, 10]:
+            for tctf in [0.1, 0.3, 1, 3]:
                 plot_multipanel_slices(field, output, sim, compare, tctf, beta = beta, cr = cr, \
                        crdiff = diff, crstream = stream, crheat = heat, work_dir = work_dir)
 

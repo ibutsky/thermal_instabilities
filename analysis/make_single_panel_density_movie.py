@@ -22,8 +22,8 @@ mh = const.m_p.cgs.value
 kb = const.k_B.cgs.value
 p0 = (rho0 / mu / mh) * kb*T0
 
-workdir = '../../simulations/2d_4096'
-plot_folder = '../../movies/highres_oslo'
+workdir = '../../simulations/production/fat'
+plot_folder = '../../movies/fat/tmp'
 
 sim = sys.argv[1]
 orient = sys.argv[2]
@@ -31,7 +31,6 @@ last_output = int(sys.argv[3])
 
 def plot_density_slices(output, folder = '.'):
     cmap_list = [palettable.cmocean.sequential.Tempo_20.mpl_colormap]
-    cmap_list = ['bone']
     cmap_list = [palettable.scientific.sequential.Oslo_20.mpl_colormap]
 
     fig, ax = plt.subplots(ncols = 1, nrows = 1, figsize=(5, 5))

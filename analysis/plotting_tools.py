@@ -37,10 +37,11 @@ def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0
 
     time_list = []
     data_list = []
-    if data_type == 'rms_fluctuation':
+    if data_type == 'rms_fluctuation' or data_type == 'density_fluctuation':
         out_name = '%s/%s/%s_fluctuation_growth_%s.dat'%(data_loc, sim_fam, field, os.path.basename(sim_location))
     elif data_type == 'cold_fraction':
         out_name = '%s/%s/cold_fraction_growth_%s.dat'%(data_loc, sim_fam, os.path.basename(sim_location))
+        print(out_name)
 
     if os.path.isfile(out_name) and load == True:
         time_list, data_list = np.loadtxt(out_name, skiprows = 1, unpack=True)
@@ -56,9 +57,10 @@ def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0
 
         pool = mp.Pool(mp.cpu_count())
         results = pool.map(calculate_time_data_wrapper, args_list)
-
         pool.close()
-        time_list, data_list = zip(*results)
+        
+        if len(results) > 0:
+            time_list, data_list = zip(*sorted(results))
         if save and len(data_list) > 0:
             outf = open(out_name, 'w')
             for time, data in zip(time_list, data_list):
@@ -69,9 +71,9 @@ def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0
 def calculate_time_data_wrapper(args):
     output_loc, data_type, field, T_min, zstart, zend, grid_rank = args
     ds = yt.load(output_loc)
-    if data_type == 'rms_fluctuation':
+    if data_type == 'rms_fluctuation' or data_type == 'density_fluctuation':
         data = calculate_rms_fluctuation(ds, field = field, zstart = zstart, zend = zend, grid_rank = grid_rank)
-    elif data_type == 'cold_fractoin':
+    elif data_type == 'cold_fraction':
         data = calculate_cold_fraction(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank)
     time = ds.current_time
     return time.d, data.d
@@ -523,7 +525,7 @@ def get_sim_location(sim, tctf, beta, cr, diff = 0, \
     return sim_location
 
 def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
-                   crstream = 0, crheat = 0, use_crheat = 0):
+                   crstream = 0, crheat = 0, use_crheat = 0, counter = 0):
     label = '$t_{cool}/t_{ff}$ = %.1f'%tctf
     print(compare)
     if compare == 'cr':
@@ -553,13 +555,19 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
     elif compare == 'diff':
         if cr == 0:
             label = 'No CRs'
+            if counter > 0:
+                label = None
         elif crdiff == 0:
             label = 'CR Advection'
+            if counter > 1:
+                label = None
         else:
             label = 't$_{diff}$/t$_{ff}$ = %.1f'%crdiff
     elif compare == 'stream':
         if cr == 0:
             label = 'No CRs'
+            if counter > 0:
+                label = None
         elif crstream:
             label = 'stream'
             if use_crheat:
@@ -567,11 +575,26 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
             label += ', $\\beta = %i$'%beta
         else:
             label = 'CR Advection'
+            if counter > 1:
+                label = None
             
     return label
 
-def get_fig_name(base, sim, compare, tctf, beta=100.0, cr=0, crdiff=0, crstream = 0, crheat=0, time = -1, use_tctf = 0, loc = '../../plots/'):
-    plot_name = '%s/%s_%s'%(loc, base, sim)
+
+def get_linestyle(compare, tctf, beta, cr, crdiff = 0, \
+                   crstream = 0, crheat = 0, use_crheat = 0, counter = 0):
+    linestyle = 'solid'
+    if compare == 'diff' or compare == 'stream':
+        if cr == 0:
+            linestyle = 'dotted'
+        elif crdiff == 0 and crstream == 0:
+            linestyle = 'dashed'
+    return linestyle
+
+
+def get_fig_name(base, sim, compare, tctf, beta=100.0, cr=0, crdiff=0, crstream = 0, crheat=0, 
+                 time = -1, use_tctf = 0, sim_fam = 'production', loc = '../../plots'):
+    plot_name = '%s/%s/%s_%s'%(loc, sim_fam, base, sim)
     if compare == 'tctf':
         if beta != 'inf':
             plot_name += '_beta_%.1f'%(beta)
@@ -686,4 +709,14 @@ def get_masked_data(ds, field, z_min = 0.8, z_max = 1.2, T_cold = 3.33333e5):
 
     return cold, hot
 
-
+def get_color_list(compare):
+    if compare == 'tctf':
+        color_list = palettable.cmocean.sequential.Tempo_5_r.mpl_colors
+    elif compare == 'cr':
+        color_list = palettable.scientific.sequential.Batlow_6.mpl_colors
+    elif compare == 'diff':
+        color_list = palettable.scientific.sequential.Bamako_6.mpl_colors
+    elif compare == 'stream':
+        cpal = palettable.scientific.sequential.Bamako_4.mpl_colors
+        color_list = [cpal[0], cpal[0], cpal[0], cpal[1], cpal[1], cpal[1], cpal[2], cpal[2], cpal[2]]
+    return color_list
