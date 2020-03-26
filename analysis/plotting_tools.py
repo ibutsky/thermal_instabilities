@@ -41,8 +41,10 @@ def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0
         out_name = '%s/%s/%s_fluctuation_growth_%s.dat'%(data_loc, sim_fam, field, os.path.basename(sim_location))
     elif data_type == 'cold_fraction':
         out_name = '%s/%s/cold_fraction_growth_%s.dat'%(data_loc, sim_fam, os.path.basename(sim_location))
-        print(out_name)
-
+    elif data_type == 'cold_flux':
+        out_name = '%s/%s/cold_mass_flux_growth_%s.dat'%(data_loc, sim_fam, os.path.basename(sim_location))
+    else:
+        print("ERROR: Data type %s not recognized"%data_type)
     if os.path.isfile(out_name) and load == True:
         time_list, data_list = np.loadtxt(out_name, skiprows = 1, unpack=True)
     else:
@@ -72,11 +74,14 @@ def calculate_time_data_wrapper(args):
     output_loc, data_type, field, T_min, zstart, zend, grid_rank = args
     ds = yt.load(output_loc)
     if data_type == 'rms_fluctuation' or data_type == 'density_fluctuation':
-        data = calculate_rms_fluctuation(ds, field = field, zstart = zstart, zend = zend, grid_rank = grid_rank)
+        data = calculate_rms_fluctuation(ds, field = field, zstart = zstart, zend = zend, grid_rank = grid_rank).d
     elif data_type == 'cold_fraction':
-        data = calculate_cold_fraction(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank)
-    time = ds.current_time
-    return time.d, data.d
+        data = calculate_cold_fraction(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank).d
+    elif data_type == 'cold_flux':
+        data = calculate_mass_flux(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank)
+
+    time = ds.current_time.d
+    return time, data
 
 def calculate_rms_fluctuation(ds, field = 'density', zstart = .8, zend = 1.2, grid_rank = 3):
     if (grid_rank == 3):
@@ -105,32 +110,6 @@ def calculate_rms_fluctuation(ds, field = 'density', zstart = .8, zend = 1.2, gr
     dzfield_rms = np.sqrt(np.mean(dzfield**2))
     return dzfield_rms
 
-def calculate_averaged_drho_rms(output_list, sim_location = '.', zmin = 0.8, zmax = 1.2):
-    drho_rms_list = []
-    for output in output_list:
-        ds_path = '%s/DD%04d/DD%04d'%(sim_location, output, output)
-        if os.path.isfile(ds_path):
-            ds = yt.load(ds_path)
-            drho_rms_list.append(calculate_drho_rms(ds, zmin = zmin, zmax = zmax))
-        else: 
-            print("warning: no such file '%s'"%ds_path)
-            drho_rms_list.append(0)
-    return np.mean(drho_rms_list)
-
-def calculate_cold_fraction_wrapper(args):
-    output_loc, T_min, zstart, zend, grid_rank = args
-    ds = yt.load(output_loc)
-    cold_frac = calculate_cold_fraction(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank)
-    time = ds.current_time
-    return time.d, cold_frac.d
-
-def calculate_time_cold_fraction(args):
-    output_loc, T_min, zstart, zend, grid_rank = args
-    ds = yt.load(output_loc)
-    cold_frac = calculate_cold_fraction(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank)
-    time = ds.current_time
-    return time.d, cold_frac.d
-
 def calculate_cold_fraction(ds, T_min = 3.333333e5, z_min = 0.1, z_max = None, grid_rank = 3):
     ad = ds.all_data()
     
@@ -158,17 +137,31 @@ def calculate_cold_fraction(ds, T_min = 3.333333e5, z_min = 0.1, z_max = None, g
     print(cold_mass, total_mass)
     return cold_mass / total_mass
 
-def calculate_averaged_cold_fraction(output_list, sim_location = '.', T_min = 3.333333e5, z_min =0.1, grid_rank = 3):
-    cold_fraction_list = []
-    for output in output_list:
-        ds_path = '%s/DD%04d/DD%04d'%(sim_location, output, output)
-        if os.path.isfile(ds_path):
-            ds = yt.load(ds_path)
-            cold_fraction_list.append(calculate_cold_fraction(ds, T_min = T_min, z_min = z_min, grid_rank = grid_rank))
-        else:
-            print("warning: no such file '%s'"%(ds_path))
-            cold_fraction_list.append(0)
-    return np.mean(cold_fraction_list)
+def calculate_mass_flux(ds, z_min = 0.8, z_max = 1.2, grid_rank = 3, T_min = 3.33333e5):
+    if (grid_rank == 3):
+        ad = ds.all_data()
+        z_abs_code = np.abs(ad[('gas', 'z')] / ds.length_unit.in_units('kpc'))
+
+        if z_max == None:
+            z_max = ds.domain_right_edge[2].d
+
+        # convert negative velocities to positive in bottom half                           
+        vz = ad[('gas', 'velocity_z')]
+        vz[ad[('gas', 'z')] < 0] *= -1
+
+        zmask = (z_abs_code >= z_min) & (z_abs_code <= z_max)
+        cold_influx_mask = zmask & (vz < 0) & (ad[('gas', 'temperature')] <= T_min)
+
+        rho0 = YTQuantity(1e-27, 'g/cm**3')
+        v_cool_flow = ds.length_unit / ds.time_unit # H / tff                                                                               
+        cool_flow_flux = (rho0 * v_cool_flow).in_units('Msun / kpc**2 / yr')
+#        cool_flow_flux = (ad[('gas', 'density')] * v_cool_flow).in_units('Msun / kpc**2 / yr')
+        all_flux = (ad[('gas', 'density')] * ad[('gas', 'velocity_z')]).in_units('Msun / kpc**2 / yr')
+        all_flux_norm =(all_flux / cool_flow_flux).d
+
+        cold_influx = all_flux_norm[cold_influx_mask]
+        return np.sqrt(np.mean(cold_influx**2))
+
 
 def plot_density_slices(ds, folder = '.', rho0 = 1e-27, T0 = 1e6, half_range = 1):
     p0 = calculate_p(rho0, T0)
@@ -419,7 +412,7 @@ def make_power_spectrum(ds, field = 'drho'):
 
 def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, beta = 100.0):
     if compare == 'tctf':
-        tctf_list = [0.1, 0.3, 1.0, 3.0]
+        tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
         num = len(tctf_list)
         cr_list = num*[cr]
         beta_list = num*[beta]
@@ -461,17 +454,15 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         heat_list   = [0, 0, 1, 0, 0, 1, 0, 0, 1]
 
     elif compare == 'transport':
-        diff_list   = [0, 0, 10, 3, 1, 0, 0, 0]
-        stream_list = [0, 0, 0, 0, 0, 1, 1, 1]
-        heat_list   = [0, 0, 0, 0, 0, 1, 1, 1]
+        diff_list   = [0, 0, 10, 1, 0, 0]
+        stream_list = [0, 0, 0, 0, 1, 1]
+        heat_list   = [0, 0, 0, 0, 1, 1]
         num = len(diff_list)
         tctf_list = num*[tctf]
         cr_list  = num*[cr]
         cr_list[0] = 0
         beta_list = num*[100]
-   #     beta_list[0] = 10
-        beta_list[-1] = 3
-        beta_list[-2] = 10
+        beta_list[-1] = 10
     else:
         print("Unrecognized compare keyword: %s"%compare)
     tctf_list = np.array(tctf_list)
@@ -550,8 +541,8 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
                 label = 'tdiff = %i'%crdiff
             if crstream > 0:
                 label = 'stream, $\\beta = %i$'%beta
-            if crheat > 0:
-                label += ' + heat'
+                if crheat == 0:
+                    label += ' + no heat'
     elif compare == 'diff':
         if cr == 0:
             label = 'No CRs'
@@ -719,4 +710,17 @@ def get_color_list(compare):
     elif compare == 'stream':
         cpal = palettable.scientific.sequential.Bamako_4.mpl_colors
         color_list = [cpal[0], cpal[0], cpal[0], cpal[1], cpal[1], cpal[1], cpal[2], cpal[2], cpal[2]]
+    elif compare == 'transport':
+        mhd_color = palettable.wesanderson.Darjeeling2_5.mpl_colors[-1]
+#        adv_color = palettable.wesanderson.Darjeeling1_4.mpl_colors[1]
+#        diff_color = palettable.wesanderson.Chevalier_4.mpl_colors[0]
+#        stream_color = palettable.wesanderson.Darjeeling2_5.mpl_colors[1]
+        adv_color = palettable.scientific.sequential.Batlow_6.mpl_colors[3]
+        diff_color = palettable.wesanderson.Mendl_4.mpl_colors[-1]
+        diff1_color = palettable.tableau.GreenOrange_12.mpl_colors[8]
+        diff2_color = palettable.tableau.GreenOrange_12.mpl_colors[9]
+        stream1_color = palettable.tableau.GreenOrange_12.mpl_colors[10]
+        stream2_color = palettable.tableau.GreenOrange_12.mpl_colors[11]
+        stream_color = palettable.wesanderson.Royal1_4.mpl_colors[0]
+        color_list = [mhd_color, adv_color, diff1_color, diff2_color, stream1_color, stream2_color]
     return color_list

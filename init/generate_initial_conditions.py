@@ -218,7 +218,7 @@ def generate_enzo_input_file():
             outf.write("TICosmicRayUseConstantEta    = 0\n")
         outf.write("TICosmicRayPressureRatio   = %e\n"%(cr_pressure_ratio))
         outf.write("CRModel                    = 1\n")
-        outf.write("CRCourantSafetyNumber      = 0.4\n")
+        outf.write("CRCourantSafetyNumber      = 0.2\n")
         outf.write("CRDiffusion                = %i\n"%cr_diffusion)
         outf.write("CRkappa                    = %e\n"%cr_kappa)
         outf.write("CRStreaming                = %i\n"%cr_streaming)

@@ -28,16 +28,19 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
         heat_list = heat_list[mask]
     print(tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list)
 
-    fig, ax = plt.subplots(nrows=1, ncols = 2, figsize = (8.8, 4), sharex = True, sharey = False)
-    for col in range(2):
+    ncols = 3
+    fig, ax = plt.subplots(nrows=1, ncols=ncols, figsize = (4.4*ncols, 4), sharex = True, sharey = False)
+    for col in range(ncols):
         ax[col].set_yscale('log')
         ax[col].set_xlim(0, 10)
         ax[col].set_xlabel('$t / t_{cool}$')
 
     ax[0].set_ylim(1e-2, 5)
     ax[1].set_ylim(5e-3, 4)
+    ax[2].set_ylim(5e-3, 5)
     ax[0].set_ylabel('Density Fluctuation')
     ax[1].set_ylabel('Cold Mass Fraction')
+    ax[2].set_ylabel('Cold Mass Flux')
     
     gamma = 5./3.
     time_list = np.arange(0, 12, 1)
@@ -53,7 +56,7 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
     cpal = pt.get_color_list(compare)
 
 
-    for col, plot_type in enumerate(['density_fluctuation', 'cold_fraction']):
+    for col, plot_type in enumerate(['density_fluctuation', 'cold_fraction', 'cold_flux']):
         for i, tctf in enumerate(tctf_list):
             time_list, data_list = pt.get_time_data(plot_type, sim, tctf, beta_list[i], cr_list[i], \
                                            diff = diff_list[i], stream = stream_list[i], heat = heat_list[i], 
@@ -70,15 +73,15 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
      
     ax[0].legend()
     fig.tight_layout()
-    figname = pt.get_fig_name('dens_cmass_growth', sim, compare, \
+    figname = pt.get_fig_name('dens_cfrac_cflux_growth', sim, compare, \
                               tctf, beta, cr, diff,  sim_fam = sim_fam)
     plt.savefig(figname, dpi = 300)
 
 
 def make_all_plots(compare, beta = 100, cr = 0, field = 'density'):
-    all_tctf = [.1, 0.3, 1, 3]
+    all_tctf = [.1, 0.3, 1, 3, 10]
     all_cr = [0.01, .1, 1, 10]
-    for sim in ['isocool', 'isothermal']:
+    for sim in ['isocool']:
         if compare == 'diff' or compare == 'stream' or compare == 'transport':
             for tctf in all_tctf:
                 for cr in all_cr:
@@ -109,5 +112,6 @@ compare = sys.argv[1]
 
 #field = 'cr_pressure'
 field = 'density'
+
 
 make_all_plots(compare, field = field)

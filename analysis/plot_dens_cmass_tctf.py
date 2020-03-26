@@ -17,20 +17,22 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
 
     tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list\
                         = pt.generate_lists(compare, tctf, crdiff = diff, cr = cr, beta = beta)
-    tctf_list = [0.1, 0.3, 1, 3]
+    tctf_list = [0.1, 0.3, 1, 3, 10]
     print(tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list)
     
-    fig, ax = plt.subplots(nrows=1, ncols = 2, figsize = (8.8, 4), sharex = True, sharey = False)
-    for col in range(2):
+    fig, ax = plt.subplots(nrows=1, ncols = 3, figsize = (4.4*3, 4), sharex = True, sharey = False)
+    for col in range(3):
         ax[col].set_xscale('log')
         ax[col].set_yscale('log')
-        ax[col].set_xlim(.09, 5)
+        ax[col].set_xlim(.09, 10)
         ax[col].set_xlabel('$t_{cool} / t_{ff}$')
 
     ax[0].set_ylim(1e-2, 5)
     ax[1].set_ylim(5e-3, 4)
+    ax[2].set_ylim(5e-3, 4)
     ax[0].set_ylabel('Density Fluctuation')
     ax[1].set_ylabel('Cold Mass Fraction')
+    ax[2].set_ylabel('Cold Mass Flux')               
 
     color_list = pt.get_color_list(compare)
     
@@ -45,7 +47,7 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
                 out_name += '_heat'
         out_name += '_%i'%output
 
-        for col, plot_type in enumerate(['density_fluctuation', 'cold_fraction']):
+        for col, plot_type in enumerate(['density_fluctuation', 'cold_fraction', 'cold_flux']):
             x_list = []
             y_list = []
             for tctf in tctf_list:
@@ -54,11 +56,11 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
                                            T_min = T_cold, zstart = zstart, zend = zend, grid_rank = grid_rank,
                                            load = load, save = save, work_dir = work_dir, sim_fam = sim_fam)
                 if len(data_list) > 0:
-                    data = np.mean(data_list[output-5:output+5])
+                    data = np.mean(np.nan_to_num(data_list[output-10:output+10]))
                     x_list.append(tctf)
                     y_list.append(data)
                     
-                    print(x_list, y_list)
+                    
             label = pt.get_label_name(compare, tctf, beta_list[i], cr_list[i], crdiff = diff_list[i], \
                                       crstream = stream_list[i], crheat = heat_list[i], counter = i)
         
@@ -70,13 +72,18 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
             linestyle = pt.get_linestyle(compare, tctf, beta_list[i], cr_list[i], crdiff = diff_list[i], \
                                               crstream = stream_list[i], crheat = heat_list[i], counter = i)
 
+            x_list = np.array(x_list)
+            y_list = np.array(y_list)
+            mask = y_list > 0
+            x_list = x_list[mask]
+            y_list= y_list[mask]
             ax[col].plot(x_list, y_list, color = color_list[i], label = label, 
                             linewidth = 2, marker = marker, linestyle = linestyle)
 
 
     ax[0].legend(fontsize = 8)
     fig.tight_layout()
-    fig_basename = 'dens_cfrac_tctf'
+    fig_basename = 'dens_cfrac_cflux_tctf'
     figname = pt.get_fig_name(fig_basename, sim, compare, \
                               tctf, beta, cr, crdiff = diff, crstream = stream, \
                               crheat = heat, time = output, sim_fam = sim_fam,\
@@ -108,10 +115,10 @@ beta = 100
 #    for cr in [.1, 1, 10]:
 #        for output in [40]:
 
-for compare in ['stream', 'diff']:
+for compare in ['cr', 'stream', 'diff']:
     for cr in [0.01, 0.1, 1, 10]:
 #    for cr in [1.0]:
-        for output in [40]:
+        for output in [50]:
             plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = diff, stream = stream, heat = heat, \
                          work_dir = work_dir)
 
