@@ -12,7 +12,7 @@ import plotting_tools as pt
 
 
 def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, stream = 0, heat = 0,
-                              T_cold = 3.3333333e5, zstart = 0.8, zend = 1.2,
+                              T_cold = 3.3333333e5, zstart = 0.8, zend = 1.2, relative = 0, 
                               work_dir = '../../simulations/', grid_rank = 3):
 
     tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list\
@@ -27,29 +27,30 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
         ax[col].set_xlim(.09, 10)
         ax[col].set_xlabel('$t_{cool} / t_{ff}$')
 
-    ax[0].set_ylim(1e-2, 5)
-    ax[1].set_ylim(5e-3, 4)
-    ax[2].set_ylim(5e-3, 4)
-    ax[0].set_ylabel('Density Fluctuation')
-    ax[1].set_ylabel('Cold Mass Fraction')
-    ax[2].set_ylabel('Cold Mass Flux')               
+    if relative == 0:
+        ax[0].set_ylim(1e-2, 5)
+        ax[1].set_ylim(5e-3, 4)
+        ax[2].set_ylim(5e-3, 4)
+        ax[0].set_ylabel('Density Fluctuation')
+        ax[1].set_ylabel('Cold Mass Fraction')
+        ax[2].set_ylabel('Cold Mass Flux')
+    else:
+        ax[0].set_ylim(1e-2, 10)
+        ax[1].set_ylim(1e-2, 100)
+        ax[2].set_ylim(1e-2, 10)
+        ax[0].set_ylabel('Relative Density Fluctuation')
+        ax[1].set_ylabel('Relative Cold Mass Fraction')
+        ax[2].set_ylabel('Relative Cold Mass Flux')               
 
     color_list = pt.get_color_list(compare)
     
     for i in range(len(cr_list)):
-        out_loc = '../../data' 
-        out_name = 'tctf_%s_beta_%.1f_cr_%.2f'%(sim, beta_list[i], cr_list[i])
-        if diff_list[i] > 0:
-            out_name +='_tdiff_%.1f'%diff_list[i]
-        if stream_list[i] > 0:
-            out_name +='_stream'
-            if heat_list[i] > 0:
-                out_name += '_heat'
-        out_name += '_%i'%output
-
         for col, plot_type in enumerate(['density_fluctuation', 'cold_fraction', 'cold_flux']):
             x_list = []
             y_list = []
+
+            x_rel = []
+            y_rel = []
             for tctf in tctf_list:
                 time_list, data_list = pt.get_time_data(plot_type, sim, tctf, beta_list[i], cr_list[i], \
                                            diff = diff_list[i], stream = stream_list[i], heat = heat_list[i],
@@ -59,7 +60,17 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
                     data = np.mean(np.nan_to_num(data_list[output-10:output+10]))
                     x_list.append(tctf)
                     y_list.append(data)
-                    
+                
+                if relative:
+                    time_nocr, data_nocr = pt.get_time_data(plot_type, sim, tctf, beta_list[i], cr = 0, \
+                                           diff = 0, stream = 0, heat = 0,
+                                           T_min = T_cold, zstart = zstart, zend = zend, grid_rank = grid_rank,
+                                           load = load, save = save, work_dir = work_dir, sim_fam = sim_fam)
+                    if len(data_list) > 0 and len(data_nocr) > 0:
+                        data = np.mean(np.nan_to_num(data_list[output-10:output+10]))
+                        data_nocr = np.mean(np.nan_to_num(data_nocr[output-10:output+10]))
+                        x_rel.append(tctf)
+                        y_rel.append(data / data_nocr)
                     
             label = pt.get_label_name(compare, tctf, beta_list[i], cr_list[i], crdiff = diff_list[i], \
                                       crstream = stream_list[i], crheat = heat_list[i], counter = i)
@@ -74,16 +85,21 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
 
             x_list = np.array(x_list)
             y_list = np.array(y_list)
-            mask = y_list > 0
-            x_list = x_list[mask]
-            y_list= y_list[mask]
-            ax[col].plot(x_list, y_list, color = color_list[i], label = label, 
+
+
+            if relative == 0:    
+                mask = y_list > 0
+                x_list = x_list[mask]
+                y_list= y_list[mask]
+                ax[col].plot(x_list, y_list, color = color_list[i], label = label, 
                             linewidth = 2, marker = marker, linestyle = linestyle)
-
-
+            elif relative and cr_list[i] > 0:
+                ax[col].plot(x_rel, y_rel, color = color_list[i], label = label,
+                            linewidth = 2, marker = marker, linestyle = linestyle)
+                ax[col].axhline(y = 1, linestyle = 'dashed', color = 'gray', linewidth = 1)
     ax[0].legend(fontsize = 8)
     fig.tight_layout()
-    fig_basename = 'dens_cfrac_cflux_tctf'
+    fig_basename = 'dens_cfrac_cflux_tctf_relative'
     figname = pt.get_fig_name(fig_basename, sim, compare, \
                               tctf, beta, cr, crdiff = diff, crstream = stream, \
                               crheat = heat, time = output, sim_fam = sim_fam,\
@@ -115,10 +131,10 @@ beta = 100
 #    for cr in [.1, 1, 10]:
 #        for output in [40]:
 
-for compare in ['cr', 'stream', 'diff']:
+for compare in ['transport']:
     for cr in [0.01, 0.1, 1, 10]:
 #    for cr in [1.0]:
         for output in [50]:
             plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = diff, stream = stream, heat = heat, \
-                         work_dir = work_dir)
+                                     work_dir = work_dir, relative = 1)
 

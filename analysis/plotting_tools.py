@@ -454,15 +454,25 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         heat_list   = [0, 0, 1, 0, 0, 1, 0, 0, 1]
 
     elif compare == 'transport':
-        diff_list   = [0, 0, 10, 1, 0, 0]
-        stream_list = [0, 0, 0, 0, 1, 1]
-        heat_list   = [0, 0, 0, 0, 1, 1]
+        diff_list   = [0, 0, 10, 3, 1, 0, 0, 0]
+        stream_list = [0, 0, 0, 0, 0, 1, 1, 1]
+        heat_list   = [0, 0, 0, 0, 0, 1, 1, 1]
         num = len(diff_list)
         tctf_list = num*[tctf]
         cr_list  = num*[cr]
         cr_list[0] = 0
         beta_list = num*[100]
-        beta_list[-1] = 10
+        beta_list[-2] = 10
+        beta_list[-1] = 3
+    elif compare == 'transport_multipanel':
+        diff_list   = [0, 0, 3, 0]
+        stream_list = [0, 0, 0, 1]
+        heat_list   = [0, 0, 0, 1]
+        num = len(diff_list)
+        tctf_list = num*[tctf]
+        cr_list  = num*[cr]
+        cr_list[0] = 0
+        beta_list = num*[100]
     else:
         print("Unrecognized compare keyword: %s"%compare)
     tctf_list = np.array(tctf_list)
@@ -473,6 +483,16 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
     heat_list = np.array(heat_list)
     return tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list
 
+def generate_sim_list(compare, sim = 'isocool', tctf = 0.3, beta = 100, 
+                      cr = 0, diff = 0, stream = 0, heat =  0):
+    tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list \
+        = generate_lists(compare, tctf, beta = beta, cr = cr, 
+                         crdiff = diff, crstream = stream, crheat = heat)
+    sim_list = []
+    for i in range(len(tctf_list)):
+        sim_list.append(get_sim_name(sim, tctf_list[i], beta_list[i], cr_list[i], 
+                        diff = diff_list[i], stream = stream_list[i], heat = heat_list[i]))
+    return sim_list
 
 def get_sim_list(sim, compare, tctf=1.0, crdiff = 0, crstream = 0, crheat=0, \
                       cr = 1.0, beta = 100.0, work_dir = '../../simulations', sim_fam = 'production'):
@@ -492,26 +512,29 @@ def get_sim_list(sim, compare, tctf=1.0, crdiff = 0, crstream = 0, crheat=0, \
                                          crheat = heat_list[i]))
     return sim_list, label_list
                                          
+def get_sim_name(sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0):
+    if beta == 'inf':
+        sim_name = '%s_tctf_%.1f'%(sim, tctf)
+    else:
+        beta = float(beta)
+        sim_name =  '%s_tctf_%.1f_beta_%.1f'%(sim, tctf, beta)
+    if cr > 0:
+        if cr < 0.1:
+            sim_name += '_cr_%.2f'%(cr)
+        else:
+            sim_name += '_cr_%0.1f'%(cr)
+        if diff > 0:
+            sim_name += '_tdiff_%0.1f'%(diff)
+        if stream > 0:
+            sim_name += '_stream'
+        if heat > 0:
+            sim_name += '_heat'
+    return sim_name
 
 def get_sim_location(sim, tctf, beta, cr, diff = 0, \
                      stream = 0, heat = 0, work_dir = '../../simulations', sim_fam = 'production'):
-    print(beta)
-    if beta == 'inf':
-        sim_location = '%s/%s/%s_tctf_%.1f'%(work_dir, sim_fam, sim, tctf)
-    else:
-        beta = float(beta)
-        sim_location =  '%s/%s/%s_tctf_%.1f_beta_%.1f'%(work_dir, sim_fam, sim, tctf, beta)
-    if cr > 0:
-        if cr < 0.1:
-            sim_location += '_cr_%.2f'%(cr)
-        else:
-            sim_location += '_cr_%0.1f'%(cr)
-        if diff > 0:
-            sim_location += '_tdiff_%0.1f'%(diff)
-        if stream > 0:
-            sim_location += '_stream'
-        if heat > 0:
-            sim_location += '_heat'
+    sim_name = get_sim_name(sim, tctf, beta, cr, diff = diff, stream = stream, heat = heat)
+    sim_location = '%s/%s/%s'%(work_dir, sim_fam, sim_name)
     print(sim_location)
     return sim_location
 
@@ -532,15 +555,15 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
         else:
             beta = float(beta)
             label = '$\\beta = $%.1f'%beta
-    elif compare == 'transport':
+    elif compare == 'transport' or compare == 'transport_multipanel':
         if cr == 0:
             label = 'No CR'
         if cr > 0:
             label = 'P$_c$ / P$_g$ = %.1f'%cr
             if crdiff > 0:
-                label = 'tdiff = %i'%crdiff
+                label = 'Diffusion, $t_{diff} / t_{ff}$ = %i'%crdiff
             if crstream > 0:
-                label = 'stream, $\\beta = %i$'%beta
+                label = 'Streaming, $\\beta = %i$'%beta
                 if crheat == 0:
                     label += ' + no heat'
     elif compare == 'diff':
@@ -612,7 +635,7 @@ def get_fig_name(base, sim, compare, tctf, beta=100.0, cr=0, crdiff=0, crstream 
         plot_name += '_beta_%.1f_cr_%.1f_stream_compare'%(beta, cr)
         if crheat > 0:
             plot_name += '_heat'
-    elif compare == 'transport':
+    elif compare == 'transport' or compare == 'transport_multipanel':
         plot_name += '_cr_%.2f_transport_compare'%cr
     if time > 0:
         plot_name += '_%i'%time
@@ -716,11 +739,14 @@ def get_color_list(compare):
 #        diff_color = palettable.wesanderson.Chevalier_4.mpl_colors[0]
 #        stream_color = palettable.wesanderson.Darjeeling2_5.mpl_colors[1]
         adv_color = palettable.scientific.sequential.Batlow_6.mpl_colors[3]
+        adv_color = mhd_color
         diff_color = palettable.wesanderson.Mendl_4.mpl_colors[-1]
+        diff0_color = 'darkslategray'
         diff1_color = palettable.tableau.GreenOrange_12.mpl_colors[8]
         diff2_color = palettable.tableau.GreenOrange_12.mpl_colors[9]
+        stream0_color = 'darkolivegreen'
         stream1_color = palettable.tableau.GreenOrange_12.mpl_colors[10]
         stream2_color = palettable.tableau.GreenOrange_12.mpl_colors[11]
         stream_color = palettable.wesanderson.Royal1_4.mpl_colors[0]
-        color_list = [mhd_color, adv_color, diff1_color, diff2_color, stream1_color, stream2_color]
+        color_list = [mhd_color, adv_color, diff0_color, diff1_color, diff2_color, stream0_color, stream1_color, stream2_color]
     return color_list
