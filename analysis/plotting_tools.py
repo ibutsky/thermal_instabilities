@@ -22,11 +22,25 @@ if dark_mode:
     plt.style.use('dark_background')
 
 
-def calculate_p(rho, T):
+def calculate_pressure(rho, T):
     mu = 1.22
     mh = const.m_p.cgs.value
     kb = const.k_B.cgs.value
     return (rho / mu / mh) * kb*T
+
+def calculate_entropy(rho, T):
+    gammam1 = 2./3.
+    mh    = YTQuantity(const.m_p.cgs.value, 'g')
+    mu    = 1.22
+    mu = 1
+    kb    = YTQuantity(const.k_B.cgs.value, 'erg / K')    
+    T     = YTQuantity(T, 'K')
+    rho   = YTQuantity(rho, 'g/cm**3')
+
+    kT = kb*T
+    n = rho / (mu * mh)
+    e = kT / np.power(n, gammam1)
+    return  e.in_units('cm**2 * keV')
 
 def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0, 
                                   field = 'density', zstart = 0.8, zend = 1.2, grid_rank = 3, 
@@ -43,6 +57,8 @@ def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0
         out_name = '%s/%s/cold_fraction_growth_%s.dat'%(data_loc, sim_fam, os.path.basename(sim_location))
     elif data_type == 'cold_flux':
         out_name = '%s/%s/cold_mass_flux_growth_%s.dat'%(data_loc, sim_fam, os.path.basename(sim_location))
+    elif data_type == 'cold_creta':
+        out_name = '%s/%s/cold_creta_growth_%s.dat'%(data_loc, sim_fam, os.path.basename(sim_location))
     else:
         print("ERROR: Data type %s not recognized"%data_type)
     if os.path.isfile(out_name) and load == True:
@@ -70,6 +86,7 @@ def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0
             outf.close()
     return time_list, data_list
 
+
 def calculate_time_data_wrapper(args):
     output_loc, data_type, field, T_min, zstart, zend, grid_rank = args
     ds = yt.load(output_loc)
@@ -79,6 +96,8 @@ def calculate_time_data_wrapper(args):
         data = calculate_cold_fraction(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank).d
     elif data_type == 'cold_flux':
         data = calculate_mass_flux(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank)
+    elif data_type == 'cold_creta':
+        data = calculate_cold_creta(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank).d
 
     time = ds.current_time.d
     return time, data
@@ -162,9 +181,23 @@ def calculate_mass_flux(ds, z_min = 0.8, z_max = 1.2, grid_rank = 3, T_min = 3.3
         cold_influx = all_flux_norm[cold_influx_mask]
         return np.sqrt(np.mean(cold_influx**2))
 
+def calculate_cold_creta(ds, T_min = 3.333333e5, z_min = 0.8, z_max = 1.2, grid_rank = 3):
+    ad = ds.all_data()
+
+    if (grid_rank == 3):
+        z_abs_code = np.abs(ad[('gas', 'z')] / ds.length_unit.in_units('kpc'))
+
+        if z_max == None:
+            z_max = ds.domain_right_edge[2].d
+        zmask = (z_abs_code >= z_min) & (z_abs_code <= z_max)
+        total_mass = np.sum(ad[('gas', 'cell_mass')][zmask].in_units('Msun'))
+
+        cold_mask = (zmask) & (ad[('gas', 'temperature')] <= T_min)
+    creta = ad[('gas', 'creta')][cold_mask]
+    return np.mean(creta), np.std(creta)
 
 def plot_density_slices(ds, folder = '.', rho0 = 1e-27, T0 = 1e6, half_range = 1):
-    p0 = calculate_p(rho0, T0)
+    p0 = calculate_pressure(rho0, T0)
 
     s = yt.SlicePlot(ds, 'x', [('gas', 'density'), ('gas', 'pressure')])
     frb_s = s.frb
@@ -493,6 +526,17 @@ def generate_sim_list(compare, sim = 'isocool', tctf = 0.3, beta = 100,
         sim_list.append(get_sim_name(sim, tctf_list[i], beta_list[i], cr_list[i], 
                         diff = diff_list[i], stream = stream_list[i], heat = heat_list[i]))
     return sim_list
+
+def generate_label_list(compare, sim = 'isocool', tctf = 0.3, beta = 100,
+                      cr = 0, diff = 0, stream = 0, heat =  0):
+    tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list \
+        = generate_lists(compare, tctf, beta = beta, cr = cr,
+                         crdiff = diff, crstream = stream, crheat = heat)
+    label_list = []
+    for i in range(len(tctf_list)):
+        label_list.append(get_label_name(compare, tctf_list[i], beta_list[i], cr_list[i],
+                        crdiff = diff_list[i], crstream = stream_list[i], crheat = heat_list[i]))
+    return label_list
 
 def get_sim_list(sim, compare, tctf=1.0, crdiff = 0, crstream = 0, crheat=0, \
                       cr = 1.0, beta = 100.0, work_dir = '../../simulations', sim_fam = 'production'):

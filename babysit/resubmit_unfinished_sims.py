@@ -1,5 +1,6 @@
 import os
 import glob
+import sys
 import numpy as np
 
 def generate_restart_sbatch_file(sim_loc, output, nodes = 1, tasks_per_node = 48, wall_time = '24:00:00'):
@@ -30,7 +31,7 @@ def generate_restart_sbatch_file(sim_loc, output, nodes = 1, tasks_per_node = 48
 def find_last_output(sim_loc):
     DD_list = sorted(glob.glob('%s/DD*'%sim_loc))
     # sometimes the last output is corrupt
-    return os.path.basename(DD_list[-2])
+    return os.path.basename(DD_list[-1])
 
 
 def resubmit_unfinished_sims(nodes = 1, tasks_per_node = 48, wall_time = '24:00:00'):
@@ -49,6 +50,7 @@ def resubmit_unfinished_sims(nodes = 1, tasks_per_node = 48, wall_time = '24:00:
         os.system('sbatch resubmit.sbatch')
         os.chdir(cw)
 
-resubmit_unfinished_sims(wall_time = '24:00:00')
+wall_time = int(sys.argv[1])
+resubmit_unfinished_sims(wall_time = '%i:00:00'%wall_time)
 
     

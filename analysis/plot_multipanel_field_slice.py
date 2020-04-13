@@ -27,7 +27,7 @@ p0 = (rho0 / mu / mh) * kb*T0
 def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0, \
                            crdiff = 0, crstream = 0, crheat = 0, work_dir = '.'):
     ds_loc_list, label_list  = pt.get_sim_list(sim, compare, tctf, beta = beta,  cr = cr, \
-                    crdiff = diff, crstream = stream, crheat = heat, work_dir = work_dir)
+                crdiff = diff, crstream = stream, crheat = heat, work_dir = work_dir, sim_fam = sim_fam)
     print(ds_loc_list)
     fig, ax = plt.subplots(ncols = len(ds_loc_list), nrows = 1, figsize=(1.5*len(ds_loc_list), 3.8), constrained_layout = True)    
 
@@ -51,7 +51,7 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
         
         if field == 'density':
             vmin = 1e-1
-            vmax = 1
+            vmax = 3
             label = '$\\rho / \\rho_0 $'
         elif field == 'temperature':
             vmin = 5e4
@@ -104,7 +104,7 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
     plt.savefig(figname, dpi = 300)
 
 
-sim_fam = 'production'
+sim_fam = 'production/high_res'
 work_dir = '../../simulations'
 
 compare = 'cr'
@@ -113,17 +113,19 @@ compare = 'cr'
 sim = 'isocool'
 tctf = 1.0
 beta = 100
-cr = 0.1
+cr = 0
 
 diff = 0
 stream = 0
 heat = 0
 
 compare = 'transport_multipanel'
-for output in [40, 50, 60]:
-    for field in ['temperature', 'density']:
-        for tctf in [0.3, 1]:
-            plot_multipanel_slices(field, output, sim, compare, tctf, beta = beta, cr = cr, \
+compare = 'tctf'
+for output in [40]:#, 50, 60]:
+    for field in ['density']:#'temperature', 'density']:
+        for tctf in [0.3]:#, 1]:
+            for compare in ['tctf', 'cr']:
+                plot_multipanel_slices(field, output, sim, compare, tctf, beta = beta, cr = cr, \
                        crdiff = diff, crstream = stream, crheat = heat, work_dir = work_dir)
 
 
