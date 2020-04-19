@@ -42,6 +42,31 @@ def calculate_entropy(rho, T):
     e = kT / np.power(n, gammam1)
     return  e.in_units('cm**2 * keV')
 
+def calculate_density(e, p):
+    invgamma = 3./5.
+    mh    = YTQuantity(const.m_p.cgs.value, 'g')
+    mu    = 1.22
+    temp = (p / e).in_units('cm**-5')
+    n     = np.power(temp, invgamma)
+
+    return n * mu * mh
+
+def calculate_temperature(e, p):
+    gamma     = 5./3.
+    gammam1   = 2./3.
+    invgamma  = 3./5.
+    e = e.in_units('erg * cm**2')
+    p = p.in_units('dyn / cm**2')
+
+    temp1 = np.power(p, gammam1 / gamma)
+    temp2 = np.power(e, invgamma) 
+    kb    = YTQuantity(const.k_B.cgs.value, 'erg / K')
+    T = temp1*temp2 / kb
+#    print (temp1 * temp2)
+    return T
+    
+    
+
 def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0, 
                                   field = 'density', zstart = 0.8, zend = 1.2, grid_rank = 3, 
                                   T_min = 3.33333e5, save = True, load = True, data_loc = '../../data', 
@@ -63,7 +88,10 @@ def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0
         print("ERROR: Data type %s not recognized"%data_type)
     if os.path.isfile(out_name) and load == True:
         time_list, data_list = np.loadtxt(out_name, skiprows = 1, unpack=True)
-    else:
+        if len(time_list) < 100:
+            os.remove(out_name)
+            print("WARNING: removing %s"%out_name)
+    if not os.path.isfile(out_name) or load == False:
         if not os.path.isdir(sim_location):
             return time_list, data_list
 
@@ -72,10 +100,11 @@ def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0
         for output_loc in output_list:
             ds_loc = '%s/%s'%(output_loc, os.path.basename(output_loc))
             args_list.append((ds_loc, data_type, field, T_min, zstart, zend, grid_rank))
-
+            
         pool = mp.Pool(mp.cpu_count())
         results = pool.map(calculate_time_data_wrapper, args_list)
         pool.close()
+           
         
         if len(results) > 0:
             time_list, data_list = zip(*sorted(results))
@@ -89,7 +118,7 @@ def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0
 
 def calculate_time_data_wrapper(args):
     output_loc, data_type, field, T_min, zstart, zend, grid_rank = args
-    ds = yt.load(output_loc)
+    ds = ytf.load(output_loc)
     if data_type == 'rms_fluctuation' or data_type == 'density_fluctuation':
         data = calculate_rms_fluctuation(ds, field = field, zstart = zstart, zend = zend, grid_rank = grid_rank).d
     elif data_type == 'cold_fraction':
@@ -97,10 +126,24 @@ def calculate_time_data_wrapper(args):
     elif data_type == 'cold_flux':
         data = calculate_mass_flux(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank)
     elif data_type == 'cold_creta':
-        data = calculate_cold_creta(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank).d
+        data = calculate_cold_creta(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank)
 
     time = ds.current_time.d
     return time, data
+
+def get_log_phase_data(ds, xfield = 'density', yfield = 'temperature', z_min = 0.8, z_max = 1.2):
+    ad = ds.all_data()
+    z_abs_code = np.abs(ad[('gas', 'z')] / ds.length_unit.in_units('kpc'))
+    zmask = (z_abs_code >= z_min) & (z_abs_code <= z_max)
+
+    xfield = ad[('gas', xfield)][zmask]# / 1e27                                                                       
+    yfield = ad[('gas', yfield)][zmask]# / 1e-27                                                                      
+    mass = ad[('gas', 'cell_mass')].in_units('Msun')[zmask]
+
+    logx = np.log10(xfield)
+    logy = np.log10(yfield)
+
+    return logx, logy, mass
 
 def calculate_rms_fluctuation(ds, field = 'density', zstart = .8, zend = 1.2, grid_rank = 3):
     if (grid_rank == 3):
@@ -190,11 +233,9 @@ def calculate_cold_creta(ds, T_min = 3.333333e5, z_min = 0.8, z_max = 1.2, grid_
         if z_max == None:
             z_max = ds.domain_right_edge[2].d
         zmask = (z_abs_code >= z_min) & (z_abs_code <= z_max)
-        total_mass = np.sum(ad[('gas', 'cell_mass')][zmask].in_units('Msun'))
-
         cold_mask = (zmask) & (ad[('gas', 'temperature')] <= T_min)
-    creta = ad[('gas', 'creta')][cold_mask]
-    return np.mean(creta), np.std(creta)
+    creta = ad[('gas', 'cr_eta')][cold_mask]
+    return np.mean(creta)#, np.std(creta)
 
 def plot_density_slices(ds, folder = '.', rho0 = 1e-27, T0 = 1e6, half_range = 1):
     p0 = calculate_pressure(rho0, T0)
@@ -443,7 +484,7 @@ def make_power_spectrum(ds, field = 'drho'):
     return k, P_spectrum
 
 
-def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, beta = 100.0):
+def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, beta = 100.0, cr_only = 0):
     if compare == 'tctf':
         tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
         num = len(tctf_list)
@@ -514,6 +555,14 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
     diff_list = np.array(diff_list)
     stream_list = np.array(stream_list)
     heat_list = np.array(heat_list)
+    if cr_only:
+        mask = cr_list > 0
+        tctf_list = tctf_list[mask]
+        beta_list = beta_list[mask]
+        cr_list   = cr_list[mask]
+        diff_list = diff_list[mask]
+        stream_list = stream_list[mask]
+        heat_list = heat_list[mask]
     return tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list
 
 def generate_sim_list(compare, sim = 'isocool', tctf = 0.3, beta = 100, 
@@ -794,3 +843,49 @@ def get_color_list(compare):
         stream_color = palettable.wesanderson.Royal1_4.mpl_colors[0]
         color_list = [mhd_color, adv_color, diff0_color, diff1_color, diff2_color, stream0_color, stream1_color, stream2_color]
     return color_list
+
+
+def constant_T_line(T):
+    p_list = []
+    entropy_list = []
+    rho_list = np.linspace(-30, -24, 100)
+    rho_list = np.power(10, rho_list)
+    for rho in rho_list:
+        p_list.append(calculate_pressure(rho, T))
+        entropy_list.append(calculate_entropy(rho, T))
+    return np.array(p_list), np.array(entropy_list)
+
+def constant_rho_line(rho):
+    p_list = []
+    entropy_list = []
+    T_list = np.linspace(3, 8, 100)
+    T_list = np.power(10, T_list)
+    for T in T_list:
+        p = YTQuantity(p, 'dyn / cm**2')
+        p_list.append(calculate_pressure(rho, T))
+        entropy_list.append(calculate_entropy(rho, T))
+    return np.array(p_list), np.array(entropy_list)
+
+def constant_entropy_line(e):
+    e = YTQuantity(e, 'keV * cm**2')
+    rho_list = []
+    T_list = []
+    p_list = np.linspace(-15.5, -11, 100)
+    p_list = np.power(10, p_list)
+    for p in p_list:
+        p = YTQuantity(p, 'dyn / cm**2')
+        rho_list.append(calculate_density(e, p))
+        T_list.append(calculate_temperature(e, p))
+    return np.array(rho_list), np.array(T_list)
+
+def constant_pressure_line(p):
+    p = YTQuantity(p, 'dyn / cm**2')
+    rho_list = []
+    T_list = []
+    e_list = np.linspace(-2, 3, 100)
+    e_list = np.power(10, e_list)
+    for e in e_list:
+        e = YTQuantity(e, 'keV * cm**2')
+        rho_list.append(calculate_density(e, p))
+        T_list.append(calculate_temperature(e, p))
+    return np.array(rho_list), np.array(T_list)

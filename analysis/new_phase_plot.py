@@ -1,5 +1,6 @@
 import yt
 
+
 import matplotlib.pylab as plt
 from matplotlib.colors import LogNorm, ListedColormap
 
@@ -10,41 +11,6 @@ import palettable
 import plotting_tools as pt
 import yt_functions as ytf
 
-def get_log_phase_data(ds, xfield = 'density', yfield = 'temperature', z_min = 0.8, z_max = 1.2):
-    ad = ds.all_data()
-    z_abs_code = np.abs(ad[('gas', 'z')] / ds.length_unit.in_units('kpc'))
-    zmask = (z_abs_code >= z_min) & (z_abs_code <= z_max)
-
-    xfield = ad[('gas', xfield)][zmask]# / 1e27
-    yfield = ad[('gas', yfield)][zmask]# / 1e-27
-    mass = ad[('gas', 'cell_mass')].in_units('Msun')[zmask]
-
-    logx = np.log10(xfield)
-    logy = np.log10(yfield)
-
-    return logx, logy, mass
-
-
-def constant_T_line(T):
-    p_list = []
-    entropy_list = []
-    rho_list = np.linspace(-30, -24, 100)
-    rho_list = np.power(10, rho_list)
-    for rho in rho_list:
-        p_list.append(pt.calculate_pressure(rho, T))
-        entropy_list.append(pt.calculate_entropy(rho, T))
-    return np.array(p_list), np.array(entropy_list)
-                      
-def constant_rho_line(rho):
-    p_list = []
-    entropy_list = []
-    T_list = np.linspace(3, 8, 100)
-    T_list = np.power(10, T_list)
-    for T in T_list:
-        p_list.append(pt.calculate_pressure(rho, T))
-        entropy_list.append(pt.calculate_entropy(rho, T))
-    return np.array(p_list), np.array(entropy_list)
-
 def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, normed = True, 
               label = None,  z_min = 0.8, z_max = 1.2, 
               work_dir = '../../simulations', plot_dir = '../../plots', sim_fam = 'production'):
@@ -53,10 +19,10 @@ def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, 
     mass_list = np.array([])
     
     output_list = np.arange(40, 61, 1)
-#    output_list = [40]
+    output_list = [40]
     for output in output_list:
         ds = ytf.load('%s/%s/%s/DD%04d/DD%04d'%(work_dir, sim_fam, sim, output, output))
-        logx, logy, mass = get_log_phase_data(ds, xfield = xfield, yfield = yfield, z_min = z_min, z_max = z_max)
+        logx, logy, mass = pt.get_log_phase_data(ds, xfield = xfield, yfield = yfield, z_min = z_min, z_max = z_max)
         logx_list = np.append(logx_list, logx)
         logy_list = np.append(logy_list, logy)
         mass_list = np.append(mass_list, mass)
@@ -124,16 +90,32 @@ def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, 
     
 
     # add constant T line:
-    T_list = np.linspace(4, 7, 6)
-    rho_list = np.linspace(-28, -26, 6)
-    for T in T_list:
-        T = np.power(10, T)
-        pT, eT = constant_T_line(T)
-        ax_scatter.plot(np.log10(pT), np.log10(eT),linestyle = (0, (5, 5)), color = 'black', alpha = 0.4)
-    for rho in rho_list:
-        rho = np.power(10, rho)
-        pT, eT = constant_rho_line(rho)
-        ax_scatter.plot(np.log10(pT), np.log10(eT),linestyle = (0, (5, 5)), color = 'black', alpha = 0.4)
+    if xfield == 'pressure':
+        T_list = np.linspace(4, 7, 6)
+        rho_list = np.linspace(-28, -26, 6)
+        for T in T_list:
+            T = np.power(10, T)
+            pT, eT = pt.constant_T_line(T)
+            ax_scatter.plot(np.log10(pT), np.log10(eT),linestyle = (0, (5, 5)), color = 'black', alpha = 0.4)
+        for rho in rho_list:
+            rho = np.power(10, rho)
+            pT, eT = pt.constant_rho_line(rho)
+            ax_scatter.plot(np.log10(pT), np.log10(eT),linestyle = (0, (5, 5)), color = 'black', alpha = 0.4)
+    elif xfield == 'density':
+        e_list = np.linspace(-1.5, 3.0, 6)
+        p_list = np.linspace(-15.5, -11, 6)
+        for e in e_list:
+            e = np.power(10, e)
+            rho, T = pt.constant_entropy_line(e)
+            print('constant e', T)
+            ax_scatter.plot(np.log10(rho), np.log10(T),linestyle = (0, (5, 5)), color = 'black', alpha = 0.4)
+        for p in p_list:
+            p = np.power(10, p)
+            rho, T = pt.constant_pressure_line(p)
+            print('constant p: ', T)
+            ax_scatter.plot(np.log10(rho), np.log10(T),linestyle = (0, (5, 5)), color = 'black', alpha = 0.4)
+            
+
 
     if label is not None:
         xtext = 0.08*(xlims[1] - xlims[0]) + xlims[0]
@@ -160,8 +142,8 @@ compare = 'transport'
 xfield = 'density'
 yfield = 'temperature'
 
-xfield = 'pressure'
-yfield = 'entropy'
+#xfield = 'pressure'
+#yfield = 'entropy'
 for cr in [1, 0.1]:
     for tctf in [0.3, 1]:
         sim_list = pt.generate_sim_list(compare, tctf = tctf, cr = cr)
