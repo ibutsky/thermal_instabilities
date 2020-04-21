@@ -3,6 +3,7 @@ from yt import YTQuantity
 from yt import YTArray
 
 import numpy as np
+import h5py as h5
 import glob
 import os
 import sys
@@ -65,7 +66,57 @@ def calculate_temperature(e, p):
 #    print (temp1 * temp2)
     return T
     
-    
+def get_2d_hist_data(xfield, yfield, sim, weighted = True,
+                     field = 'density', zstart = 0.8, zend = 1.2, grid_rank = 3,
+                     T_min = 3.33333e5, save = True, load = True, data_loc = '../../data',
+                     work_dir = '../../simulations', sim_fam = 'production'):
+
+    sim_location = '%s/%s/%s'%(work_dir, sim_fam, sim)
+    print(sim_location)
+    out_name = '%s/%s/histogram_%s.h5'%(data_loc, sim_fam, sim)
+    logx_list = np.array([])
+    logy_list = np.array([])
+    mass_list = np.array([])
+    if os.path.isfile(out_name) and load == True:
+        data = h5.File(out_name, 'r')
+        print(data.keys())
+        if xfield in data.keys() and yfield in data.keys() and 'mass' in data.keys():
+            logx_list = data[xfield].value
+            logy_list = data[yfield].value
+            mass_list = data['mass'].value
+        else:
+            load = False
+#        data.close()
+    if not os.path.isfile(out_name) or load == False:
+        if not os.path.isdir(sim_location):
+            return logx_list, logy_list, mass_list
+        args_list = []
+        output_list = np.arange(40, 61, 1)
+        #testing:
+#        output_list = [40]
+        for output in output_list:
+            ds_loc = '%s/DD%04d/DD%04d'%(sim_location, output, output)
+            args_list.append((ds_loc, xfield, yfield, weighted, T_min, zstart, zend))
+        pool = mp.Pool(mp.cpu_count())
+        results = pool.map(calculate_histogram_data_wrapper, args_list)
+        pool.close()
+
+        for result in results:
+            logx, logy, mass = result
+            logx_list = np.append(logx_list, logx)
+            logy_list = np.append(logy_list, logy)
+            mass_list = np.append(mass_list, mass)
+        
+        print(logx_list)
+        if save and len(logx_list) > 0:
+            outf = h5.File(out_name, 'a')
+            for key, data in zip([xfield, yfield, 'mass'], [logx_list, logy_list, mass_list]):
+                if key not in outf.keys():
+                    outf.create_dataset(key, data = data)
+            outf.close()
+
+    return logx_list, logy_list, mass_list
+
 
 def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0, 
                                   field = 'density', zstart = 0.8, zend = 1.2, grid_rank = 3, 
@@ -88,9 +139,9 @@ def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0
         print("ERROR: Data type %s not recognized"%data_type)
     if os.path.isfile(out_name) and load == True:
         time_list, data_list = np.loadtxt(out_name, skiprows = 1, unpack=True)
-        if len(time_list) < 100:
-            os.remove(out_name)
-            print("WARNING: removing %s"%out_name)
+      #  if len(time_list) < 100:
+      #      os.remove(out_name)
+      #      print("WARNING: removing %s"%out_name)
     if not os.path.isfile(out_name) or load == False:
         if not os.path.isdir(sim_location):
             return time_list, data_list
@@ -130,6 +181,14 @@ def calculate_time_data_wrapper(args):
 
     time = ds.current_time.d
     return time, data
+
+def calculate_histogram_data_wrapper(args):
+    output_loc, xfield, yfield, weighted, T_min, zstart, zend = args
+    ds = ytf.load(output_loc)
+    
+    logx, logy, mass = get_log_phase_data(ds, xfield = xfield, yfield = yfield, z_min = zstart, z_max = zend)
+    return (logx, logy, mass)
+
 
 def get_log_phase_data(ds, xfield = 'density', yfield = 'temperature', z_min = 0.8, z_max = 1.2):
     ad = ds.all_data()

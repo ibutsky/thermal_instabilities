@@ -14,18 +14,19 @@ import yt_functions as ytf
 def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, normed = True, 
               label = None,  z_min = 0.8, z_max = 1.2, 
               work_dir = '../../simulations', plot_dir = '../../plots', sim_fam = 'production'):
-    logx_list = np.array([])
-    logy_list = np.array([])
-    mass_list = np.array([])
+
+
+    logx_list, logy_list, mass_list = pt.get_2d_hist_data(xfield, yfield, sim)
     
-    output_list = np.arange(40, 61, 1)
-    output_list = [40]
-    for output in output_list:
-        ds = ytf.load('%s/%s/%s/DD%04d/DD%04d'%(work_dir, sim_fam, sim, output, output))
-        logx, logy, mass = pt.get_log_phase_data(ds, xfield = xfield, yfield = yfield, z_min = z_min, z_max = z_max)
-        logx_list = np.append(logx_list, logx)
-        logy_list = np.append(logy_list, logy)
-        mass_list = np.append(mass_list, mass)
+    
+#    output_list = np.arange(40, 61, 1)
+#    output_list = [40]
+#    for output in output_list:
+#        ds = ytf.load('%s/%s/%s/DD%04d/DD%04d'%(work_dir, sim_fam, sim, output, output))
+#        logx, logy, mass = pt.get_log_phase_data(ds, xfield = xfield, yfield = yfield, z_min = z_min, z_max = z_max)
+#        logx_list = np.append(logx_list, logx)
+#        logy_list = np.append(logy_list, logy)
+#        mass_list = np.append(mass_list, mass)
 #    xedges = np.linspace(-.45, .15, 100)
 #    yedges = np.linspace(-1.3, .5, 100)
 
@@ -44,8 +45,7 @@ def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, 
         weights = mass_list
     else:
         weights = None
-    H, xedges, yedges = np.histogram2d(logx_list, logy_list, bins = (xedges, yedges), 
-                                       weights = weights, normed = normed)
+    H, xedges, yedges = np.histogram2d(logx_list, logy_list, bins = (xedges, yedges), weights = weights, normed = normed)
     H = H.T
     X, Y = np.meshgrid(xedges, yedges)
 
@@ -107,15 +107,12 @@ def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, 
         for e in e_list:
             e = np.power(10, e)
             rho, T = pt.constant_entropy_line(e)
-            print('constant e', T)
             ax_scatter.plot(np.log10(rho), np.log10(T),linestyle = (0, (5, 5)), color = 'black', alpha = 0.4)
         for p in p_list:
             p = np.power(10, p)
             rho, T = pt.constant_pressure_line(p)
-            print('constant p: ', T)
             ax_scatter.plot(np.log10(rho), np.log10(T),linestyle = (0, (5, 5)), color = 'black', alpha = 0.4)
             
-
 
     if label is not None:
         xtext = 0.08*(xlims[1] - xlims[0]) + xlims[0]
@@ -144,8 +141,8 @@ yfield = 'temperature'
 
 #xfield = 'pressure'
 #yfield = 'entropy'
-for cr in [1, 0.1]:
-    for tctf in [0.3, 1]:
+for cr in [1, 0.1, 0.01, 10]:
+    for tctf in [0.3, 1, .1, 3]:
         sim_list = pt.generate_sim_list(compare, tctf = tctf, cr = cr)
         label_list = pt.generate_label_list(compare, tctf = tctf, cr = cr)
         for sim, label in zip(sim_list, label_list):

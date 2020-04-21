@@ -127,7 +127,7 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
     print(figname)
     plt.savefig(figname, dpi = 300)
 
-sim_fam = 'production'
+sim_fam = 'production/high_res'
 work_dir = '../../simulations'
 load = True
 save = True
@@ -147,12 +147,12 @@ heat = 0
 diff = 0
 beta = 100
 
-relative = 0
+relative = 1
 #for compare in ['stream', 'diff']:
 #    for cr in [.1, 1, 10]:
 #        for output in [40]:
 
-for compare in ['cr']:
+for compare in ['transport']:
     for cr in [0.01, 0.1, 1, 10]:
 #    for cr in [1.0]:
         for output in [50]:

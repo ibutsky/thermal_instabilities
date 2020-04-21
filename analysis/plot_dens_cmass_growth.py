@@ -70,6 +70,13 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
             
             ax[col].plot(time_list/tctf, data_list, linewidth = 3, linestyle = linestyle, label = label, color = cpal[i])
 
+            if resolution_compare:
+                time_list, data_list = pt.get_time_data(plot_type, sim, tctf, beta_list[i], cr_list[i], \
+                                           diff = diff_list[i], stream = stream_list[i], heat = heat_list[i],
+                                           field = field, zstart = zstart, zend = zend, grid_rank = grid_rank,
+                                           load = load, save = save, work_dir = work_dir, sim_fam = 'production/high_res')
+                ax[col].plot(time_list/tctf, data_list, linewidth = 2, linestyle = 'dotted', label = label, color = cpal[i])
+
      
     ax[0].legend()
     fig.tight_layout()
@@ -105,13 +112,12 @@ sim_fam = 'production'
 work_dir = '../../simulations'
 save = True
 load = True
-resolution_compare = 0
+resolution_compare = 1
 
 crdiff = 0
 compare = sys.argv[1]
 
 #field = 'cr_pressure'
 field = 'density'
-
 
 make_all_plots(compare, field = field)
