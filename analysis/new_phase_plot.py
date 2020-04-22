@@ -16,20 +16,9 @@ def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, 
               work_dir = '../../simulations', plot_dir = '../../plots', sim_fam = 'production'):
 
 
-    logx_list, logy_list, mass_list = pt.get_2d_hist_data(xfield, yfield, sim)
+    logx_list, logy_list, mass_list = pt.get_2d_hist_data(xfield, yfield, sim, zstart = z_min, zend = z_max, 
+                                                          work_dir = work_dir, sim_fam = sim_fam)
     
-    
-#    output_list = np.arange(40, 61, 1)
-#    output_list = [40]
-#    for output in output_list:
-#        ds = ytf.load('%s/%s/%s/DD%04d/DD%04d'%(work_dir, sim_fam, sim, output, output))
-#        logx, logy, mass = pt.get_log_phase_data(ds, xfield = xfield, yfield = yfield, z_min = z_min, z_max = z_max)
-#        logx_list = np.append(logx_list, logx)
-#        logy_list = np.append(logy_list, logy)
-#        mass_list = np.append(mass_list, mass)
-#    xedges = np.linspace(-.45, .15, 100)
-#    yedges = np.linspace(-1.3, .5, 100)
-
     if xfield == 'density':
         xlims = (-28, -26)
     elif xfield == 'pressure':
@@ -134,6 +123,7 @@ def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, 
     print('%s.png'%figname)
     plt.savefig('%s.png'%figname, dpi = 300)
 
+sim_fam = 'production/high_res'
 
 compare = 'transport'
 xfield = 'density'
@@ -141,10 +131,10 @@ yfield = 'temperature'
 
 #xfield = 'pressure'
 #yfield = 'entropy'
-for cr in [1, 0.1, 0.01, 10]:
-    for tctf in [0.3, 1, .1, 3]:
+for cr in [1]:
+    for tctf in [0.3]:
         sim_list = pt.generate_sim_list(compare, tctf = tctf, cr = cr)
         label_list = pt.generate_label_list(compare, tctf = tctf, cr = cr)
         for sim, label in zip(sim_list, label_list):
-            make_plot(sim, xfield = xfield, yfield = yfield, label = label)
+            make_plot(sim, xfield = xfield, yfield = yfield, label = label, sim_fam = sim_fam)
 
