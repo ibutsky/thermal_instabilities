@@ -46,75 +46,74 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
     
     for i in range(len(cr_list)):
         for col, plot_type in enumerate(['density_fluctuation', 'cold_fraction', 'cold_flux']):
-            x_list = []
-            y_list = []
-            err_list = []
+            for sim_fam in sim_fam_list:
+                x_list = []
+                y_list = []
+                err_list = []
 
-            x_rel = []
-            y_rel = []
-            err_rel_list = []
-            for tctf in tctf_list:
-                time_list, data_list = pt.get_time_data(plot_type, sim, tctf, beta_list[i], cr_list[i], \
+                x_rel = []
+                y_rel = []
+                err_rel_list = []
+                for tctf in tctf_list:
+                    time_list, data_list = pt.get_time_data(plot_type, sim, tctf, beta_list[i], cr_list[i], \
                                            diff = diff_list[i], stream = stream_list[i], heat = heat_list[i],
                                            T_min = T_cold, zstart = zstart, zend = zend, grid_rank = grid_rank,
                                            load = load, save = save, work_dir = work_dir, sim_fam = sim_fam)
-                if len(data_list) > 0:
-                    data = np.nan_to_num(data_list[output-10:output+10])
-                    mean = np.mean(data)
-                    err  = np.std(data)
-                    x_list.append(tctf)
-                    y_list.append(mean)
-                    err_list.append(err)
+                    if len(data_list) > 0:
+                        data = np.nan_to_num(data_list[output-10:output+10])
+                        mean = np.mean(data)
+                        err  = np.std(data)
+                        x_list.append(tctf)
+                        y_list.append(mean)
+                        err_list.append(err)
                 
-                if relative:
-                    time_nocr, data_nocr = pt.get_time_data(plot_type, sim, tctf, beta_list[i], cr = 0, \
+                    if relative:
+                        time_nocr, data_nocr = pt.get_time_data(plot_type, sim, tctf, beta_list[i], cr = 0, \
                                            diff = 0, stream = 0, heat = 0,
                                            T_min = T_cold, zstart = zstart, zend = zend, grid_rank = grid_rank,
                                            load = load, save = save, work_dir = work_dir, sim_fam = sim_fam)
-                    if len(data_list) > 0 and len(data_nocr) > 0:
-                        data_nocr = np.nan_to_num(data_nocr[output-10:output+10])
-                        mean_nocr = np.mean(data_nocr)
-                        err_nocr  = np.std(data_nocr)
-                        data =  np.nan_to_num(data_list[output-10:output+10])
-                        mean_cr = np.mean(data)
-                        err_cr = np.std(data)
-                        mean = mean_cr / mean_nocr
-                        err = mean * np.sqrt( np.power(err_nocr / mean_nocr, 2) + np.power(err_cr / mean, 2)) 
+                        if len(data_list) > 0 and len(data_nocr) > 0:
+                            data_nocr = np.nan_to_num(data_nocr[output-10:output+10])
+                            mean_nocr = np.mean(data_nocr)
+                            err_nocr  = np.std(data_nocr)
+                            data =  np.nan_to_num(data_list[output-10:output+10])
+                            mean_cr = np.mean(data)
+                            err_cr = np.std(data)
+                            mean = mean_cr / mean_nocr
+                            err = mean * np.sqrt( np.power(err_nocr / mean_nocr, 2) + np.power(err_cr / mean, 2)) 
 
-                        x_rel.append(tctf)
-                        y_rel.append(mean)
-                        err_rel_list.append(err)
+                            x_rel.append(tctf)
+                            y_rel.append(mean)
+                            err_rel_list.append(err)
                     
-            label = pt.get_label_name(compare, tctf, beta_list[i], cr_list[i], crdiff = diff_list[i], \
-                                      crstream = stream_list[i], crheat = heat_list[i], counter = i)
-        
-            color = color_list[i]
-            marker = 'o'
-            if label is None:
-                marker = None
-
-            linestyle = pt.get_linestyle(compare, tctf, beta_list[i], cr_list[i], crdiff = diff_list[i], \
+                if sim_fam == 'production':
+                    label = pt.get_label_name(compare, tctf, beta_list[i], cr_list[i], crdiff = diff_list[i], \
                                               crstream = stream_list[i], crheat = heat_list[i], counter = i)
+                    linestyle = 'solid'
+                else:
+                    label =  None
+                    linestyle = 'dashed'
 
-            x_list = np.array(x_list)
-            y_list = np.array(y_list)
-            err_list = np.array(err_list)
+                color = color_list[i]
+                marker = 'o'
+                
+                x_list = np.array(x_list)
+                y_list = np.array(y_list)
+                err_list = np.array(err_list)
 
-
-            if relative == 0:    
-                mask = y_list > 0
-                x_list   =   x_list[mask]
-                y_list   =   y_list[mask]
-                err_list = err_list[mask]
-
-                ax[col].plot(x_list, y_list, color = color_list[i], label = label, 
+                if relative == 0:    
+                    mask = y_list > 0
+                    x_list   =   x_list[mask]
+                    y_list   =   y_list[mask]
+                    err_list = err_list[mask]
+                    ax[col].plot(x_list, y_list, color = color_list[i], label = label, 
+                                 linewidth = 2, marker = marker, linestyle = linestyle)
+                    ax[col].errorbar(x_list, y_list, err_list, color = color_list[i], linestyle = '')
+                elif relative and cr_list[i] > 0:
+                    ax[col].plot(x_rel, y_rel, color = color_list[i], label = label,
                             linewidth = 2, marker = marker, linestyle = linestyle)
-                ax[col].errorbar(x_list, y_list, err_list, color = color_list[i])
-            elif relative and cr_list[i] > 0:
-                ax[col].plot(x_rel, y_rel, color = color_list[i], label = label,
-                            linewidth = 2, marker = marker, linestyle = linestyle)
-                ax[col].errorbar(x_rel, y_rel, err_rel_list, color = color_list[i])
-                ax[col].axhline(y = 1, linestyle = 'dashed', color = 'gray', linewidth = 1)
+                    ax[col].errorbar(x_rel, y_rel, err_rel_list, color = color_list[i], linestyle = '')
+                    ax[col].axhline(y = 1, linestyle = 'dashed', color = 'gray', linewidth = 1)
     ax[0].legend(fontsize = 8)
     fig.tight_layout()
     fig_basename = 'dens_cfrac_cflux_tctf'
@@ -127,7 +126,7 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
     print(figname)
     plt.savefig(figname, dpi = 300)
 
-sim_fam = 'production/high_res'
+sim_fam_list = ['production', 'production/high_res']
 work_dir = '../../simulations'
 load = True
 save = True
@@ -146,15 +145,9 @@ stream = 0
 heat = 0
 diff = 0
 beta = 100
-
 relative = 1
-#for compare in ['stream', 'diff']:
-#    for cr in [.1, 1, 10]:
-#        for output in [40]:
-
 for compare in ['transport']:
     for cr in [0.01, 0.1, 1, 10]:
-#    for cr in [1.0]:
         for output in [50]:
             plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = diff, stream = stream, heat = heat, \
                                      work_dir = work_dir, relative = relative)

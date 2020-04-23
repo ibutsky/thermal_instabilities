@@ -86,7 +86,7 @@ def get_2d_hist_data(xfield, yfield, sim, weighted = True,
             mass_list = data['mass'].value
         else:
             load = False
-#        data.close()
+        data.close()
     if not os.path.isfile(out_name) or load == False:
         if not os.path.isdir(sim_location):
             return logx_list, logy_list, mass_list

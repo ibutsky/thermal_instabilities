@@ -3,7 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import os
-
+import palettable
 import plotting_tools as pt
 
 sns.set(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
@@ -15,11 +15,12 @@ def label(x, color, label):
             ha="left", va="center", transform=ax.transAxes)
 
 
-def create_pdf_plot(x, y, num_cols, bw = 'scott', xlabel = 'x', height = 2, aspect = 4):    
+def create_pdf_plot(x, y, num_cols, bw = 'scott', xlabel = 'x', height = 2, aspect = 7, pal = None):    
     df = pd.DataFrame(dict(x=x, y=y))
 
     # Initialize the FacetGrid object
-    pal = sns.cubehelix_palette(num_cols, rot=-.25, light=.7)
+    if pal is None:
+        pal = sns.cubehelix_palette(num_cols, rot=-.25, light=.7)
     g = sns.FacetGrid(df, row="y", hue="y", aspect=aspect, height=height, palette=pal, )
 
     # Draw the densities in a few steps
@@ -39,55 +40,83 @@ def create_pdf_plot(x, y, num_cols, bw = 'scott', xlabel = 'x', height = 2, aspe
     g.despine(bottom=True, left=True)
     return(g)
    
-def get_masked_data(field, output, sim_loc, workdir = '../../simulations/production'):
-    ds = yt.load('%s/%s/DD%04d/DD%04d'%(workdir, sim_loc, output, output))
-    ad = ds.all_data()
-    z_abs_code = np.abs(ad[('gas', 'z')] / ds.length_unit.in_units('kpc'))
-    z_max = 1.2
-    z_min = 0.8
-    zmask = (z_abs_code >= z_min) & (z_abs_code <= z_max)
-
-#    cell_mass = ad[('gas', 'cell_mass')][zmask]
-#    total_mass = np.sum(cell_mass)
-#    weighted_field = ad[('gas', field)][zmask] * cell_mass / total_mass   
-    temp = ad[('gas', 'temperature')][zmask]
-    print(len(temp[temp < 3.333e5]) / len(temp))
-    return np.log10(ad[('gas', field)][zmask].d)
-
-def format_data_for_pdf(field, output, sim_list, label_list, nbins = 100, work_dir = '../../simulations/production'):
+def format_data_for_pdf(field, sim_list, label_list, nbins = 100, weighted = True, work_dir = '../../simulations', sim_fam = 'production'):
     # Create the data
     x = np.array([])
     y = np.array([])
     for i, sim in enumerate(sim_list):
         print(i, label_list[i])
         data, ignore, mass_list = pt.get_2d_hist_data(field, field, sim, work_dir = work_dir, sim_fam = sim_fam)
-        hist, bin_edges = np.histogram(data, weights = mass_list, density = False, bins = nbins)
+        print(len(data))
+        if weighted:
+            weights = mass_list
+        else:
+            weights = np.array(len(mass_list)*[1.0])
+        hist, bin_edges = np.histogram(data, weights = weights, density = False, bins = nbins)
         # normalize hist values:
         max_hist = max(hist)
-        hist *= (1000 / max_hist)
+        if max_hist > 0:
+            hist *= (10000 / max_hist)
         new_array = np.array([])
 #        print(max(hist), min(hist), np.median(hist))
         for j in range(len(hist)):
             bin_edge = 0.5*(bin_edges[j] + bin_edges[j+1])
             # add hist[i] copies of the value "bin_edge" to artificially recreate the data of the weighted histogram
             new_array = np.append(new_array, (int(hist[j])*[bin_edge]))
-#        if len(data) > 250000:
-#            data = signal.resample(data, 250000)
         x = np.append(x, new_array)
         y = np.append(y, len(new_array)*[label_list[i]])
     return x, y
 
+def make_plot(field, compare, tctf = 0.3, cr = 1, weighted = True, nbins = 100, 
+              work_dir = '../../simulations', plot_dir = '../../plots', sim_fam = 'production'):
+
+    sim_list = pt.generate_sim_list(compare, tctf = tctf, cr = cr)
+    label_list = pt.generate_label_list(compare, tctf = tctf, cr = cr)
+    #color_list = pt.get_color_list(compare)
+    if field == 'density':
+        pal = sns.cubehelix_palette(len(sim_list), rot=-.25, light=.7)
+    if field == 'temperature':
+        pal = palettable.scientific.sequential.LaJolla_11.mpl_colors[2:-1]
 
 
-sim_fam = 'production'
+    x, y = format_data_for_pdf(field, sim_list, label_list, weighted = weighted, 
+                               nbins = nbins, work_dir = work_dir, sim_fam = sim_fam)
+    g = create_pdf_plot(x, y, len(sim_list), height = 1, aspect = 8, pal = pal)  
+    ax = g.axes
+
+    if field == 'density':
+        xlabel = 'Log Density (g cm$^{-3}$)'
+        xlims = (-28.5, -25.8)
+        ylims = (0, 1)
+    elif field == 'temperature':
+        xlabel = 'Log Temperature (K)'
+        xlims = (3.5, 7)
+        ylims = (0, 1)
+    ax[-1][0].set_xlabel(xlabel, color = 'black')
+    ax[-1][0].tick_params(axis='x', colors='black', bottom = True)
+    g.set(xlim = xlims)
+    g.set(ylim = ylims)
+    fig_basename = 'pdf_%s'%field
+    if weighted:
+        fig_basename += '_weighted'
+    figname = pt.get_fig_name(fig_basename, 'isocool', compare, \
+                              tctf, 100, cr, sim_fam = sim_fam,\
+                              loc = plot_dir)
+    g.savefig(figname, dpi = 300)
 
 
-sim_list = ['isocool_tctf_0.3_beta_100.0', 'isocool_tctf_0.3_beta_100.0_cr_0.01', \
-            'isocool_tctf_0.3_beta_100.0_cr_0.1', 'isocool_tctf_0.3_beta_100.0_cr_1.0',\
-            'isocool_tctf_0.3_beta_100.0_cr_10.0']
-label_list = ['No CR', 'P_c/P_g = .01', 'P_c/P_g = .1', 'P_c/P_g = 1', 'P_c/P_g = 10']
-  
 
-x, y = format_data_for_pdf('temperature', 50, sim_list, label_list)
-g = create_pdf_plot(x, y, len(sim_list))  
-plt.savefig('test.png', dpi = 300)
+sim_fam = 'production/high_res'
+field = 'density'
+
+cr = 1
+tctf = 0.3
+compare = 'transport'
+
+cr_list = [0.01, 0.1, 1, 10]
+tctf_list = [0.1, 0.3, 1, 3]
+
+for cr in cr_list:
+    for tctf in tctf_list:
+        for field in ['density', 'temperature']:
+            make_plot(field, compare, tctf, cr, weighted = True, sim_fam = sim_fam)
