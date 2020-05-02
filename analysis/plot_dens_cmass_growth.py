@@ -16,7 +16,7 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
 
 
     tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list \
-                        = pt.generate_lists(compare, tctf, beta = beta, crdiff = crdiff, cr = cr)
+        = pt.generate_lists(compare, tctf, beta = beta, crdiff = crdiff, cr = cr)
 
     if field == 'cr_pressure':
         mask = cr_list > 0
@@ -120,4 +120,4 @@ compare = sys.argv[1]
 #field = 'cr_pressure'
 field = 'density'
 
-make_all_plots(compare, field = field)
+make_all_plots(compare, field = field, beta = 'inf')
