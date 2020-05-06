@@ -1,6 +1,4 @@
 import yt
-
-
 import matplotlib.pylab as plt
 from matplotlib.colors import LogNorm, ListedColormap
 
@@ -40,34 +38,34 @@ def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, 
 
 
     # definitions for the axes
-    left, width = 0.1, 0.65
-    bottom, height = 0.1, 0.65
+    left, width = 0.12, 0.65
+    bottom, height = 0.11, 0.65
     spacing = 0.005
     rect_scatter = [left, bottom, width, height]
     rect_histx = [left, bottom + height + spacing, width, 0.2]
     rect_histy = [left + width + spacing, bottom, 0.2, height]
 
-    fig = plt.figure(figsize=(6, 6))
-
+    fig = plt.figure(figsize=(7, 5.9))
+    fs = 14
     ax_scatter = plt.axes(rect_scatter)
-    ax_scatter.tick_params(direction='in', top=True, right=True)
+    ax_scatter.tick_params(direction='in', top=True, right=True, labelsize = fs)
     ax_histx = plt.axes(rect_histx)
-    ax_histx.tick_params(direction='in', labelbottom=False)
+    ax_histx.tick_params(direction='in', labelbottom=False, labelsize = fs)
     ax_histy = plt.axes(rect_histy)
-    ax_histy.tick_params(direction='in', labelleft=False)
+    ax_histy.tick_params(direction='in', labelleft=False, labelsize = fs)
 
     ax_scatter.set_xlim(xlims[0], xlims[1])
     ax_scatter.set_ylim(ylims[0], ylims[1])
     ax_histx.set_xlim(ax_scatter.get_xlim())
     ax_histy.set_ylim(ax_scatter.get_ylim())
     if xfield == 'density':
-        ax_scatter.set_xlabel('Log Density (g cm$^{-3}$)')
+        ax_scatter.set_xlabel('Log Density (g cm$^{-3}$)', fontsize = fs)
     elif xfield == 'pressure':
-        ax_scatter.set_xlabel('Log Pressure ($\\frac{\\mathrm{dyn}}{\\mathrm{cm}^2}$)')
+        ax_scatter.set_xlabel('Log Pressure ($\\frac{\\mathrm{dyn}}{\\mathrm{cm}^2}$)', fontsize = fs)
     if yfield == 'temperature':
-        ax_scatter.set_ylabel('Log Temperature (K)')
+        ax_scatter.set_ylabel('Log Temperature (K)', fontsize = fs)
     elif yfield == 'entropy':
-        ax_scatter.set_ylabel('Log Entropy ($\\mathrm{cm}^2 \cdot \\mathrm{keV}$)')
+        ax_scatter.set_ylabel('Log Entropy ($\\mathrm{cm}^2 \cdot \\mathrm{keV}$)', fontsize = fs)
 
 
     palette = sns.color_palette("Blues")
@@ -106,7 +104,7 @@ def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, 
     if label is not None:
         xtext = 0.08*(xlims[1] - xlims[0]) + xlims[0]
         ytext = 0.9*(ylims[1] - ylims[0]) + ylims[0]
-        ax_scatter.text(xtext, ytext, label, fontsize = 16, color = 'black')
+        ax_scatter.text(xtext, ytext, label, fontsize = fs+2, color = 'black')
     ax_histx.hist(logx_list, bins=xedges, weights = weights, normed = normed, color = palette[2])
     ax_histx.hist(logx_list, bins=xedges, weights = weights, normed = normed, 
                   histtype = 'step', color = palette[-1])
@@ -123,7 +121,7 @@ def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, 
     print('%s.png'%figname)
     plt.savefig('%s.png'%figname, dpi = 300)
 
-sim_fam = 'production/high_res'
+sim_fam = 'production'
 
 compare = 'transport'
 xfield = 'density'

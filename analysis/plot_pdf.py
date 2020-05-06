@@ -72,11 +72,16 @@ def make_plot(field, compare, tctf = 0.3, cr = 1, weighted = True, nbins = 100,
 
     sim_list = pt.generate_sim_list(compare, tctf = tctf, cr = cr)
     label_list = pt.generate_label_list(compare, tctf = tctf, cr = cr)
+    if field == 'cr_eta':
+        sim_list = sim_list[1:]
+        label_list = label_list[1:]
     #color_list = pt.get_color_list(compare)
     if field == 'density':
         pal = sns.cubehelix_palette(len(sim_list), rot=-.25, light=.7)
-    if field == 'temperature':
+    elif field == 'temperature':
         pal = palettable.scientific.sequential.LaJolla_11.mpl_colors[2:-1]
+    elif field == 'cr_eta':
+        pal = sns.cubehelix_palette(len(sim_list))
 
 
     x, y = format_data_for_pdf(field, sim_list, label_list, weighted = weighted, 
@@ -87,15 +92,19 @@ def make_plot(field, compare, tctf = 0.3, cr = 1, weighted = True, nbins = 100,
     if field == 'density':
         xlabel = 'Log Density (g cm$^{-3}$)'
         xlims = (-28.5, -25.8)
-        ylims = (0, 1)
     elif field == 'temperature':
         xlabel = 'Log Temperature (K)'
         xlims = (3.5, 7)
-        ylims = (0, 1)
+    elif field == 'cr_eta':
+        xlabel = 'Log ($P_c / P_g$)'
+        xlims = (np.log10(cr) - 2, np.log10(cr) + 2)
+    ylims = (0, 1)
     ax[-1][0].set_xlabel(xlabel, color = 'black')
     ax[-1][0].tick_params(axis='x', colors='black', bottom = True)
     g.set(xlim = xlims)
     g.set(ylim = ylims)
+    if field == 'cr_eta':
+        field = 'creta'
     fig_basename = 'pdf_%s'%field
     if weighted:
         fig_basename += '_weighted'
@@ -106,8 +115,8 @@ def make_plot(field, compare, tctf = 0.3, cr = 1, weighted = True, nbins = 100,
 
 
 
+
 sim_fam = 'production/high_res'
-field = 'density'
 
 cr = 1
 tctf = 0.3
@@ -116,7 +125,10 @@ compare = 'transport'
 cr_list = [0.01, 0.1, 1, 10]
 tctf_list = [0.1, 0.3, 1, 3]
 
+cr_list = [.1, 1] 
+tctf_list = [0.3]
 for cr in cr_list:
     for tctf in tctf_list:
-        for field in ['density', 'temperature']:
+        for field in ['cr_eta', 'density', 'temperature']:
             make_plot(field, compare, tctf, cr, weighted = True, sim_fam = sim_fam)
+

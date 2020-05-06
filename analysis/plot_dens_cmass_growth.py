@@ -10,6 +10,7 @@ import palettable
 import plotting_tools as pt
 import yt_functions as ytf
 
+
 def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stream = 0, heat = 0,
                                     zstart = 0.8, zend = 1.2, T_cold = 3.33333e5, 
                                     field = 'density', work_dir = '../../simulations/', grid_rank = 3):
@@ -18,18 +19,10 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
     tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list \
         = pt.generate_lists(compare, tctf, beta = beta, crdiff = crdiff, cr = cr)
 
-    if field == 'cr_pressure':
-        mask = cr_list > 0
-        tctf_list = tctf_list[mask]
-        beta_list = beta_list[mask]
-        cr_list = cr_list[mask]
-        diff_list = diff_list[mask]
-        stream_list = stream_list[mask]
-        heat_list = heat_list[mask]
     print(tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list)
 
     ncols = 3
-    fig, ax = plt.subplots(nrows=1, ncols=ncols, figsize = (4.4*ncols, 4), sharex = True, sharey = False)
+    fig, ax = plt.subplots(nrows=1, ncols=ncols, figsize = (4*ncols, 3.8), sharex = True, sharey = False)
     for col in range(ncols):
         ax[col].set_yscale('log')
         ax[col].set_xlim(0, 10)
@@ -37,7 +30,7 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
 
     ax[0].set_ylim(1e-2, 5)
     ax[1].set_ylim(5e-3, 4)
-    ax[2].set_ylim(5e-3, 5)
+    ax[2].set_ylim(2e-2, 10)
     ax[0].set_ylabel('Density Fluctuation')
     ax[1].set_ylabel('Cold Mass Fraction')
     ax[2].set_ylabel('Cold Mass Flux')
@@ -55,7 +48,6 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
 
     cpal = pt.get_color_list(compare)
 
-
     for col, plot_type in enumerate(['density_fluctuation', 'cold_fraction', 'cold_flux']):
         for i, tctf in enumerate(tctf_list):
             time_list, data_list = pt.get_time_data(plot_type, sim, tctf, beta_list[i], cr_list[i], \
@@ -67,7 +59,6 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
                                       crstream = stream_list[i], crheat = heat_list[i], counter = i)
             linestyle = pt.get_linestyle(compare, tctf, beta_list[i], cr_list[i], crdiff = diff_list[i], \
                                               crstream = stream_list[i], crheat = heat_list[i], counter = i)
-            
             ax[col].plot(time_list/tctf, data_list, linewidth = 3, linestyle = linestyle, label = label, color = cpal[i])
 
             if resolution_compare:
@@ -76,7 +67,17 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
                                            field = field, zstart = zstart, zend = zend, grid_rank = grid_rank,
                                            load = load, save = save, work_dir = work_dir, sim_fam = 'production/high_res')
                 ax[col].plot(time_list/tctf, data_list, linewidth = 2, linestyle = 'dotted', label = label, color = cpal[i])
-
+            if mhd_compare:
+                linestyle_list = ['dashed', 'dotted', 'solid', 'solid']
+                alpha_list = [1, 1, 1, 0.5]
+                for j,compare_beta in enumerate([3, 10, 100, 'inf']):
+                    time_list, data_list = pt.get_time_data(plot_type, sim, tctf, compare_beta, cr_list[i], \
+                                                        diff = diff_list[i], stream = stream_list[i], heat = heat_list[i],
+                                           field = field, zstart = zstart, zend = zend, grid_rank = grid_rank,
+                                                            load = load, save = save, work_dir = work_dir, sim_fam = sim_fam)
+                    ax[col].plot(time_list/tctf, data_list, linewidth = 2, linestyle = linestyle_list[j], alpha = alpha_list[j], 
+                                 label = None, color = cpal[i])
+                    
      
     ax[0].legend()
     fig.tight_layout()
@@ -112,12 +113,11 @@ sim_fam = 'production'
 work_dir = '../../simulations'
 save = True
 load = True
-resolution_compare = 1
+resolution_compare = 0
+mhd_compare = 0
 
 crdiff = 0
 compare = sys.argv[1]
 
-#field = 'cr_pressure'
-field = 'density'
 
-make_all_plots(compare, field = field, beta = 'inf')
+make_all_plots(compare)

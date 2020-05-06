@@ -11,10 +11,12 @@ import sys
 import matplotlib.pylab as plt
 from matplotlib.colors import LogNorm, SymLogNorm
 import palettable
+import seaborn as sns
+sns.set_style("ticks",{'axes.grid': True, 'grid.linestyle': '--'})
+
 import astropy.constants as const
 
 import multiprocessing as mp
-
 import yt_functions as ytf
 
 dark_mode = 0
@@ -185,7 +187,6 @@ def calculate_time_data_wrapper(args):
 def calculate_histogram_data_wrapper(args):
     output_loc, xfield, yfield, weighted, T_min, zstart, zend = args
     ds = ytf.load(output_loc)
-    
     logx, logy, mass = get_log_phase_data(ds, xfield = xfield, yfield = yfield, z_min = zstart, z_max = zend)
     return (logx, logy, mass)
 
@@ -194,11 +195,10 @@ def get_log_phase_data(ds, xfield = 'density', yfield = 'temperature', z_min = 0
     ad = ds.all_data()
     z_abs_code = np.abs(ad[('gas', 'z')] / ds.length_unit.in_units('kpc'))
     zmask = (z_abs_code >= z_min) & (z_abs_code <= z_max)
-
     xfield = ad[('gas', xfield)][zmask]# / 1e27                                                                       
     yfield = ad[('gas', yfield)][zmask]# / 1e-27                                                                      
     mass = ad[('gas', 'cell_mass')].in_units('Msun')[zmask]
-
+    
     logx = np.log10(xfield)
     logy = np.log10(yfield)
 
@@ -553,7 +553,7 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         stream_list = num*[crstream]
         heat_list = num*[crheat]
     elif compare == 'beta':
-        beta_list = [10, 100, 'inf']
+        beta_list = [3, 10, 100, 'inf']
         num = len(beta_list)
         tctf_list = num*[tctf]
         cr_list = num*[cr]
@@ -755,6 +755,11 @@ def get_linestyle(compare, tctf, beta, cr, crdiff = 0, \
             linestyle = 'dotted'
         elif crdiff == 0 and crstream == 0:
             linestyle = 'dashed'
+    if compare == 'transport':
+        if crdiff:
+            linestyle = 'dashed'
+        elif crstream:
+            linestyle = 'dashdot'
     return linestyle
 
 
@@ -878,6 +883,8 @@ def get_masked_data(ds, field, z_min = 0.8, z_max = 1.2, T_cold = 3.33333e5):
 def get_color_list(compare):
     if compare == 'tctf':
         color_list = palettable.cmocean.sequential.Tempo_5_r.mpl_colors
+    elif compare == 'beta':
+        color_list = palettable.cmocean.sequential.Tempo_5_r.mpl_colors
     elif compare == 'cr':
         color_list = palettable.scientific.sequential.Batlow_6.mpl_colors
     elif compare == 'diff':
@@ -891,15 +898,15 @@ def get_color_list(compare):
 #        diff_color = palettable.wesanderson.Chevalier_4.mpl_colors[0]
 #        stream_color = palettable.wesanderson.Darjeeling2_5.mpl_colors[1]
         adv_color = palettable.scientific.sequential.Batlow_6.mpl_colors[3]
-        adv_color = mhd_color
-        diff_color = palettable.wesanderson.Mendl_4.mpl_colors[-1]
-        diff0_color = 'darkslategray'
-        diff1_color = palettable.tableau.GreenOrange_12.mpl_colors[8]
-        diff2_color = palettable.tableau.GreenOrange_12.mpl_colors[9]
-        stream0_color = 'darkolivegreen'
-        stream1_color = palettable.tableau.GreenOrange_12.mpl_colors[10]
-        stream2_color = palettable.tableau.GreenOrange_12.mpl_colors[11]
-        stream_color = palettable.wesanderson.Royal1_4.mpl_colors[0]
+        adv_color = 'black'#mhd_color
+        tp = palettable.scientific.diverging.Berlin_10.mpl_colors
+        diff0_color = tp[6]
+        diff1_color = tp[7]
+        diff2_color = tp[9]
+        
+        stream0_color = tp[3]
+        stream1_color = tp[2]
+        stream2_color = tp[1]
         color_list = [mhd_color, adv_color, diff0_color, diff1_color, diff2_color, stream0_color, stream1_color, stream2_color]
     return color_list
 
@@ -915,12 +922,12 @@ def constant_T_line(T):
     return np.array(p_list), np.array(entropy_list)
 
 def constant_rho_line(rho):
+    rho = YTQuantity(rho, 'g/cm**3')
     p_list = []
     entropy_list = []
     T_list = np.linspace(3, 8, 100)
     T_list = np.power(10, T_list)
     for T in T_list:
-        p = YTQuantity(p, 'dyn / cm**2')
         p_list.append(calculate_pressure(rho, T))
         entropy_list.append(calculate_entropy(rho, T))
     return np.array(p_list), np.array(entropy_list)

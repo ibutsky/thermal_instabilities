@@ -17,10 +17,10 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
 
     tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list\
                         = pt.generate_lists(compare, tctf, crdiff = diff, cr = cr, beta = beta)
-    tctf_list = [0.1, 0.3, 1, 3, 10]
+    tctf_list = [0.1, 0.3, 1, 3]#, 10]
     print(tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list)
     
-    fig, ax = plt.subplots(nrows=1, ncols = 3, figsize = (4.4*3, 4), sharex = True, sharey = False)
+    fig, ax = plt.subplots(nrows=1, ncols = 3, figsize = (4*3, 3.8), sharex = True, sharey = False)
     for col in range(3):
         ax[col].set_xscale('log')
         ax[col].set_yscale('log')
@@ -30,7 +30,7 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
     if relative == 0:
         ax[0].set_ylim(1e-2, 5)
         ax[1].set_ylim(5e-3, 4)
-        ax[2].set_ylim(5e-3, 4)
+        ax[2].set_ylim(2e-2, 10)
         ax[0].set_ylabel('Density Fluctuation')
         ax[1].set_ylabel('Cold Mass Fraction')
         ax[2].set_ylabel('Cold Mass Flux')
@@ -126,7 +126,7 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
     print(figname)
     plt.savefig(figname, dpi = 300)
 
-sim_fam_list = ['production', 'production/high_res']
+sim_fam_list = ['production']#, 'production/high_res']
 work_dir = '../../simulations'
 load = True
 save = True
@@ -140,15 +140,25 @@ def make_all_plots(output, compare, beta = 100, cr = 0.1,\
 
 sim = 'isocool'
 tctf = .1
-
+output = 50
 stream = 0
 heat = 0
 diff = 0
 beta = 100
 relative = 1
-for compare in ['transport']:
-    for cr in [0.01, 0.1, 1, 10]:
-        for output in [50]:
+
+compare = sys.argv[1]
+if compare == 'transport':
+    if relative:
+        cr_list = [0.01, 0.1, 1, 10]
+    else:
+        cr_list = [0, 0.01, 0.1, 1, 10]
+    for cr in cr_list:
             plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = diff, stream = stream, heat = heat, \
                                      work_dir = work_dir, relative = relative)
 
+elif compare == 'beta':
+    cr = 0
+    relative = 0
+    plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = diff, stream = stream, heat = heat, \
+                                     work_dir = work_dir, relative = relative)
