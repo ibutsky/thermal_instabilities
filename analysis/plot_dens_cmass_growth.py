@@ -12,7 +12,7 @@ import yt_functions as ytf
 
 
 def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stream = 0, heat = 0,
-                                    zstart = 0.8, zend = 1.2, T_cold = 3.33333e5, 
+                                    zstart = 0.8, zend = 1.2, T_cold = 3.33333e5, fs = 12, 
                                     field = 'density', work_dir = '../../simulations/', grid_rank = 3):
 
 
@@ -20,20 +20,20 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
         = pt.generate_lists(compare, tctf, beta = beta, crdiff = crdiff, cr = cr)
 
     print(tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list)
-
+    
     ncols = 3
     fig, ax = plt.subplots(nrows=1, ncols=ncols, figsize = (4*ncols, 3.8), sharex = True, sharey = False)
     for col in range(ncols):
         ax[col].set_yscale('log')
         ax[col].set_xlim(0, 10)
-        ax[col].set_xlabel('$t / t_{cool}$')
+        ax[col].set_xlabel('$t / t_{cool}$', fontsize = fs)
 
     ax[0].set_ylim(1e-2, 5)
     ax[1].set_ylim(5e-3, 4)
     ax[2].set_ylim(2e-2, 10)
-    ax[0].set_ylabel('Density Fluctuation')
-    ax[1].set_ylabel('Cold Mass Fraction')
-    ax[2].set_ylabel('Cold Mass Flux')
+    ax[0].set_ylabel('Density Fluctuation', fontsize = fs)
+    ax[1].set_ylabel('Cold Mass Fraction', fontsize = fs)
+    ax[2].set_ylabel('Cold Mass Flux', fontsize = fs)
     
     gamma = 5./3.
     time_list = np.arange(0, 12, 1)
@@ -57,9 +57,11 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
 
             label = pt.get_label_name(compare, tctf, beta_list[i], cr_list[i], crdiff = diff_list[i], \
                                       crstream = stream_list[i], crheat = heat_list[i], counter = i)
-            linestyle = pt.get_linestyle(compare, tctf, beta_list[i], cr_list[i], crdiff = diff_list[i], \
-                                              crstream = stream_list[i], crheat = heat_list[i], counter = i)
+#            linestyle = pt.get_linestyle(compare, tctf, beta_list[i], cr_list[i], crdiff = diff_list[i], \
+#                                              crstream = stream_list[i], crheat = heat_list[i], counter = i)
+            linestyle = 'solid'
             ax[col].plot(time_list/tctf, data_list, linewidth = 3, linestyle = linestyle, label = label, color = cpal[i])
+            ax[col].tick_params(labelsize = fs)
 
             if resolution_compare:
                 time_list, data_list = pt.get_time_data(plot_type, sim, tctf, beta_list[i], cr_list[i], \

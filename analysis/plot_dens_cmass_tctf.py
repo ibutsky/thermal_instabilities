@@ -12,7 +12,7 @@ import plotting_tools as pt
 
 
 def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, stream = 0, heat = 0,
-                              T_cold = 3.3333333e5, zstart = 0.8, zend = 1.2, relative = 0, 
+                              T_cold = 3.3333333e5, zstart = 0.8, zend = 1.2, relative = 0, fs = 12, 
                               work_dir = '../../simulations/', grid_rank = 3):
 
     tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list\
@@ -25,22 +25,22 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
         ax[col].set_xscale('log')
         ax[col].set_yscale('log')
         ax[col].set_xlim(.09, 10)
-        ax[col].set_xlabel('$t_{cool} / t_{ff}$')
+        ax[col].set_xlabel('$t_{cool} / t_{ff}$', fontsize = fs)
 
     if relative == 0:
         ax[0].set_ylim(1e-2, 5)
         ax[1].set_ylim(5e-3, 4)
         ax[2].set_ylim(2e-2, 10)
-        ax[0].set_ylabel('Density Fluctuation')
-        ax[1].set_ylabel('Cold Mass Fraction')
-        ax[2].set_ylabel('Cold Mass Flux')
+        ax[0].set_ylabel('Density Fluctuation', fontsize = fs)
+        ax[1].set_ylabel('Cold Mass Fraction', fontsize = fs)
+        ax[2].set_ylabel('Cold Mass Flux', fontsize = fs)
     else:
         ax[0].set_ylim(1e-2, 10)
         ax[1].set_ylim(1e-2, 100)
         ax[2].set_ylim(1e-2, 10)
-        ax[0].set_ylabel('Relative Density Fluctuation')
-        ax[1].set_ylabel('Relative Cold Mass Fraction')
-        ax[2].set_ylabel('Relative Cold Mass Flux')               
+        ax[0].set_ylabel('Relative Density Fluctuation', fontsize = fs)
+        ax[1].set_ylabel('Relative Cold Mass Fraction', fontsize = fs)
+        ax[2].set_ylabel('Relative Cold Mass Flux', fontsize = fs)               
 
     color_list = pt.get_color_list(compare)
     
@@ -114,6 +114,7 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
                             linewidth = 2, marker = marker, linestyle = linestyle)
                     ax[col].errorbar(x_rel, y_rel, err_rel_list, color = color_list[i], linestyle = '')
                     ax[col].axhline(y = 1, linestyle = 'dashed', color = 'gray', linewidth = 1)
+                    ax[col].tick_params(labelsize = fs)
     ax[0].legend(fontsize = 8)
     fig.tight_layout()
     fig_basename = 'dens_cfrac_cflux_tctf'
@@ -145,11 +146,12 @@ stream = 0
 heat = 0
 diff = 0
 beta = 100
-relative = 1
+relative = 0
 
 compare = sys.argv[1]
-if compare == 'transport':
-    if relative:
+if compare == 'transport' or compare == 'cr':
+    if compare == 'transport':
+        relative = 1
         cr_list = [0.01, 0.1, 1, 10]
     else:
         cr_list = [0, 0.01, 0.1, 1, 10]

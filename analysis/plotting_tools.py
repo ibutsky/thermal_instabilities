@@ -81,7 +81,6 @@ def get_2d_hist_data(xfield, yfield, sim, weighted = True,
     mass_list = np.array([])
     if os.path.isfile(out_name) and load == True:
         data = h5.File(out_name, 'r')
-        print(data.keys())
         if xfield in data.keys() and yfield in data.keys() and 'mass' in data.keys():
             logx_list = data[xfield].value
             logy_list = data[yfield].value
@@ -545,7 +544,7 @@ def make_power_spectrum(ds, field = 'drho'):
 
 def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, beta = 100.0, cr_only = 0):
     if compare == 'tctf':
-        tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
+        tctf_list = [0.1, 0.3, 1.0, 3.0]
         num = len(tctf_list)
         cr_list = num*[cr]
         beta_list = num*[beta]
