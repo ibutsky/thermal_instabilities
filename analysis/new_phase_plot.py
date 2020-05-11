@@ -127,8 +127,8 @@ compare = 'transport'
 xfield = 'density'
 yfield = 'temperature'
 
-xfield = 'pressure'
-yfield = 'entropy'
+#xfield = 'pressure'
+#yfield = 'entropy'
 for cr in [1]:
     for tctf in [0.3]:
         sim_list = pt.generate_sim_list(compare, tctf = tctf, cr = cr)

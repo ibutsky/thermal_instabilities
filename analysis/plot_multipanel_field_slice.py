@@ -14,6 +14,8 @@ import astropy.constants as const
 import yt_functions as ytf
 import plotting_tools as pt
 
+#import seaborn as sns
+pt.sns.set_style({"xtick.direction": "in","ytick.direction": "in"})
 
 half_range = 1
 rho0 = 1e-27
@@ -25,14 +27,16 @@ p0 = (rho0 / mu / mh) * kb*T0
 
 
 def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0, \
-                           crdiff = 0, crstream = 0, crheat = 0, work_dir = '.'):
+                           crdiff = 0, crstream = 0, crheat = 0, fixed_time = 0, work_dir = '.'):
     ds_loc_list, label_list  = pt.get_sim_list(sim, compare, tctf, beta = beta,  cr = cr, \
                 crdiff = diff, crstream = stream, crheat = heat, work_dir = work_dir, sim_fam = sim_fam)
     print(ds_loc_list)
     fig, ax = plt.subplots(ncols = len(ds_loc_list), nrows = 1, figsize=(1.5*len(ds_loc_list), 3.8), constrained_layout = True)    
-
     for i, ds_loc in enumerate(ds_loc_list):
         print(ds_loc)
+        if fixed_time:
+            output_list = [100, 33, 10, 3, 1]
+            output = output_list[i]
         if not os.path.isfile('%s/DD%04d/DD%04d'%(ds_loc, output, output)):
             continue
         ds = ytf.load('%s/DD%04d/DD%04d'%(ds_loc, output, output))
@@ -64,14 +68,20 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
             label = 'P$_c$ / P$_g$'
 
         cmap = pt.get_cmap(field)
-#        ax[i].set_axis_off()
         pcm = ax[i].pcolormesh(xbins, ybins, data, norm = LogNorm(), cmap = cmap, \
-                               vmax = vmax, vmin = vmin)
+                               vmax = vmax, vmin = vmin, zorder = 1)
         
         
         ax[i].set_aspect('equal')
-        ax[i].set_xticks([])
-        ax[i].set_yticks([])
+#        ax[i].tick_params(direction='in', top=True, right=True, zorder = 10)
+        ax[i].set_xticklabels([])
+        if i == 0:
+            ax[i].set_ylabel('z (kpc)')
+        else:
+            ax[i].set_yticklabels([])
+        H_kpc = 43.85 # scale height in kpc
+        ax[i].axhline(0.8*H_kpc, linestyle = 'dashed', color = 'black', linewidth = 0.7)
+        ax[i].axhline(1.2*H_kpc, linestyle = 'dashed', color = 'black', linewidth = 0.7)
         ax[i].set_title(label_list[i], fontsize = 10)
 
     #fig.subplots_adjust(left = 0.2, wspace = 0.1)
@@ -80,19 +90,10 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
 
     pos_l = ax[0].get_position()
     pos_r = ax[-1].get_position()
-
-#    cbax = fig.add_axes([.15, pos.y0, .03, .95*pos.x1*2])
-#    cbar = fig.colorbar(pcm,  cax=cbax)
-#    cbax.yaxis.set_ticks_position('left')
-#    cbax.yaxis.set_label_position('left')
-     
     dx = .8
     
     cbax = fig.add_axes([.5-dx/2, 0.17, dx,  0.03])
     cbar = fig.colorbar(pcm,  cax=cbax, orientation = 'horizontal')
-#    cbax.yaxis.set_ticks_position('left')
-#    cbax.yaxis.set_label_position('left')
-
     cbar.set_label(label)
 
     # figname not working right !!!!!!!!!!!!
@@ -119,14 +120,20 @@ diff = 0
 stream = 0
 heat = 0
 
-compare = 'transport_multipanel'
-compare = 'tctf'
+fixed_time = False
 for output in [40]:#, 50, 60]:
-    for field in ['density']:#'temperature', 'density']:
+    for field in ['density', 'temperature']:
         for tctf in [0.3]:#, 1]:
-            for compare in ['tctf', 'cr']:
+            for compare in ['tctf', 'cr', 'transport_multipanel']:
+                if compare == 'transport_multipanel':
+                    cr = 1.0
+                else:
+                    cr = 0
                 plot_multipanel_slices(field, output, sim, compare, tctf, beta = beta, cr = cr, \
-                       crdiff = diff, crstream = stream, crheat = heat, work_dir = work_dir)
+                                       crdiff = diff, crstream = stream, crheat = heat,
+                                       work_dir = work_dir, fixed_time = fixed_time)
 
 
 
+# tctf = 0.1, .3, 1, 3, 10
+# output: 100, 33, 10, 3 1

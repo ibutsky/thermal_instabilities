@@ -544,7 +544,7 @@ def make_power_spectrum(ds, field = 'drho'):
 
 def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, beta = 100.0, cr_only = 0):
     if compare == 'tctf':
-        tctf_list = [0.1, 0.3, 1.0, 3.0]
+        tctf_list = [0.1, 0.3, 1.0, 3.0, 10]
         num = len(tctf_list)
         cr_list = num*[cr]
         beta_list = num*[beta]
