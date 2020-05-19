@@ -881,7 +881,7 @@ def get_masked_data(ds, field, z_min = 0.8, z_max = 1.2, T_cold = 3.33333e5):
 
 def get_color_list(compare):
     if compare == 'tctf':
-        color_list = palettable.cmocean.sequential.Tempo_5_r.mpl_colors
+        color_list = palettable.cmocean.sequential.Tempo_6_r.mpl_colors
     elif compare == 'beta':
         color_list = palettable.cmocean.sequential.Tempo_5_r.mpl_colors
     elif compare == 'cr':
