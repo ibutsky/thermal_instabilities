@@ -1,6 +1,7 @@
 import yt
 from yt import YTQuantity
 from yt import YTArray
+from yt.data_objects.level_sets.api import *
 
 import numpy as np
 import h5py as h5
@@ -24,6 +25,9 @@ dark_mode = 0
 if dark_mode:
     plt.style.use('dark_background')
 
+def _neg_log_T(field, data):
+    log_rho = -np.log10(data[('gas', 'temperature')])
+    return log_rho
 
 def calculate_pressure(rho, T):
     mu = 1.22
@@ -67,6 +71,39 @@ def calculate_temperature(e, p):
     T = temp1*temp2 / kb
 #    print (temp1 * temp2)
     return T
+
+def calculate_cold_clump_properties(ds, field = 'neg_log_T'):
+    ds.add_field(('gas', 'neg_log_T'), function = _neg_log_T, units = '')
+    ad = ds.all_data()
+    ad_slice = ds.r[:, :, 0.8:1.2]
+    master_clump = Clump(ad, ('gas', field))
+
+    master_clump.add_validator("min_cells", 3)
+    master_clump.add_info_item("total_cells")
+
+    c_min = -5
+    c_max = ad["gas", field].max()
+    step = -0.1
+    find_clumps(master_clump, c_min, c_max, step)
+    
+    leaf_clumps = master_clump.leaves
+
+    radius_list = []
+    n_clumps = 0
+    H = 43.8535772
+    z_min = 0.8 * H
+    z_max = 1.2 * H
+    for i, clump in enumerate(leaf_clumps):
+        z = np.abs(clump[('gas', 'z')].in_units('kpc'))
+        z_ave = np.mean(z)
+        if (z_ave >= z_min) and (z_ave <= z_max):
+            n_clumps += 1
+            ncells = len(z)
+            radius = np.power(ncells, 1./3.)
+            print(i, ncells, radius)
+            radius_list.append(radius)
+
+    return n_clumps, np.mean(radius_list), np.std(radius_list)
     
 def get_2d_hist_data(xfield, yfield, sim, weighted = True,
                      field = 'density', zstart = 0.8, zend = 1.2, grid_rank = 3,
@@ -119,7 +156,7 @@ def get_2d_hist_data(xfield, yfield, sim, weighted = True,
     return logx_list, logy_list, mass_list
 
 
-def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0, 
+def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0, use_mpi = True,  
                                   field = 'density', zstart = 0.8, zend = 1.2, grid_rank = 3, 
                                   T_min = 3.33333e5, save = True, load = True, data_loc = '../../data', 
                                   work_dir = '../../simulations', sim_fam = 'production'):
@@ -136,15 +173,23 @@ def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0
         out_name = '%s/%s/cold_mass_flux_growth_%s.dat'%(data_loc, sim_fam, os.path.basename(sim_location))
     elif data_type == 'cold_creta':
         out_name = '%s/%s/cold_creta_growth_%s.dat'%(data_loc, sim_fam, os.path.basename(sim_location))
+    elif data_type == 'clump':
+        out_name = '%s/%s/clump_growth_%s.dat'%(data_loc, sim_fam, os.path.basename(sim_location))
     else:
         print("ERROR: Data type %s not recognized"%data_type)
     if os.path.isfile(out_name) and load == True:
-        time_list, data_list = np.loadtxt(out_name, skiprows = 1, unpack=True)
+        if data_type == 'clump':
+            time_list, n_clumps, clump_size, clump_std  = np.loadtxt(out_name, skiprows = 1, unpack = True)
+            data_list = [n_clumps, clump_size, clump_std]
+        else:
+            time_list, data_list = np.loadtxt(out_name, skiprows = 1, unpack=True)
       #  if len(time_list) < 100:
       #      os.remove(out_name)
       #      print("WARNING: removing %s"%out_name)
     if not os.path.isfile(out_name) or load == False:
         if not os.path.isdir(sim_location):
+            if data_type == 'clump':
+                data_list = np.array([[], [], []])
             return time_list, data_list
 
         args_list = []
@@ -152,19 +197,32 @@ def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0
         for output_loc in output_list:
             ds_loc = '%s/%s'%(output_loc, os.path.basename(output_loc))
             args_list.append((ds_loc, data_type, field, T_min, zstart, zend, grid_rank))
-            
-        pool = mp.Pool(mp.cpu_count())
-        results = pool.map(calculate_time_data_wrapper, args_list)
-        pool.close()
-           
         
+        if use_mpi:
+            pool = mp.Pool(mp.cpu_count())
+            results = pool.map(calculate_time_data_wrapper, args_list)
+            pool.close()       
+            time_list, data_list = zip(*sorted(results))
+        else:
+            time_list = []
+            data_list = []
+            for args in args_list:
+                time, data = calculate_time_data_wrapper(args)
+                time_list.append(time)
+                data_list.append(data)
+
         if len(results) > 0:
             time_list, data_list = zip(*sorted(results))
         if save and len(data_list) > 0:
             outf = open(out_name, 'w')
             for time, data in zip(time_list, data_list):
-                outf.write("%e %e\n"%(time, data))
+                if data_type == 'clump':
+                    outf.write("%e %e %e %e\n"%(time, data[0], data[1], data[2]))
+                else:
+                    outf.write("%e %e\n"%(time, data))
             outf.close()
+        if data_type == 'clump':
+            data_list = list(zip(*data_list))
     return time_list, data_list
 
 
@@ -179,7 +237,9 @@ def calculate_time_data_wrapper(args):
         data = calculate_mass_flux(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank)
     elif data_type == 'cold_creta':
         data = calculate_cold_creta(ds, T_min = T_min, z_min = zstart, z_max = zend, grid_rank = grid_rank)
-
+    elif data_type == 'clump':
+        data = calculate_cold_clump_properties(ds)
+        
     time = ds.current_time.d
     return time, data
 
@@ -596,6 +656,21 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         beta_list = num*[100]
         beta_list[-2] = 10
         beta_list[-1] = 3
+
+    elif compare == 'transport_relative':
+        diff_list   = [0, 0, 0, 0,10, 3, 1, 0, 0, 0]
+        stream_list = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1]
+        heat_list   = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1]
+        num = len(diff_list)
+        tctf_list = num*[tctf]
+        cr_list  = num*[cr]
+        cr_list[0] = 0
+        beta_list = num*[100]
+        beta_list[-2] = 10
+        beta_list[-1] = 3
+        beta_list[2] = 10
+        beta_list[3] = 3
+
     elif compare == 'transport_multipanel':
         diff_list   = [0, 0, 3, 0]
         stream_list = [0, 0, 0, 1]
@@ -706,11 +781,13 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
         else:
             beta = float(beta)
             label = '$\\beta = $%.1f'%beta
-    elif compare == 'transport' or compare == 'transport_multipanel':
+    elif compare == 'transport' or compare == 'transport_multipanel' or compare == 'transport_relative':
         if cr == 0:
             label = 'No CR'
         if cr > 0:
             label = 'P$_c$ / P$_g$ = %.1f'%cr
+            if compare == 'transport_relative':
+                label += ', $\\beta = %i$'%beta
             if crdiff > 0:
                 label = 'Diffusion, $t_{diff} / t_{ff}$ = %i'%crdiff
             if crstream > 0:
@@ -791,8 +868,8 @@ def get_fig_name(base, sim, compare, tctf, beta=100.0, cr=0, crdiff=0, crstream 
         plot_name += '_beta_%.1f_cr_%.1f_stream_compare'%(beta, cr)
         if crheat > 0:
             plot_name += '_heat'
-    elif compare == 'transport' or compare == 'transport_multipanel':
-        plot_name += '_cr_%.2f_transport_compare'%cr
+    elif compare == 'transport' or compare == 'transport_multipanel' or compare == 'transport_relative':
+        plot_name += '_cr_%.2f_%s_compare'%(cr, compare)
     if time > 0:
         plot_name += '_%i'%time
 
@@ -907,6 +984,22 @@ def get_color_list(compare):
         stream1_color = tp[2]
         stream2_color = tp[1]
         color_list = [mhd_color, adv_color, diff0_color, diff1_color, diff2_color, stream0_color, stream1_color, stream2_color]
+    elif compare == 'transport_relative':
+        mhd_color = palettable.wesanderson.Darjeeling2_5.mpl_colors[-1]
+        tp = palettable.scientific.diverging.Berlin_12.mpl_colors
+        diff0_color = tp[8]
+        diff1_color = tp[9]
+        diff2_color = tp[10]
+
+        stream0_color = tp[3]
+        stream1_color = tp[2]
+        stream2_color = tp[1]
+        ap = palettable.scientific.diverging.Tofino_12.mpl_colors
+        adv1_color = ap[8]
+        adv2_color = ap[9]
+        adv3_color = ap[10]
+        color_list = [mhd_color, adv1_color, adv2_color, adv3_color, diff0_color, 
+                      diff1_color, diff2_color, stream0_color, stream1_color, stream2_color]
     return color_list
 
 

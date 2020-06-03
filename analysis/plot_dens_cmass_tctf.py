@@ -90,6 +90,8 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
                     label = pt.get_label_name(compare, tctf, beta_list[i], cr_list[i], crdiff = diff_list[i], \
                                               crstream = stream_list[i], crheat = heat_list[i], counter = i)
                     linestyle = 'solid'
+ #                   if compare == 'transport' and i == 1:
+#                        linestyle = 'dashed'
                 else:
                     label =  None
                     linestyle = 'dashed'
@@ -115,7 +117,7 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
                     ax[col].errorbar(x_rel, y_rel, err_rel_list, color = color_list[i], linestyle = '')
                     ax[col].axhline(y = 1, linestyle = 'dashed', color = 'gray', linewidth = 1)
                     ax[col].tick_params(labelsize = fs)
-    ax[0].legend(fontsize = 8)
+    ax[0].legend(fontsize = 6)
     fig.tight_layout()
     fig_basename = 'dens_cfrac_cflux_tctf'
     if relative:
@@ -152,6 +154,7 @@ compare = sys.argv[1]
 if compare == 'transport' or compare == 'cr':
     if compare == 'transport':
         relative = 1
+        compare = 'transport_relative'
         cr_list = [0.01, 0.1, 1, 10]
     else:
         cr_list = [0, 0.01, 0.1, 1, 10]

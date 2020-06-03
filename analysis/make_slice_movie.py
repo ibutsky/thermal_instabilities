@@ -25,6 +25,7 @@ kb = const.k_B.cgs.value
 p0 = (rho0 / mu / mh) * kb*T0
 
 sim_family = 'production'
+#sim_family = 'production/Tmin1e4'
 #sim_family = 'skinny'
 workdir = '../../simulations/%s'%sim_family
 plot_folder = '../../movies/temp2'

@@ -104,11 +104,12 @@ def plot_density_fluctuation(plot_type = 'mean', compare = 'transport', profile 
 #    color_list  = pt.get_color_list('tctf')
     color_list = pt.get_color_list('transport')
     marker = 'o'
-    sim_fam_list = ['production', 'production/high_res', 'production/low_res']
+    sim_fam_list = ['production', 'production/high_res', 'production/low_res',
+                    'production/Tmin1e4']
     pal = sns.cubehelix_palette(8, start=.5, rot=-.75)
 #    color_list = ['black', 'gray']
-    color_list = [pal[6], pal[4], pal[2]]
-    label_list = ['Fiducial', 'High-res', 'Low-res']
+    color_list = [pal[6], pal[4], pal[2], 'red']
+    label_list = ['Fiducial', 'High-res', 'Low-res', 'Tmin = 1e4']
     for i in range(len(sim_fam_list)):
         rho_cont_mhd, rho_err_mhd, rho_contrast, rho_err, creta, creta_err =  \
                            get_plot_data(profile = profile, 

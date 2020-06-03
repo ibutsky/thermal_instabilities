@@ -1,6 +1,7 @@
 import yt
 import matplotlib.pylab as plt
 from matplotlib.colors import LogNorm, ListedColormap
+import astropy.constants as const
 
 import numpy as np
 import seaborn as sns
@@ -10,19 +11,31 @@ import plotting_tools as pt
 import yt_functions as ytf
 
 def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, normed = True, 
-              label = None,  z_min = 0.8, z_max = 1.2, 
+              label = None,  z_min = 0.8, z_max = 1.2, number_density = True,
               work_dir = '../../simulations', plot_dir = '../../plots', sim_fam = 'production'):
 
 
     logx_list, logy_list, mass_list = pt.get_2d_hist_data(xfield, yfield, sim, zstart = z_min, zend = z_max, 
                                                           work_dir = work_dir, sim_fam = sim_fam)
-    
+
+    mu = 1.22
+    mh = const.m_p.cgs.value
+    log_mumh = np.log10(mu*mh)
+
     if xfield == 'density':
         xlims = (-28, -26)
+        if sim_fam == 'production/Tmin1e4':
+            xlims = (-28, -24)
+        if number_density:
+            xlims -= log_mumh
+            logx_list -= log_mumh
+
     elif xfield == 'pressure':
         xlims = (-14.55, -13.01)
     if yfield == 'temperature':
-        ylims = (4.3, 7)
+        ylims = (4.3, 6.9)
+        if sim_fam == 'production/Tmin1e4':
+            ylims = (3.5, 6.9)
     elif yfield == 'entropy':
         ylims = (-1.2, 2.4)
 
@@ -60,6 +73,9 @@ def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, 
     ax_histy.set_ylim(ax_scatter.get_ylim())
     if xfield == 'density':
         ax_scatter.set_xlabel('Log Density (g cm$^{-3}$)', fontsize = fs)
+        if number_density:
+            ax_scatter.set_xlabel('Log Number Density (cm$^{-3}$)', fontsize = fs)
+
     elif xfield == 'pressure':
         ax_scatter.set_xlabel('Log Pressure ($\\frac{\\mathrm{dyn}}{\\mathrm{cm}^2}$)', fontsize = fs)
     if yfield == 'temperature':
@@ -91,14 +107,34 @@ def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, 
     elif xfield == 'density':
         e_list = np.linspace(-1.5, 3.0, 6)
         p_list = np.linspace(-15.5, -11, 6)
-        for e in e_list:
+        color_list = ['green', 'blue', 'purple', 'black', 'orange', 'red']
+        e_label_pos = [(-4, 4.5), (-4, 4.5), (-6, 4.7), (-6, 5.5), (-6, 6.5), (-6, 6.5)]
+        p_label_pos = [(-6, 4.5), (-5, 5), (-4, 5.3), (-3.5, 5.5), (-3, 6), (-3, 6.5)]
+        e_index = [0, 25, 2, 45, 27, 0]
+        p_index = [45, 58, 35, 58, 69, 0]
+        for e, pos, color, i in zip(e_list, e_label_pos, color_list, e_index):
             e = np.power(10, e)
             rho, T = pt.constant_entropy_line(e)
-            ax_scatter.plot(np.log10(rho), np.log10(T),linestyle = (0, (5, 5)), color = 'black', alpha = 0.4)
-        for p in p_list:
+            log_rho = np.log10(rho)
+            log_T = np.log10(T)
+            if number_density:
+                log_rho -= log_mumh
+            ax_scatter.plot(log_rho, log_T, linestyle = (0, (5, 5)), color = color, alpha = 0.4)
+            angle = 24 #27
+            ax_scatter.text(log_rho[i], log_T[i], 'Log k = %.1f'%e, rotation = angle, rotation_mode = 'anchor', 
+                            color = color, alpha = 0.4, fontsize = fs-6)
+        for p, pos, color, i in zip(p_list, p_label_pos, color_list, p_index):
             p = np.power(10, p)
             rho, T = pt.constant_pressure_line(p)
-            ax_scatter.plot(np.log10(rho), np.log10(T),linestyle = (0, (5, 5)), color = 'black', alpha = 0.4)
+            log_rho = np.log10(rho)
+            log_T = np.log10(T)
+            if number_density:
+                log_rho -= log_mumh
+            ax_scatter.plot(log_rho, log_T,linestyle = (0, (5, 5)), color = color, alpha = 0.4)
+            # label lines of constant pressure
+            angle = -33 #30
+            ax_scatter.text(log_rho[i], log_T[i], 'Log P = %.1f'%p, rotation = angle, rotation_mode = 'anchor', 
+                            color = color, alpha = 0.4, fontsize = fs-6)
             
 
     if label is not None:
@@ -121,7 +157,7 @@ def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, 
     print('%s.png'%figname)
     plt.savefig('%s.png'%figname, dpi = 300)
 
-sim_fam = 'production'
+sim_fam = 'production/Tmin1e4'
 
 compare = 'transport'
 xfield = 'density'
@@ -129,8 +165,9 @@ yfield = 'temperature'
 
 #xfield = 'pressure'
 #yfield = 'entropy'
-for cr in [1]:
-    for tctf in [0.3]:
+#for cr in [0.1, 1]:
+for cr in [0]:
+    for tctf in [0.1]:#, 0.3, 1.0]:
         sim_list = pt.generate_sim_list(compare, tctf = tctf, cr = cr)
         label_list = pt.generate_label_list(compare, tctf = tctf, cr = cr)
         for sim, label in zip(sim_list, label_list):

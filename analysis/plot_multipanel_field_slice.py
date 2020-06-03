@@ -26,8 +26,8 @@ kb = const.k_B.cgs.value
 p0 = (rho0 / mu / mh) * kb*T0
 
 
-def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0, \
-                           crdiff = 0, crstream = 0, crheat = 0, fixed_time = 0, work_dir = '.'):
+def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0,\
+                           crdiff = 0, crstream = 0, crheat = 0, fixed_time = 0, projection = False, work_dir = '.'):
     ds_loc_list, label_list  = pt.get_sim_list(sim, compare, tctf, beta = beta,  cr = cr, \
                 crdiff = diff, crstream = stream, crheat = heat, work_dir = work_dir, sim_fam = sim_fam)
     print(ds_loc_list)
@@ -40,8 +40,11 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
         if not os.path.isfile('%s/DD%04d/DD%04d'%(ds_loc, output, output)):
             continue
         ds = ytf.load('%s/DD%04d/DD%04d'%(ds_loc, output, output))
-
-        s = yt.SlicePlot(ds, 'x', ('gas', field), center = (0, 0, 1), width = (1, 2))
+        if projection:
+            s = yt.ProjectionPlot(ds, 'x', ('gas', field), center = (0, 0, 1), width = (1, 2),
+                                  weight_field = 'density')
+        else:
+            s = yt.SlicePlot(ds, 'x', ('gas', field), center = (0, 0, 1), width = (1, 2))
         frb = s.frb
 
         xbins = frb['y'].in_units('kpc')
@@ -96,8 +99,11 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
     cbar = fig.colorbar(pcm,  cax=cbax, orientation = 'horizontal')
     cbar.set_label(label)
 
-    # figname not working right !!!!!!!!!!!!
-    figname = pt.get_fig_name('%s_multipanel_slice'%field, sim, compare, tctf, beta = beta, use_tctf = 1, \
+    if projection:
+        fig_base = '%s_multipanel_projection'%field
+    else:
+        fig_base = '%s_multipanel_slice'%field
+    figname = pt.get_fig_name(fig_base, sim, compare, tctf, beta = beta, use_tctf = 1, \
                            cr=cr, crdiff = crdiff, crstream = crstream, crheat = crheat, \
                               time = output, sim_fam = sim_fam)
 #    plt.subplots_adjust(wspace=0.02, top = 0.9)
