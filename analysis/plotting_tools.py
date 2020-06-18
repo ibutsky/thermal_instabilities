@@ -156,11 +156,13 @@ def get_2d_hist_data(xfield, yfield, sim, weighted = True,
     return logx_list, logy_list, mass_list
 
 
-def get_time_data(data_type, sim, tctf, beta, cr, diff = 0, stream = 0, heat = 0, use_mpi = True,  
+def get_time_data(data_type, sim='isocool', tctf=0.1, beta=100, cr=0, diff = 0, stream = 0, heat = 0, use_mpi = True,  
                                   field = 'density', zstart = 0.8, zend = 1.2, grid_rank = 3, 
                                   T_min = 3.33333e5, save = True, load = True, data_loc = '../../data', 
-                                  work_dir = '../../simulations', sim_fam = 'production'):
-    sim_location = get_sim_location(sim, tctf, beta, cr, diff = diff, stream = stream, heat = heat,
+                                  work_dir = '../../simulations', sim_fam = 'production', 
+                                   sim_location = None):
+    if sim_location is None:
+        sim_location = get_sim_location(sim, tctf, beta, cr, diff = diff, stream = stream, heat = heat,
                                     work_dir = work_dir, sim_fam = sim_fam)
 
     time_list = []
@@ -665,6 +667,9 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         tctf_list = num*[tctf]
         cr_list  = num*[cr]
         cr_list[0] = 0
+#        cr_list[1] = 0
+#        cr_list[2] = 0
+#        cr_list[3] = 0
         beta_list = num*[100]
         beta_list[-2] = 10
         beta_list[-1] = 3
@@ -784,13 +789,15 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
     elif compare == 'transport' or compare == 'transport_multipanel' or compare == 'transport_relative':
         if cr == 0:
             label = 'No CR'
+            if compare == 'transport_relative':
+                label += ', $\\beta = %i$'%beta
         if cr > 0:
             label = 'P$_c$ / P$_g$ = %.1f'%cr
             if compare == 'transport_relative':
                 label += ', $\\beta = %i$'%beta
             if crdiff > 0:
                 label = 'Diffusion, $t_{diff} / t_{ff}$ = %i'%crdiff
-            if crstream > 0:
+            elif crstream > 0:
                 label = 'Streaming, $\\beta = %i$'%beta
                 if crheat == 0:
                     label += ' + no heat'
@@ -974,7 +981,9 @@ def get_color_list(compare):
 #        diff_color = palettable.wesanderson.Chevalier_4.mpl_colors[0]
 #        stream_color = palettable.wesanderson.Darjeeling2_5.mpl_colors[1]
         adv_color = palettable.scientific.sequential.Batlow_6.mpl_colors[3]
-        adv_color = 'black'#mhd_color
+        ap = palettable.scientific.diverging.Tofino_12.mpl_colors
+        adv_color = ap[8]
+        #adv_color = 'black'#mhd_color
         tp = palettable.scientific.diverging.Berlin_10.mpl_colors
         diff0_color = tp[6]
         diff1_color = tp[7]

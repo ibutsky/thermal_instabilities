@@ -35,8 +35,8 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
         ax[1].set_ylabel('Cold Mass Fraction', fontsize = fs)
         ax[2].set_ylabel('Cold Mass Flux', fontsize = fs)
     else:
-        ax[0].set_ylim(1e-2, 10)
-        ax[1].set_ylim(1e-2, 100)
+        ax[0].set_ylim(1e-2, 3)
+        ax[1].set_ylim(1e-3, 100)
         ax[2].set_ylim(1e-2, 10)
         ax[0].set_ylabel('Relative Density Fluctuation', fontsize = fs)
         ax[1].set_ylabel('Relative Cold Mass Fraction', fontsize = fs)
@@ -117,7 +117,7 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
                     ax[col].errorbar(x_rel, y_rel, err_rel_list, color = color_list[i], linestyle = '')
                     ax[col].axhline(y = 1, linestyle = 'dashed', color = 'gray', linewidth = 1)
                     ax[col].tick_params(labelsize = fs)
-    ax[0].legend(fontsize = 6)
+    ax[0].legend(fontsize = 7, ncol = 2, loc = 3)
     fig.tight_layout()
     fig_basename = 'dens_cfrac_cflux_tctf'
     if relative:

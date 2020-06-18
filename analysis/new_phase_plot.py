@@ -109,9 +109,9 @@ def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, 
         p_list = np.linspace(-15.5, -11, 6)
         color_list = ['green', 'blue', 'purple', 'black', 'orange', 'red']
         e_label_pos = [(-4, 4.5), (-4, 4.5), (-6, 4.7), (-6, 5.5), (-6, 6.5), (-6, 6.5)]
-        p_label_pos = [(-6, 4.5), (-5, 5), (-4, 5.3), (-3.5, 5.5), (-3, 6), (-3, 6.5)]
-        e_index = [0, 25, 2, 45, 27, 0]
-        p_index = [45, 58, 35, 58, 69, 0]
+        p_label_pos = [(-6.2, 4.7), (-5.1, 5.1), (-4, 5.3), (-3.5, 5.5), (-3, 6), (-3, 6.5)]
+        e_index = [0, 23, 43, 43, 43, 0]
+        p_index = [49, 59, 59, 59, 69, 0]
         for e, pos, color, i in zip(e_list, e_label_pos, color_list, e_index):
             e = np.power(10, e)
             rho, T = pt.constant_entropy_line(e)
@@ -119,10 +119,11 @@ def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, 
             log_T = np.log10(T)
             if number_density:
                 log_rho -= log_mumh
-            ax_scatter.plot(log_rho, log_T, linestyle = (0, (5, 5)), color = color, alpha = 0.4)
+            ax_scatter.plot(log_rho, log_T, linestyle = (0, (5, 5)), color = 'black', alpha = 0.4)
             angle = 24 #27
-            ax_scatter.text(log_rho[i], log_T[i], 'Log k = %.1f'%e, rotation = angle, rotation_mode = 'anchor', 
-                            color = color, alpha = 0.4, fontsize = fs-6)
+            ax_scatter.text(log_rho[i]+.06, log_T[i]-.06, '$\\kappa = 10^{%.1f}\mathrm{cm}^2\mathrm{keV}$'%np.log10(e), 
+                            rotation = angle, rotation_mode = 'anchor', 
+                            color = 'black', alpha = 0.4, fontsize = fs-6)
         for p, pos, color, i in zip(p_list, p_label_pos, color_list, p_index):
             p = np.power(10, p)
             rho, T = pt.constant_pressure_line(p)
@@ -130,11 +131,12 @@ def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, 
             log_T = np.log10(T)
             if number_density:
                 log_rho -= log_mumh
-            ax_scatter.plot(log_rho, log_T,linestyle = (0, (5, 5)), color = color, alpha = 0.4)
+            ax_scatter.plot(log_rho, log_T,linestyle = (0, (5, 5)), color = 'black', alpha = 0.4)
             # label lines of constant pressure
             angle = -33 #30
-            ax_scatter.text(log_rho[i], log_T[i], 'Log P = %.1f'%p, rotation = angle, rotation_mode = 'anchor', 
-                            color = color, alpha = 0.4, fontsize = fs-6)
+            ax_scatter.text(log_rho[i]+.01, log_T[i]+.01, '$\\mathrm{P} = 10^{%.1f}\mathrm{dyn/cm}^2$'%np.log10(p), 
+                            rotation = angle, rotation_mode = 'anchor', 
+                            color = 'black', alpha = 0.4, fontsize = fs-6)
             
 
     if label is not None:
@@ -166,8 +168,8 @@ yfield = 'temperature'
 #xfield = 'pressure'
 #yfield = 'entropy'
 #for cr in [0.1, 1]:
-for cr in [0]:
-    for tctf in [0.1]:#, 0.3, 1.0]:
+for cr in [0.1, 1]:
+    for tctf in [0.3, 1.0]:
         sim_list = pt.generate_sim_list(compare, tctf = tctf, cr = cr)
         label_list = pt.generate_label_list(compare, tctf = tctf, cr = cr)
         for sim, label in zip(sim_list, label_list):

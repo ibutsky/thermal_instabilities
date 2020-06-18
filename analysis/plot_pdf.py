@@ -2,11 +2,16 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import astropy.constants as const
 import os
 import palettable
 import plotting_tools as pt
 
 sns.set(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
+
+mu = 1.22
+mh = const.m_p.cgs.value
+log_mumh = np.log10(mu*mh)
 
 # Define and use a simple function to label the plot in axes coordinates
 def label(x, color, label):
@@ -52,6 +57,8 @@ def format_data_for_pdf(field, sim_list, label_list, nbins = 100, weighted = Tru
             weights = mass_list
         else:
             weights = np.array(len(mass_list)*[1.0])
+        if field == 'density':
+            data -= log_mumh
         hist, bin_edges = np.histogram(data, weights = weights, density = False, bins = nbins)
         # normalize hist values:
         max_hist = max(hist)
@@ -79,9 +86,9 @@ def make_plot(field, compare, tctf = 0.3, cr = 1, weighted = True, nbins = 100,
     if field == 'density':
         pal = sns.cubehelix_palette(len(sim_list), rot=-.25, light=.7)
     elif field == 'temperature':
-        pal = palettable.scientific.sequential.LaJolla_11.mpl_colors[2:-1]
+        pal = palettable.scientific.sequential.LaJolla_13.mpl_colors[2:-1]
     elif field == 'cr_eta':
-        pal = sns.cubehelix_palette(len(sim_list))
+        pal = sns.cubehelix_palette(len(sim_list)+1)[1:]
 
 
     x, y = format_data_for_pdf(field, sim_list, label_list, weighted = weighted, 
@@ -90,8 +97,9 @@ def make_plot(field, compare, tctf = 0.3, cr = 1, weighted = True, nbins = 100,
     ax = g.axes
 
     if field == 'density':
-        xlabel = 'Log Density (g cm$^{-3}$)'
+        xlabel = 'Log Number Density (cm$^{-3}$)'
         xlims = (-28.5, -25.8)
+        xlims -= log_mumh
     elif field == 'temperature':
         xlabel = 'Log Temperature (K)'
         xlims = (3.5, 7)
@@ -116,19 +124,20 @@ def make_plot(field, compare, tctf = 0.3, cr = 1, weighted = True, nbins = 100,
 
 
 
-sim_fam = 'production/high_res'
+sim_fam = 'production/Tmin1e4'
 
 cr = 1
 tctf = 0.3
-compare = 'transport'
-
+#compare = 'transport_relative'
+compare = 'cr'
 cr_list = [0.01, 0.1, 1, 10]
 tctf_list = [0.1, 0.3, 1, 3]
 
-cr_list = [.1, 1] 
-tctf_list = [0.3]
+cr_list = [1, 0.1] 
+tctf_list = [0.1, 0.3]
+
 for cr in cr_list:
     for tctf in tctf_list:
-        for field in ['cr_eta', 'density', 'temperature']:
+        for field in ['density', 'temperature', 'cr_eta']:#, 'density', 'temperature']:
             make_plot(field, compare, tctf, cr, weighted = True, sim_fam = sim_fam)
 

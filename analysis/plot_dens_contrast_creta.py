@@ -26,6 +26,15 @@ def skip_sim(sim_loc):
             skip = True
     return skip
 
+def get_marker(sim_name):
+    if sim_name.__contains__('cr'):
+        marker = 'o'
+        if sim_name.__contains__('tdiff'):
+            marker = 's'
+        elif sim_name.__contains__('stream'):
+            marker = 'v'
+    return marker
+
 def get_density_contrast(sim_name, sim_fam = 'production', work_dir = '../../simulations',
                   T_cold = 3.33333e5, zstart = 0.8, zend = 1.2):
 
@@ -69,7 +78,7 @@ def get_plot_data(profile = 'isocool', sim_fam = 'production', work_dir = '../..
     rho_err_list   = np.array([])
     creta_list     = np.array([])
     creta_err_list = np.array([])
-                          
+    marker_list = np.array([])
     for sim_loc in sim_list:
         sim_name = os.path.basename(sim_loc)
         if sim_has_all_outputs(sim_loc) and not skip_sim(sim_name):
@@ -78,17 +87,21 @@ def get_plot_data(profile = 'isocool', sim_fam = 'production', work_dir = '../..
                       work_dir = work_dir, T_cold = T_cold, zstart = zstart, zend = zend)
                 creta, creta_err = get_creta(sim_name, sim_fam = sim_fam,
                       work_dir = work_dir, T_cold = T_cold, zstart = zstart, zend = zend)
-
+                marker = get_marker(sim_name)
+                
                 rho_cont_list  = np.append(rho_cont_list,  rho_cont)
                 rho_err_list   = np.append(rho_err_list,   rho_err)
                 creta_list     = np.append(creta_list,     creta)
                 creta_err_list = np.append(creta_err_list, creta_err)
-            elif sim_name.__contains__('beta_100.0'):
+                marker_list    = np.append(marker_list, marker)
+
+            elif sim_name.__contains__('beta_100.0') and sim_name.__contains__('tctf_0.1'):
                 rho_cont, rho_err = get_density_contrast(sim_name, sim_fam = sim_fam,
                       work_dir = work_dir, T_cold = T_cold, zstart = zstart, zend = zend)
                 rho_cont_mhd_list = np.append(rho_cont_mhd_list, rho_cont)
                 rho_err_mhd_list  = np.append(rho_err_mhd_list, rho_err)
-    return  rho_cont_mhd_list, rho_err_mhd_list, rho_cont_list, rho_err_list, creta_list, creta_err_list
+
+    return  rho_cont_mhd_list, rho_err_mhd_list, rho_cont_list, rho_err_list, creta_list, creta_err_list, marker_list
                                     
 def plot_density_fluctuation(plot_type = 'mean', compare = 'transport', profile = 'isocool', output = 50,
                               T_cold = 3.3333333e5, zstart = 0.8, zend = 1.2, relative = 0, 
@@ -108,23 +121,28 @@ def plot_density_fluctuation(plot_type = 'mean', compare = 'transport', profile 
                     'production/Tmin1e4']
     pal = sns.cubehelix_palette(8, start=.5, rot=-.75)
 #    color_list = ['black', 'gray']
-    color_list = [pal[6], pal[4], pal[2], 'red']
+    color_list = [pal[6], pal[4], pal[2], 'orange']
     label_list = ['Fiducial', 'High-res', 'Low-res', 'Tmin = 1e4']
     for i in range(len(sim_fam_list)):
-        rho_cont_mhd, rho_err_mhd, rho_contrast, rho_err, creta, creta_err =  \
+        rho_cont_mhd, rho_err_mhd, rho_contrast, rho_err, creta, creta_err, marker_list =  \
                            get_plot_data(profile = profile, 
                             sim_fam = sim_fam_list[i], work_dir = work_dir, 
                             zstart = zstart, zend = zend, T_cold = T_cold)
-        ax.axhline(np.mean(rho_cont_mhd), color = color_list[i], linestyle = 'dashed')
+        ax.axhline(np.mean(rho_cont_mhd), color = color_list[i], linestyle = 'dashed', zorder = 0)
         
-        ax.scatter(creta, rho_contrast, color = color_list[i], label = None, marker = marker, alpha = 0.9)
-        ax.errorbar(creta, rho_contrast, xerr = creta_err, yerr = rho_err, fmt = 'none', 
-                                     color = color_list[i], alpha = 0.3)
+        for j in range(len(creta)):
+            ax.errorbar(creta[j], rho_contrast[j], xerr = creta_err[j], yerr = rho_err[j], fmt = 'none', 
+                                     color = color_list[i], alpha = 0.3, zorder = 1)
+            ax.scatter(creta[j], rho_contrast[j], color = color_list[i], facecolors = 'none',
+                       label = None, marker = marker_list[j], alpha = 1, zorder = 2)
 
         # just for the label:
         ax.scatter(-100, -100, color = color_list[i], label = label_list[i], marker = marker, alpha = 0.9)
+    ax.scatter(-100, -100, color = color_list[0], facecolors = 'none', marker = 'o', label = 'Advection')
+    ax.scatter(-100, -100, color = color_list[0], facecolors = 'none', marker = 's', label = 'Diffusion')
+    ax.scatter(-100, -100, color = color_list[0], facecolors = 'none', marker = 'v', label = 'Streaming')
 
-    ax.legend(fontsize = 8)
+    ax.legend(fontsize = 8, ncol = 2, loc = 3)
     fig.tight_layout()
     fig_basename = 'density_contrast_%s'%(profile)
     figname = '../../plots/%s/%s.png'%(sim_fam, fig_basename)

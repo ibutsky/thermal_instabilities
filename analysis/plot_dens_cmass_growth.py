@@ -42,8 +42,9 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
     linecolor = 'black'
     if pt.dark_mode:
         linecolor = 'white'
-    ax[0].plot(time_list, 0.02*np.exp(pi*time_list), color = linecolor,\
-            linestyle = 'dashed', label = 'Linear Theory', linewidth = 3)
+    if compare == 'tctf':
+        ax[0].plot(time_list, 0.02*np.exp(pi*time_list), color = linecolor,\
+                   linestyle = 'dashed', label = 'Linear Theory', linewidth = 3)
 
 
     cpal = pt.get_color_list(compare)
@@ -80,8 +81,12 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
                     ax[col].plot(time_list/tctf, data_list, linewidth = 2, linestyle = linestyle_list[j], alpha = alpha_list[j], 
                                  label = None, color = cpal[i])
                     
-     
-    ax[0].legend()
+    
+
+    if compare == 'transport' or compare == 'transport_relative':
+        ax[0].legend(fontsize = 7, loc = 3, ncol = 2)
+    else:
+        ax[1].legend(fontsize = 8, loc = 2)
     fig.tight_layout()
     figname = pt.get_fig_name('dens_cfrac_cflux_growth', sim, compare, \
                               tctf, beta, cr, diff,  sim_fam = sim_fam)
@@ -92,7 +97,7 @@ def make_all_plots(compare, beta = 100, cr = 0, field = 'density'):
     all_tctf = [.1, 0.3, 1, 3, 10]
     all_cr = [0.01, .1, 1, 10]
     for sim in ['isocool']:
-        if compare == 'diff' or compare == 'stream' or compare == 'transport':
+        if compare == 'diff' or compare == 'stream' or compare == 'transport' or compare == 'transport_relative':
             for tctf in all_tctf:
                 for cr in all_cr:
                     plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, work_dir = work_dir, field = field)
@@ -123,3 +128,4 @@ compare = sys.argv[1]
 
 
 make_all_plots(compare)
+
