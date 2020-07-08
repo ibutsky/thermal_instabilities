@@ -63,7 +63,7 @@ def format_data_for_pdf(field, sim_list, label_list, nbins = 100, weighted = Tru
         # normalize hist values:
         max_hist = max(hist)
         if max_hist > 0:
-            hist *= (10000 / max_hist)
+            hist *= (20000 / max_hist)
         new_array = np.array([])
 #        print(max(hist), min(hist), np.median(hist))
         for j in range(len(hist)):
@@ -87,6 +87,9 @@ def make_plot(field, compare, tctf = 0.3, cr = 1, weighted = True, nbins = 100,
         pal = sns.cubehelix_palette(len(sim_list), rot=-.25, light=.7)
     elif field == 'temperature':
         pal = palettable.scientific.sequential.LaJolla_13.mpl_colors[2:-1]
+        if compare == 'transport_pdf':
+            pal = palettable.scientific.sequential.LaJolla_16.mpl_colors[2:-1]
+
     elif field == 'cr_eta':
         pal = sns.cubehelix_palette(len(sim_list)+1)[1:]
 
@@ -124,18 +127,17 @@ def make_plot(field, compare, tctf = 0.3, cr = 1, weighted = True, nbins = 100,
 
 
 
-sim_fam = 'production/Tmin1e4'
+sim_fam = 'production'#/Tmin1e4'
 
 cr = 1
 tctf = 0.3
-#compare = 'transport_relative'
-compare = 'cr'
+compare = 'transport_pdf'
+#compare = 'cr'
 cr_list = [0.01, 0.1, 1, 10]
 tctf_list = [0.1, 0.3, 1, 3]
 
 cr_list = [1, 0.1] 
-tctf_list = [0.1, 0.3]
-
+tctf_list = [1, 3]
 for cr in cr_list:
     for tctf in tctf_list:
         for field in ['density', 'temperature', 'cr_eta']:#, 'density', 'temperature']:

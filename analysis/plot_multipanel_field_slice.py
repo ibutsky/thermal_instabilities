@@ -63,10 +63,10 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
         
         if field == 'density':
             vmin = 1e-1
-            vmax = 3
+            vmax = 3            
             label = '$\\rho / \\rho_0 $'
         elif field == 'temperature':
-            vmin = 9e4 / T0
+            vmin = 5e4 / T0
             vmax = 5e6 / T0
             label = 'T / T$_0$'
         elif field == 'cr_eta':
@@ -119,7 +119,7 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
     plt.savefig(figname, dpi = 300, bbox_inches = 'tight', pad_inches = 0.1)
 
 
-sim_fam = 'production/high_res'
+sim_fam = 'production'#/high_res'
 work_dir = '../../simulations'
 
 compare = 'cr'
@@ -135,12 +135,12 @@ stream = 0
 heat = 0
 
 fixed_time = False
-projection = True
-for output in [40, 60]:
-    for field in ['density', 'temperature']:
-        for tctf in [0.3, 1]:
-            for compare in ['tctf', 'cr']:#, 'transport_multipanel']:
-                if compare == 'transport_multipanel':
+projection = False
+for output in [40]:#, 60]:
+    for field in ['density', 'temperature', 'cr_eta']:
+        for tctf in [0.3]:#, 1]:
+            for compare in ['transport_pdf']:#, 'transport_multipanel']:
+                if compare.__contains__('transport'):
                     cr = 1.0
                 else:
                     cr = 0

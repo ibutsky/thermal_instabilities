@@ -70,7 +70,7 @@ def create_constants_and_parameters_file(fn, halo_profile, tcool_tff_ratio, pert
 
     f.write('# cooling function parameters\n')
     f.write('# Tmin should be ~ T0/20    \n')
-    f.write('T_min = YTQuantity(5e4, \'K\')\n')
+    f.write('T_min = YTQuantity(%s, \'K\')\n'%Tmin)
     f.write('T_max = YTQuantity(1e9, \'K\')\n')
     f.write('T_power_law_index = (-2./3.)\n')
     f.write('smooth_factor = 0.02\n\n')
@@ -142,11 +142,14 @@ def get_sim_dir():
         sim_dir = '../../simulations/production/constant_crp'
 
 
-sim_dir = '../../simulations/production/high_res'
+sim_dir = '../../simulations/production'
 grid_rank = 3
-ndim = 512
+ndim = 256
+if ndim == 512:
+    sim_dir += '/high_res'
 kmax = 0
 skinny = 1
+Tmin = '5e4'
 
 perturb_type = 1
 nodes = 1
@@ -157,21 +160,22 @@ constant_B_pressure = 0
 constant_cr_pressure = 0
 
 cr_diffusion = 0
-tcr_tff_ratio = 0#10.0
+tcr_tff_ratio = 0
 
-cr_streaming = 1
-cr_streaming_stability = 50
-cr_heating   = 1
+cr_streaming = 0
+cr_streaming_stability = 0#50
+cr_heating   = 0
 
 
 
 halo_prof_list = [3]
 #tctf_list = [0.1, 0.3, 1.0, 3.0] #, 10.0]
-tctf_list = [.3, 1.0, 3.0]
+tctf_list = [0.3]
 #beta_list = ['inf', 300, 100, 30, 10, 3]
-beta_list = [10]
+beta_list = ['inf']
+#beta_list = [3, 10]
 #cr_list = [0.01, 0.1, 1.0, 10.0]
-cr_list = [0.1, 1.0, 10]
+cr_list = [1]#, 0.1, 1.0, 10]
 
 
 for halo_prof in halo_prof_list:

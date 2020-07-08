@@ -115,6 +115,10 @@ def generate_enzo_input_file():
     outf.write("TopGridRank \t\t = %i\n\n"%grid_rank)
 
     if grid_rank == 2:
+        res_x = resolution
+        res_y = res_x
+        box_x = box_z
+        box_y = box_z
         outf.write("TopGridDimensions \t = %i %i\n"%(resolution, resolution))
         outf.write("DomainLeftEdge \t\t = %i %i\n"%(-box_x, -box_y))
         outf.write("DomainRightEdge \t = %i %i\n\n"%(box_x,  box_y))
@@ -181,7 +185,7 @@ def generate_enzo_input_file():
     outf.write("CIECooling \t\t = 0\n")
     outf.write("UseCoolingTimestep \t = 1\n")
     outf.write("CoolingTimestepSafetyFactor \t = 0.4\n")
-    outf.write("CoolingTimestepMinimumTimestep = 0 # years\n\n")
+    outf.write("CoolingTimestepMinimumTimestep = 20000 # years\n\n")
 
     outf.write("# Global Parameters\n")
     outf.write("tiny_number \t\t = 1.0e-20\n")

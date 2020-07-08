@@ -43,7 +43,7 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
         ax[2].set_ylabel('Relative Cold Mass Flux', fontsize = fs)               
 
     color_list = pt.get_color_list(compare)
-    
+    print(beta_list, cr_list, stream_list, heat_list, diff_list)
     for i in range(len(cr_list)):
         for col, plot_type in enumerate(['density_fluctuation', 'cold_fraction', 'cold_flux']):
             for sim_fam in sim_fam_list:
@@ -61,12 +61,12 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
                                            load = load, save = save, work_dir = work_dir, sim_fam = sim_fam)
                     if len(data_list) > 0:
                         data = np.nan_to_num(data_list[output-10:output+10])
-                        mean = np.mean(data)
-                        err  = np.std(data)
+                        mean = np.nanmean(data)
+                        err  = np.nanstd(data)
                         x_list.append(tctf)
                         y_list.append(mean)
                         err_list.append(err)
-                
+
                     if relative:
                         time_nocr, data_nocr = pt.get_time_data(plot_type, sim, tctf, beta_list[i], cr = 0, \
                                            diff = 0, stream = 0, heat = 0,
@@ -90,6 +90,9 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
                     label = pt.get_label_name(compare, tctf, beta_list[i], cr_list[i], crdiff = diff_list[i], \
                                               crstream = stream_list[i], crheat = heat_list[i], counter = i)
                     linestyle = 'solid'
+                    if compare == 'stream' and heat_list[i] == 0:
+                        linestyle = 'dashed'
+                        #label += ', no heating'
  #                   if compare == 'transport' and i == 1:
 #                        linestyle = 'dashed'
                 else:
@@ -151,9 +154,10 @@ beta = 100
 relative = 0
 
 compare = sys.argv[1]
-if compare == 'transport' or compare == 'cr':
+cr_list = [0.01, 0.1, 1, 10]
+if compare == 'transport' or compare == 'cr' or compare == 'stream':
     if compare == 'transport':
-        relative = 1
+#        relative = 1
         compare = 'transport_relative'
         cr_list = [0.01, 0.1, 1, 10]
     else:

@@ -185,9 +185,9 @@ def get_time_data(data_type, sim='isocool', tctf=0.1, beta=100, cr=0, diff = 0, 
             data_list = [n_clumps, clump_size, clump_std]
         else:
             time_list, data_list = np.loadtxt(out_name, skiprows = 1, unpack=True)
-      #  if len(time_list) < 100:
-      #      os.remove(out_name)
-      #      print("WARNING: removing %s"%out_name)
+            if len(time_list) < 100:
+                os.remove(out_name)
+                print("WARNING: removing %s"%out_name)
     if not os.path.isfile(out_name) or load == False:
         if not os.path.isdir(sim_location):
             if data_type == 'clump':
@@ -204,7 +204,12 @@ def get_time_data(data_type, sim='isocool', tctf=0.1, beta=100, cr=0, diff = 0, 
             pool = mp.Pool(mp.cpu_count())
             results = pool.map(calculate_time_data_wrapper, args_list)
             pool.close()       
-            time_list, data_list = zip(*sorted(results))
+#            time_list, data_list = zip(*sorted(results))
+            if len(results) > 0:
+                time_list, data_list = zip(*sorted(results))
+            else:
+                time_list = []
+                data_list = []
         else:
             time_list = []
             data_list = []
@@ -212,9 +217,9 @@ def get_time_data(data_type, sim='isocool', tctf=0.1, beta=100, cr=0, diff = 0, 
                 time, data = calculate_time_data_wrapper(args)
                 time_list.append(time)
                 data_list.append(data)
-
-        if len(results) > 0:
+            results = zip(time_list, data_list)
             time_list, data_list = zip(*sorted(results))
+
         if save and len(data_list) > 0:
             outf = open(out_name, 'w')
             for time, data in zip(time_list, data_list):
@@ -639,13 +644,13 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         stream_list = num*[0]
         heat_list = num*[0]
     elif compare == 'stream':
-        beta_list = [100, 100, 100, 10, 10, 10, 3, 3, 3]
+        beta_list = [100, 100, 10, 10, 3, 3]
         num = len(beta_list)
         tctf_list = num*[tctf]
         diff_list = num*[0]
-        cr_list     = [0, cr, cr, 0, cr, cr, 0, cr, cr]
-        stream_list = [0, 0, 1, 0, 0, 1, 0, 0, 1]
-        heat_list   = [0, 0, 1, 0, 0, 1, 0, 0, 1]
+        cr_list     = num*[cr]#[cr, cr, cr, cr, cr, cr, cr, cr, cr]
+        stream_list = num*[1]#[0, 1, 1, 0, 1, 1, 0, 1, 1]
+        heat_list   = [0, 1, 0, 1, 0, 1]
 
     elif compare == 'transport':
         diff_list   = [0, 0, 10, 3, 1, 0, 0, 0]
@@ -672,6 +677,22 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
 #        cr_list[3] = 0
         beta_list = num*[100]
         beta_list[-2] = 10
+        beta_list[-1] = 3
+        beta_list[2] = 10
+        beta_list[3] = 3
+
+    elif compare == 'transport_pdf':
+        diff_list   = [0, 0, 0, 0,10, 3, 1, 0, 0, 0, 0, 0, 0]
+        stream_list = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+        heat_list   = [0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0]
+        num = len(diff_list)
+        tctf_list = num*[tctf]
+        cr_list  = num*[cr]
+        cr_list[0] = 0
+        beta_list = num*[100]
+        beta_list[-4] = 3
+        beta_list[-3] = 3
+        beta_list[-2] = 3
         beta_list[-1] = 3
         beta_list[2] = 10
         beta_list[3] = 3
@@ -786,14 +807,14 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
         else:
             beta = float(beta)
             label = '$\\beta = $%.1f'%beta
-    elif compare == 'transport' or compare == 'transport_multipanel' or compare == 'transport_relative':
+    elif compare.__contains__('transport'):
         if cr == 0:
             label = 'No CR'
             if compare == 'transport_relative':
                 label += ', $\\beta = %i$'%beta
         if cr > 0:
             label = 'P$_c$ / P$_g$ = %.1f'%cr
-            if compare == 'transport_relative':
+            if compare == 'transport_relative' or compare == 'transport_pdf':
                 label += ', $\\beta = %i$'%beta
             if crdiff > 0:
                 label = 'Diffusion, $t_{diff} / t_{ff}$ = %i'%crdiff
@@ -836,9 +857,9 @@ def get_linestyle(compare, tctf, beta, cr, crdiff = 0, \
     if compare == 'diff' or compare == 'stream':
         if cr == 0:
             linestyle = 'dotted'
-        elif crdiff == 0 and crstream == 0:
+        if crheat == 0:
             linestyle = 'dashed'
-    if compare == 'transport':
+    elif compare == 'transport':
         if crdiff:
             linestyle = 'dashed'
         elif crstream:
@@ -875,7 +896,7 @@ def get_fig_name(base, sim, compare, tctf, beta=100.0, cr=0, crdiff=0, crstream 
         plot_name += '_beta_%.1f_cr_%.1f_stream_compare'%(beta, cr)
         if crheat > 0:
             plot_name += '_heat'
-    elif compare == 'transport' or compare == 'transport_multipanel' or compare == 'transport_relative':
+    elif compare.__contains__('transport'):
         plot_name += '_cr_%.2f_%s_compare'%(cr, compare)
     if time > 0:
         plot_name += '_%i'%time
@@ -975,6 +996,7 @@ def get_color_list(compare):
     elif compare == 'stream':
         cpal = palettable.scientific.sequential.Bamako_4.mpl_colors
         color_list = [cpal[0], cpal[0], cpal[0], cpal[1], cpal[1], cpal[1], cpal[2], cpal[2], cpal[2]]
+        color_list = [cpal[0], cpal[0], cpal[1], cpal[1], cpal[2], cpal[2]]
     elif compare == 'transport':
         mhd_color = palettable.wesanderson.Darjeeling2_5.mpl_colors[-1]
 #        adv_color = palettable.wesanderson.Darjeeling1_4.mpl_colors[1]

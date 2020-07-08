@@ -159,16 +159,14 @@ def make_plot(sim, xfield = 'density', yfield = 'temperature', weighted = True, 
     print('%s.png'%figname)
     plt.savefig('%s.png'%figname, dpi = 300)
 
-sim_fam = 'production/Tmin1e4'
+sim_fam = 'production'
 
-compare = 'transport'
+compare = 'transport_pdf'
 xfield = 'density'
 yfield = 'temperature'
 
-#xfield = 'pressure'
-#yfield = 'entropy'
-#for cr in [0.1, 1]:
-for cr in [0.1, 1]:
+
+for cr in [0]:
     for tctf in [0.3, 1.0]:
         sim_list = pt.generate_sim_list(compare, tctf = tctf, cr = cr)
         label_list = pt.generate_label_list(compare, tctf = tctf, cr = cr)

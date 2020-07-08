@@ -51,7 +51,7 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
 
     for col, plot_type in enumerate(['density_fluctuation', 'cold_fraction', 'cold_flux']):
         for i, tctf in enumerate(tctf_list):
-            time_list, data_list = pt.get_time_data(plot_type, sim, tctf, beta_list[i], cr_list[i], \
+            time_list, data_list = pt.get_time_data(plot_type, sim, tctf, beta_list[i], cr_list[i], use_mpi = use_mpi, \
                                            diff = diff_list[i], stream = stream_list[i], heat = heat_list[i], 
                                            field = field, zstart = zstart, zend = zend, grid_rank = grid_rank, 
                                            load = load, save = save, work_dir = work_dir, sim_fam = sim_fam)
@@ -65,21 +65,31 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
             ax[col].tick_params(labelsize = fs)
 
             if resolution_compare:
-                time_list, data_list = pt.get_time_data(plot_type, sim, tctf, beta_list[i], cr_list[i], \
+                time_list, data_list = pt.get_time_data(plot_type, sim, tctf, beta_list[i], cr_list[i], use_mpi = use_mpi,\
                                            diff = diff_list[i], stream = stream_list[i], heat = heat_list[i],
                                            field = field, zstart = zstart, zend = zend, grid_rank = grid_rank,
                                            load = load, save = save, work_dir = work_dir, sim_fam = 'production/high_res')
                 ax[col].plot(time_list/tctf, data_list, linewidth = 2, linestyle = 'dotted', label = label, color = cpal[i])
             if mhd_compare:
-                linestyle_list = ['dashed', 'dotted', 'solid', 'solid']
-                alpha_list = [1, 1, 1, 0.5]
-                for j,compare_beta in enumerate([3, 10, 100, 'inf']):
-                    time_list, data_list = pt.get_time_data(plot_type, sim, tctf, compare_beta, cr_list[i], \
+                linestyle_list = ['dashed', 'dotted']
+                alpha_list = [.8, .8]
+                for j,compare_beta in enumerate([3, 'inf']):
+                    time_list, data_list = pt.get_time_data(plot_type, sim, tctf, compare_beta, cr_list[i], use_mpi =use_mpi,\
                                                         diff = diff_list[i], stream = stream_list[i], heat = heat_list[i],
                                            field = field, zstart = zstart, zend = zend, grid_rank = grid_rank,
                                                             load = load, save = save, work_dir = work_dir, sim_fam = sim_fam)
-                    ax[col].plot(time_list/tctf, data_list, linewidth = 2, linestyle = linestyle_list[j], alpha = alpha_list[j], 
-                                 label = None, color = cpal[i])
+                    label = None
+                    ax[col].plot(time_list/tctf, data_list, linewidth = 2, linestyle = linestyle_list[j], 
+                                 alpha = alpha_list[j], label = label, color = cpal[i])
+            if compare == 'stream' and stream_list[i] >0:
+                linestyle = 'dotted'
+                time_list, data_list = pt.get_time_data(plot_type, sim, tctf, beta_list[i], cr_list[i], use_mpi =use_mpi,\
+                                                        diff = diff_list[i], stream = stream_list[i], heat = 0,
+                                           field = field, zstart = zstart, zend = zend, grid_rank = grid_rank,
+                                                           load = load, save = save, work_dir = work_dir, sim_fam = sim_fam)
+                label = None
+                ax[col].plot(time_list/tctf, data_list, linewidth = 2, linestyle = linestyle,
+                                 label = label, color = cpal[i])
                     
     
 
@@ -95,7 +105,7 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
 
 def make_all_plots(compare, beta = 100, cr = 0, field = 'density'):
     all_tctf = [.1, 0.3, 1, 3, 10]
-    all_cr = [0.01, .1, 1, 10]
+    all_cr = [0.01, .1, 1, 3, 10]
     for sim in ['isocool']:
         if compare == 'diff' or compare == 'stream' or compare == 'transport' or compare == 'transport_relative':
             for tctf in all_tctf:
@@ -120,6 +130,7 @@ sim_fam = 'production'
 work_dir = '../../simulations'
 save = True
 load = True
+use_mpi = True
 resolution_compare = 0
 mhd_compare = 0
 

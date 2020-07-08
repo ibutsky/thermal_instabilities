@@ -60,17 +60,20 @@ def get_density_contrast(sim_name, sim_fam = 'production', work_dir = '../../sim
     return rho_cont, err
         
 def get_creta(sim_name, sim_fam = 'production', work_dir = '../../simulations',
-                        T_cold = 3.33333e5, zstart = 0.8, zend = 1.2):
+                        T_cold = 3.33333e5, zstart = 0.8, zend = 1.2, warm = False):
     log_T, log_creta, mass_list = pt.get_2d_hist_data('temperature', 'cr_eta', sim_name,
                                                         zstart = zstart, zend = zend,
                                                     work_dir = work_dir, sim_fam = sim_fam)
-    cold_mask = log_T <= np.log10(T_cold)
-    creta_cold_ave = np.nanmean(log_creta[cold_mask])
-    err_creta = np.nanstd(log_creta[cold_mask])
-    return creta_cold_ave, err_creta
+    temp_mask = log_T <= np.log10(T_cold)
+    if warm:
+        temp_mask = log_T > np.log10(T_cold)
+        
+    creta_ave = np.nanmean(log_creta[temp_mask])
+    err_creta = np.nanstd(log_creta[temp_mask])
+    return creta_ave, err_creta
 
 def get_plot_data(profile = 'isocool', sim_fam = 'production', work_dir = '../../simulations', 
-                  T_cold = 3.33333e5, zstart = 0.8, zend = 1.2):
+                  T_cold = 3.33333e5, zstart = 0.8, zend = 1.2, warm = False):
     sim_list = glob.glob('%s/%s/%s*'%(work_dir, sim_fam, profile))
     rho_cont_mhd_list = np.array([])
     rho_err_mhd_list = np.array([])
@@ -85,7 +88,7 @@ def get_plot_data(profile = 'isocool', sim_fam = 'production', work_dir = '../..
             if sim_name.__contains__('cr'):
                 rho_cont, rho_err = get_density_contrast(sim_name, sim_fam = sim_fam, 
                       work_dir = work_dir, T_cold = T_cold, zstart = zstart, zend = zend)
-                creta, creta_err = get_creta(sim_name, sim_fam = sim_fam,
+                creta, creta_err = get_creta(sim_name, sim_fam = sim_fam, warm = warm,
                       work_dir = work_dir, T_cold = T_cold, zstart = zstart, zend = zend)
                 marker = get_marker(sim_name)
                 
@@ -104,14 +107,17 @@ def get_plot_data(profile = 'isocool', sim_fam = 'production', work_dir = '../..
     return  rho_cont_mhd_list, rho_err_mhd_list, rho_cont_list, rho_err_list, creta_list, creta_err_list, marker_list
                                     
 def plot_density_fluctuation(plot_type = 'mean', compare = 'transport', profile = 'isocool', output = 50,
-                              T_cold = 3.3333333e5, zstart = 0.8, zend = 1.2, relative = 0, 
+                              T_cold = 3.3333333e5, zstart = 0.8, zend = 1.2, relative = 0, warm = False,
                               work_dir = '../../simulations/', grid_rank = 3, load = True, save = True):
 
     
     fig, ax = plt.subplots(nrows=1, ncols = 1, figsize = (4.4, 4), sharex = True, sharey = False)
     ax.set_xlim(-2, 2.5)
     ax.set_ylim(-0.1, 1.6)
-    ax.set_xlabel('Log $(P_c / P_g$)')
+    if warm:
+        ax.set_xlabel('Log $(P_c / P_g)_{\mathrm{hot}}$')
+    else:
+        ax.set_xlabel('Log $(P_c / P_g)_{\mathrm{cold}}$')
     ax.set_ylabel('Log Average Density Contrast')
 
 #    color_list  = pt.get_color_list('tctf')
@@ -127,7 +133,7 @@ def plot_density_fluctuation(plot_type = 'mean', compare = 'transport', profile 
         rho_cont_mhd, rho_err_mhd, rho_contrast, rho_err, creta, creta_err, marker_list =  \
                            get_plot_data(profile = profile, 
                             sim_fam = sim_fam_list[i], work_dir = work_dir, 
-                            zstart = zstart, zend = zend, T_cold = T_cold)
+                                         zstart = zstart, zend = zend, T_cold = T_cold, warm = warm)
         ax.axhline(np.mean(rho_cont_mhd), color = color_list[i], linestyle = 'dashed', zorder = 0)
         
         for j in range(len(creta)):
@@ -138,13 +144,25 @@ def plot_density_fluctuation(plot_type = 'mean', compare = 'transport', profile 
 
         # just for the label:
         ax.scatter(-100, -100, color = color_list[i], label = label_list[i], marker = marker, alpha = 0.9)
+
+    #just for the label
     ax.scatter(-100, -100, color = color_list[0], facecolors = 'none', marker = 'o', label = 'Advection')
     ax.scatter(-100, -100, color = color_list[0], facecolors = 'none', marker = 's', label = 'Diffusion')
     ax.scatter(-100, -100, color = color_list[0], facecolors = 'none', marker = 'v', label = 'Streaming')
 
+    # analytic line
+    x = np.linspace(0, 3, 20)
+#    y = np.power((1 + 1/x), 3./2.)
+    y = -3./2. *  x + 1.5
+    if warm:
+        y = 3./2 * np.log10(1 + 1/np.power(10, x))
+    ax.plot(x, y, color = 'black', linestyle = 'dotted') 
+
     ax.legend(fontsize = 8, ncol = 2, loc = 3)
     fig.tight_layout()
     fig_basename = 'density_contrast_%s'%(profile)
+    if warm:
+        fig_basename += '_warm'
     figname = '../../plots/%s/%s.png'%(sim_fam, fig_basename)
     print(figname)
     plt.savefig(figname, dpi = 300)
@@ -153,5 +171,5 @@ sim_fam = 'production'
 work_dir = '../../simulations'
 
 plot_type = 'mean'
-plot_density_fluctuation(plot_type, work_dir = work_dir, profile = 'iso')
+plot_density_fluctuation(plot_type, work_dir = work_dir, profile = 'iso', warm = False)
 
