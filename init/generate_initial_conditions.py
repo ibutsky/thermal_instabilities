@@ -161,7 +161,7 @@ def generate_enzo_input_file():
     outf.write("CourantSafetyNumber \t = 0.2\n\n")
 
     outf.write("# I/O Parameters \n")
-    outf.write("StopCycle \t\t = 1000000\n")
+    outf.write("StopCycle \t\t = 10000000\n")
     outf.write("InitialTime \t\t = 0.0\n")
     outf.write("StopTime \t\t = %f\t # stop time is %0.2f cooling times (at the scale height) \n"%(StopTime, num_cooling_cycles))
     outf.write("dtDataDump \t\t = %f \n"%(dtDataDump))

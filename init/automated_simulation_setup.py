@@ -162,20 +162,20 @@ constant_cr_pressure = 0
 cr_diffusion = 0
 tcr_tff_ratio = 0
 
-cr_streaming = 0
-cr_streaming_stability = 0#50
-cr_heating   = 0
+cr_streaming = 1
+cr_streaming_stability = 50
+cr_heating   = 1
 
 
 
 halo_prof_list = [3]
 #tctf_list = [0.1, 0.3, 1.0, 3.0] #, 10.0]
-tctf_list = [0.3]
+tctf_list = [0.1, 0.3, 1, 3, 10]
 #beta_list = ['inf', 300, 100, 30, 10, 3]
-beta_list = ['inf']
-#beta_list = [3, 10]
+beta_list = [100, 10, 3]
+
 #cr_list = [0.01, 0.1, 1.0, 10.0]
-cr_list = [1]#, 0.1, 1.0, 10]
+cr_list = [10]#, 0.1, 1.0, 3, 10]
 
 
 for halo_prof in halo_prof_list:

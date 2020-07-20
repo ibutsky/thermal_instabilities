@@ -46,10 +46,10 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
         ds = ytf.load('%s/DD%04d/DD%04d'%(ds_loc, output, output))
         ds.add_field(('gas', 'invT'), function = _inv_T, units = '')
         if projection:
-            s = yt.ProjectionPlot(ds, 'x', ('gas', field), center = (0, 0, 1), width = (1, 2),
+            s = yt.ProjectionPlot(ds, 'x', ('gas', field), center = (0, 0, 1), width = (1, 1.8),
                                   weight_field = weight_field)
         else:
-            s = yt.SlicePlot(ds, 'x', ('gas', field), center = (0, 0, 1), width = (1, 2))
+            s = yt.SlicePlot(ds, 'x', ('gas', field), center = (0, 0, 1), width = (1, 1.8))
         frb = s.frb
 
         xbins = frb['y'].in_units('kpc')
@@ -63,7 +63,9 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
         
         if field == 'density':
             vmin = 1e-1
-            vmax = 3            
+            vmax = 3   
+            if projection:
+                vmax = 1.5
             label = '$\\rho / \\rho_0 $'
         elif field == 'temperature':
             vmin = 5e4 / T0
@@ -119,7 +121,7 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
     plt.savefig(figname, dpi = 300, bbox_inches = 'tight', pad_inches = 0.1)
 
 
-sim_fam = 'production'#/high_res'
+sim_fam = 'production/high_res'
 work_dir = '../../simulations'
 
 compare = 'cr'
@@ -136,17 +138,19 @@ heat = 0
 
 fixed_time = False
 projection = False
-for output in [40]:#, 60]:
-    for field in ['density', 'temperature', 'cr_eta']:
-        for tctf in [0.3]:#, 1]:
-            for compare in ['transport_pdf']:#, 'transport_multipanel']:
+for output in [70, 80, 90, 10]:
+    for field in ['density', 'temperature']:
+        for tctf in [0.3]:
+            for compare in ['cr']:#, 'transport_multipanel']:
                 if compare.__contains__('transport'):
                     cr = 1.0
+                if compare.__contains__('tctf'):
+                    projection = True
                 else:
-                    cr = 0
+                    projection = False
                 plot_multipanel_slices(field, output, sim, compare, tctf, beta = beta, cr = cr, \
                                        crdiff = diff, crstream = stream, crheat = heat, projection = projection,
-                                       work_dir = work_dir, fixed_time = fixed_time, weight_field = ('gas', 'invT'))
+                                       work_dir = work_dir, fixed_time = fixed_time, weight_field = ('index', 'ones'))
 
 
 

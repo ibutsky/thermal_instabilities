@@ -108,9 +108,8 @@ def get_plot_data(profile = 'isocool', sim_fam = 'production', work_dir = '../..
                                     
 def plot_density_fluctuation(plot_type = 'mean', compare = 'transport', profile = 'isocool', output = 50,
                               T_cold = 3.3333333e5, zstart = 0.8, zend = 1.2, relative = 0, warm = False,
-                              work_dir = '../../simulations/', grid_rank = 3, load = True, save = True):
+                              work_dir = '../../simulations/', grid_rank = 3, load = True, save = True, overwrite = False):
 
-    
     fig, ax = plt.subplots(nrows=1, ncols = 1, figsize = (4.4, 4), sharex = True, sharey = False)
     ax.set_xlim(-2, 2.5)
     ax.set_ylim(-0.1, 1.6)
@@ -120,30 +119,55 @@ def plot_density_fluctuation(plot_type = 'mean', compare = 'transport', profile 
         ax.set_xlabel('Log $(P_c / P_g)_{\mathrm{cold}}$')
     ax.set_ylabel('Log Average Density Contrast')
 
-#    color_list  = pt.get_color_list('tctf')
-    color_list = pt.get_color_list('transport')
-    marker = 'o'
     sim_fam_list = ['production', 'production/high_res', 'production/low_res',
                     'production/Tmin1e4']
     pal = sns.cubehelix_palette(8, start=.5, rot=-.75)
-#    color_list = ['black', 'gray']
     color_list = [pal[6], pal[4], pal[2], 'orange']
     label_list = ['Fiducial', 'High-res', 'Low-res', 'Tmin = 1e4']
-    for i in range(len(sim_fam_list)):
-        rho_cont_mhd, rho_err_mhd, rho_contrast, rho_err, creta, creta_err, marker_list =  \
+    marker = 'o'
+
+    if overwrite:
+        outfile = open('../../data/production/dens_contrast_plot_data.dat', 'w')
+        outfile.write('#creta creta_err, rho_contrast, rho_contrast_err, list_index, marker\n')
+        outfile_mhd = open('../../data/production/dens_contrast_mhdonly_plot_data.dat', 'w')
+        outfile_mhd.write('# index, mean(rho_cont_mhd)\n')
+        for i in range(len(sim_fam_list)):
+            rho_cont_mhd, rho_err_mhd, rho_contrast, rho_err, creta, creta_err, marker_list =  \
                            get_plot_data(profile = profile, 
                             sim_fam = sim_fam_list[i], work_dir = work_dir, 
                                          zstart = zstart, zend = zend, T_cold = T_cold, warm = warm)
-        ax.axhline(np.mean(rho_cont_mhd), color = color_list[i], linestyle = 'dashed', zorder = 0)
-        
-        for j in range(len(creta)):
-            ax.errorbar(creta[j], rho_contrast[j], xerr = creta_err[j], yerr = rho_err[j], fmt = 'none', 
+            ax.axhline(np.mean(rho_cont_mhd), color = color_list[i], linestyle = 'dashed', zorder = 0)
+            outfile_mhd.write('%i %e\n'%(i, np.mean(rho_cont_mhd)))
+            outfile_mhd.flush()
+            for j in range(len(creta)):
+                ax.errorbar(creta[j], rho_contrast[j], xerr = creta_err[j], yerr = rho_err[j], fmt = 'none', 
                                      color = color_list[i], alpha = 0.3, zorder = 1)
-            ax.scatter(creta[j], rho_contrast[j], color = color_list[i], facecolors = 'none',
+                ax.scatter(creta[j], rho_contrast[j], color = color_list[i], facecolors = 'none',
                        label = None, marker = marker_list[j], alpha = 1, zorder = 2)
 
-        # just for the label:
-        ax.scatter(-100, -100, color = color_list[i], label = label_list[i], marker = marker, alpha = 0.9)
+                outfile.write('%e %e %e %e %i %s\n'%(creta[j], creta_err[j], rho_contrast[j], rho_err[j], i, marker_list[j]))
+                outfile.flush()
+            
+
+            # just for the label:
+            ax.scatter(-100, -100, color = color_list[i], label = label_list[i], marker = marker, alpha = 0.9)
+    else:
+        print('hello')
+        creta, creta_err, rho_contrast, rho_err, index_list = np.loadtxt('../../data/production/dens_contrast_plot_data.dat',
+                                                                         unpack = True, usecols = (0, 1, 2, 3, 4))
+        marker_list = np.loadtxt('../../data/production/dens_contrast_plot_data.dat', unpack = True, usecols = (5), dtype = 'str')
+
+        mhd_index, rho_cont_mhd = np.loadtxt('../../data/production/dens_contrast_mhdonly_plot_data.dat', unpack= True)
+        for i in range(len(mhd_index)):
+            ax.axhline(rho_cont_mhd[i], color = color_list[int(mhd_index[i])], linestyle = 'dashed', zorder = 0)
+            ax.scatter(-100, -100, color = color_list[i], label = label_list[i], marker = marker, alpha = 0.9)
+
+        for j in range(len(creta)):
+            ax.errorbar(creta[j], rho_contrast[j], xerr = creta_err[j], yerr = rho_err[j], fmt = 'none',
+                                     color = color_list[int(index_list[j])], alpha = 0.3, zorder = 1)
+            ax.scatter(creta[j], rho_contrast[j], color = color_list[int(index_list[j])], facecolors = 'none',
+                       label = None, marker = marker_list[j], alpha = 1, zorder = 2)
+
 
     #just for the label
     ax.scatter(-100, -100, color = color_list[0], facecolors = 'none', marker = 'o', label = 'Advection')
@@ -153,10 +177,13 @@ def plot_density_fluctuation(plot_type = 'mean', compare = 'transport', profile 
     # analytic line
     x = np.linspace(0, 3, 20)
 #    y = np.power((1 + 1/x), 3./2.)
-    y = -3./2. *  x + 1.5
+    y = -3./2. *  x + 2.5
+    y1 = -3./2. *  x + 2
+    y2 = -3./2. *  x + 3.5
     if warm:
         y = 3./2 * np.log10(1 + 1/np.power(10, x))
-    ax.plot(x, y, color = 'black', linestyle = 'dotted') 
+#    ax.plot(x, y, color = 'black', linestyle = 'dotted') 
+    ax.fill_between(x, y1, y2 = y2, color = 'gray', alpha = 0.4, zorder = 0)
 
     ax.legend(fontsize = 8, ncol = 2, loc = 3)
     fig.tight_layout()
@@ -171,5 +198,5 @@ sim_fam = 'production'
 work_dir = '../../simulations'
 
 plot_type = 'mean'
-plot_density_fluctuation(plot_type, work_dir = work_dir, profile = 'iso', warm = False)
+plot_density_fluctuation(plot_type, work_dir = work_dir, profile = 'iso', warm = False, overwrite = False)
 

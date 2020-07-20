@@ -59,11 +59,12 @@ def format_data_for_pdf(field, sim_list, label_list, nbins = 100, weighted = Tru
             weights = np.array(len(mass_list)*[1.0])
         if field == 'density':
             data -= log_mumh
-        hist, bin_edges = np.histogram(data, weights = weights, density = False, bins = nbins)
+        hist, bin_edges = np.histogram(data, weights = weights, density = True, bins = nbins)
         # normalize hist values:
+        print("hist: %e"%np.sum(hist*np.diff(bin_edges)))
         max_hist = max(hist)
         if max_hist > 0:
-            hist *= (20000 / max_hist)
+            hist *= (1000 / max_hist)
         new_array = np.array([])
 #        print(max(hist), min(hist), np.median(hist))
         for j in range(len(hist)):
@@ -71,6 +72,7 @@ def format_data_for_pdf(field, sim_list, label_list, nbins = 100, weighted = Tru
             # add hist[i] copies of the value "bin_edge" to artificially recreate the data of the weighted histogram
             new_array = np.append(new_array, (int(hist[j])*[bin_edge]))
         x = np.append(x, new_array)
+        print("new array: %e \n"%np.sum(new_array))
         y = np.append(y, len(new_array)*[label_list[i]])
     return x, y
 
@@ -96,6 +98,7 @@ def make_plot(field, compare, tctf = 0.3, cr = 1, weighted = True, nbins = 100,
 
     x, y = format_data_for_pdf(field, sim_list, label_list, weighted = weighted, 
                                nbins = nbins, work_dir = work_dir, sim_fam = sim_fam)
+
     g = create_pdf_plot(x, y, len(sim_list), height = 1, aspect = 8, pal = pal)  
     ax = g.axes
 
@@ -136,8 +139,8 @@ compare = 'transport_pdf'
 cr_list = [0.01, 0.1, 1, 10]
 tctf_list = [0.1, 0.3, 1, 3]
 
-cr_list = [1, 0.1] 
-tctf_list = [1, 3]
+cr_list = [1]#, 0.1] 
+tctf_list = [0.3, 1.0]#1, 3]
 for cr in cr_list:
     for tctf in tctf_list:
         for field in ['density', 'temperature', 'cr_eta']:#, 'density', 'temperature']:
