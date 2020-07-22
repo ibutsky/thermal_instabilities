@@ -20,7 +20,7 @@ def label(x, color, label):
             ha="left", va="center", transform=ax.transAxes)
 
 
-def create_pdf_plot(x, y, num_cols, bw = 'scott', xlabel = 'x', height = 2, aspect = 7, pal = None):    
+def create_pdf_plot(x, y, num_cols, bw = 'scott', xlabel = 'x', height = 2, aspect = 7, pal = None, use_label = True):    
     df = pd.DataFrame(dict(x=x, y=y))
 
     # Initialize the FacetGrid object
@@ -33,7 +33,8 @@ def create_pdf_plot(x, y, num_cols, bw = 'scott', xlabel = 'x', height = 2, aspe
     g.map(sns.kdeplot, "x", clip_on=False, color="w", lw=2, bw=bw)
     g.map(plt.axhline, y=0, lw=2, clip_on=False)
 
-    g.map(label, "x")
+    if use_label:
+        g.map(label, "x")
 
     # Set the subplots to overlap
     g.fig.subplots_adjust(hspace=-.25)
@@ -64,7 +65,7 @@ def format_data_for_pdf(field, sim_list, label_list, nbins = 100, weighted = Tru
         print("hist: %e"%np.sum(hist*np.diff(bin_edges)))
         max_hist = max(hist)
         if max_hist > 0:
-            hist *= (1000 / max_hist)
+            hist *= (500 / max_hist)
         new_array = np.array([])
 #        print(max(hist), min(hist), np.median(hist))
         for j in range(len(hist)):
@@ -81,6 +82,7 @@ def make_plot(field, compare, tctf = 0.3, cr = 1, weighted = True, nbins = 100,
 
     sim_list = pt.generate_sim_list(compare, tctf = tctf, cr = cr)
     label_list = pt.generate_label_list(compare, tctf = tctf, cr = cr)
+
     if field == 'cr_eta':
         sim_list = sim_list[1:]
         label_list = label_list[1:]
@@ -99,22 +101,35 @@ def make_plot(field, compare, tctf = 0.3, cr = 1, weighted = True, nbins = 100,
     x, y = format_data_for_pdf(field, sim_list, label_list, weighted = weighted, 
                                nbins = nbins, work_dir = work_dir, sim_fam = sim_fam)
 
-    g = create_pdf_plot(x, y, len(sim_list), height = 1, aspect = 8, pal = pal)  
-    ax = g.axes
-
     if field == 'density':
         xlabel = 'Log Number Density (cm$^{-3}$)'
-        xlims = (-28.5, -25.8)
+#        xlims = (-28.5, -25.8)
+        xlims = (-28.7, -25.6)
         xlims -= log_mumh
+        aspect = 8
+        use_label = True
+        ylims = (0, 1)
     elif field == 'temperature':
         xlabel = 'Log Temperature (K)'
-        xlims = (3.5, 7)
+ #       xlims = (3.5, 7)
+        xlims = (4.3, 6.8)
+        aspect = 8.137 #7.5
+        use_label = False
+        ylims = (0, 1)
     elif field == 'cr_eta':
         xlabel = 'Log ($P_c / P_g$)'
-        xlims = (np.log10(cr) - 2, np.log10(cr) + 2)
+  #      xlims = (np.log10(cr) - 2, np.log10(cr) + 2)
+        xlims = (np.log10(cr) - 0.8, np.log10(cr) + 1.7)
+        aspect = 8
+        use_label = False
+        ylims = (0, 1)
     ylims = (0, 1)
-    ax[-1][0].set_xlabel(xlabel, color = 'black')
-    ax[-1][0].tick_params(axis='x', colors='black', bottom = True)
+
+    g = create_pdf_plot(x, y, len(sim_list), height = 1, aspect = aspect, pal = pal, use_label = use_label)
+    ax = g.axes
+
+    ax[-1][0].set_xlabel(xlabel, color = 'black', fontsize = 16)
+    ax[-1][0].tick_params(axis='x', colors='black', bottom = True, labelsize = 'large')
     g.set(xlim = xlims)
     g.set(ylim = ylims)
     if field == 'cr_eta':
@@ -125,7 +140,7 @@ def make_plot(field, compare, tctf = 0.3, cr = 1, weighted = True, nbins = 100,
     figname = pt.get_fig_name(fig_basename, 'isocool', compare, \
                               tctf, 100, cr, sim_fam = sim_fam,\
                               loc = plot_dir)
-    g.savefig(figname, dpi = 300)
+    g.savefig(figname, dpi = 300, bbox_inches = 'tight', pad_inches = 0)
 
 
 
@@ -140,9 +155,9 @@ cr_list = [0.01, 0.1, 1, 10]
 tctf_list = [0.1, 0.3, 1, 3]
 
 cr_list = [1]#, 0.1] 
-tctf_list = [0.3, 1.0]#1, 3]
+tctf_list = [1.0]
 for cr in cr_list:
     for tctf in tctf_list:
-        for field in ['density', 'temperature', 'cr_eta']:#, 'density', 'temperature']:
+        for field in ['density']:#['density', 'temperature', 'cr_eta']:#, 'density', 'temperature']:
             make_plot(field, compare, tctf, cr, weighted = True, sim_fam = sim_fam)
 

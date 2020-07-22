@@ -159,23 +159,23 @@ wall_time = '24:00:00'
 constant_B_pressure = 0
 constant_cr_pressure = 0
 
-cr_diffusion = 0
-tcr_tff_ratio = 0
+cr_diffusion = 0#2
+tcr_tff_ratio = 0#10
 
-cr_streaming = 1
+cr_streaming = 0
 cr_streaming_stability = 50
-cr_heating   = 1
+cr_heating   = 0
 
 
 
 halo_prof_list = [3]
 #tctf_list = [0.1, 0.3, 1.0, 3.0] #, 10.0]
-tctf_list = [0.1, 0.3, 1, 3, 10]
+tctf_list = [0.1]#, 0.3, 1, 3, 10]
 #beta_list = ['inf', 300, 100, 30, 10, 3]
-beta_list = [100, 10, 3]
+beta_list = [10]#, 10, 3]
 
 #cr_list = [0.01, 0.1, 1.0, 10.0]
-cr_list = [10]#, 0.1, 1.0, 3, 10]
+cr_list = [0.01]#, 0.1, 1.0, 3, 10]
 
 
 for halo_prof in halo_prof_list:

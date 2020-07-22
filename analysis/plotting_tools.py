@@ -665,16 +665,12 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         beta_list[-1] = 3
 
     elif compare == 'transport_relative':
-        diff_list   = [0, 0, 0, 0,10, 3, 1, 0, 0, 0]
-        stream_list = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1]
-        heat_list   = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1]
+        diff_list   = [0, 0, 0, 10, 3, 1, 0, 0, 0]
+        stream_list = [0, 0, 0, 0, 0, 0, 1, 1, 1]
+        heat_list   = [0, 0, 0, 0, 0, 0, 1, 1, 1]
         num = len(diff_list)
         tctf_list = num*[tctf]
         cr_list  = num*[cr]
-        cr_list[0] = 0
-#        cr_list[1] = 0
-#        cr_list[2] = 0
-#        cr_list[3] = 0
         beta_list = num*[100]
         beta_list[-2] = 10
         beta_list[-1] = 3
@@ -813,7 +809,7 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
             if compare == 'transport_relative':
                 label += ', $\\beta = %i$'%beta
         if cr > 0:
-            label = 'P$_c$ / P$_g$ = %.1f'%cr
+            label = 'Advection'%cr
             if compare == 'transport_relative' or compare == 'transport_pdf':
                 label += ', $\\beta = %i$'%beta
             if crdiff > 0:
@@ -821,7 +817,7 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
             elif crstream > 0:
                 label = 'Streaming, $\\beta = %i$'%beta
                 if crheat == 0:
-                    label += ' + no heat'
+                    label += '\n (no heat)'
     elif compare == 'diff':
         if cr == 0:
             label = 'No CRs'
@@ -1029,7 +1025,7 @@ def get_color_list(compare):
         adv1_color = ap[8]
         adv2_color = ap[9]
         adv3_color = ap[10]
-        color_list = [mhd_color, adv1_color, adv2_color, adv3_color, diff0_color, 
+        color_list = [adv1_color, adv2_color, adv3_color, diff0_color, 
                       diff1_color, diff2_color, stream0_color, stream1_color, stream2_color]
     return color_list
 

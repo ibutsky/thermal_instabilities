@@ -17,7 +17,7 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
 
     tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list\
                         = pt.generate_lists(compare, tctf, crdiff = diff, cr = cr, beta = beta)
-    tctf_list = [0.1, 0.3, 1, 3]#, 10]
+    tctf_list = [0.1, 0.3, 1, 3, 10]
     print(tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list)
     
     fig, ax = plt.subplots(nrows=1, ncols = 3, figsize = (4*3, 3.8), sharex = True, sharey = False)
@@ -25,15 +25,22 @@ def plot_density_fluctuation(output, sim, compare, tctf, beta, cr, diff = 0, str
         ax[col].set_xscale('log')
         ax[col].set_yscale('log')
         ax[col].set_xlim(.09, 10)
-        ax[col].set_xlabel('$t_{cool} / t_{ff}$', fontsize = fs)
+        ax[col].set_xlabel('$t_{\\rm cool} / t_{\\rm ff}$', fontsize = fs)
 
     if relative == 0:
         ax[0].set_ylim(1e-2, 5)
         ax[1].set_ylim(5e-3, 4)
-        ax[2].set_ylim(2e-2, 10)
+        ax[2].set_ylim(8e-3, 10)
         ax[0].set_ylabel('Density Fluctuation', fontsize = fs)
         ax[1].set_ylabel('Cold Mass Fraction', fontsize = fs)
         ax[2].set_ylabel('Cold Mass Flux', fontsize = fs)
+        if cr > 0:
+            x = 0.15
+            y = 1e-2
+            if cr < 0.1:
+                ax[1].text(x, y, '$P_c / P_g = %0.2f$'%cr, color = 'black', fontsize = fs + 6)
+            else:
+                ax[1].text(x, y, '$P_c / P_g = %.1f$'%cr, color = 'black', fontsize = fs + 6)
     else:
         ax[0].set_ylim(1e-2, 3)
         ax[1].set_ylim(1e-3, 100)
