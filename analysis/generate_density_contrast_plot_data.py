@@ -20,7 +20,7 @@ def sim_has_all_outputs(sim_loc, min_output = 40, max_output = 60):
         
 def skip_sim(sim_loc):
     skip = False
-    skip_list = ['tctf_3.0', 'tctf_10.0']
+    skip_list = ['tctf_10.0']
     for s in skip_list:
         if sim_loc.__contains__(s):
             skip = True
@@ -35,6 +35,29 @@ def get_marker(sim_name):
             marker = 'v'
     return marker
 
+def get_transport(sim_name):
+    if sim_name.__contains__('cr'):
+        transport = 0
+        if sim_name.__contains__('beta_100.0'):
+            transport = 1
+        if sim_name.__contains__('tdiff_10.0'):
+            transport = 4
+        elif sim_name.__contains__('tdiff_3.0'):
+            transport = 5
+        elif sim_name.__contains__('tdiff_1.0'):
+            transport = 6
+        elif sim_name.__contains__('stream'):
+            transport = 7
+            if sim_name.__contains__('heat'):
+                transport += 3
+        if sim_name.__contains__('beta_10.0'):
+            transport += 1
+        elif sim_name.__contains__('beta_3.0'):
+            transport += 2
+    else:
+        transport = 0
+    return transport
+        
 def get_density_contrast(sim_name, sim_fam = 'production', work_dir = '../../simulations',
                   T_cold = 3.33333e5, zstart = 0.8, zend = 1.2):
 
@@ -53,7 +76,7 @@ def get_density_contrast(sim_name, sim_fam = 'production', work_dir = '../../sim
     # if the cold mass fraction is very low, ignore
     if cold_mass / hot_mass < 0.01:
         rho_cont = -99
-        rho_err = 0
+        err = 0
     else:
         rho_cold_ave = np.nanmean(log_rho[cold_mask])
         rho_hot_ave = np.nanmean(log_rho[hot_mask])
@@ -103,13 +126,7 @@ def get_plot_data(profile = 'isocool', sim_fam = 'production', work_dir = '../..
                 rho_err_list   = np.append(rho_err_list,   rho_err)
                 creta_list     = np.append(creta_list,     creta)
                 creta_err_list = np.append(creta_err_list, creta_err)
-                transport = 1
-                if sim_name.__contains__('diff'):
-                    transport = 2
-                elif sim_name.__contains__('stream'):
-                    transport = 3
-
-                transport_list  = np.append(transport_list, transport)
+                transport_list  = np.append(transport_list, get_transport(sim_name))
 
             elif sim_name.__contains__('beta_100.0') and sim_name.__contains__('tctf_0.1'):
                 rho_cont, rho_err = get_density_contrast(sim_name, sim_fam = sim_fam,
@@ -134,9 +151,9 @@ def generate_density_contrast_plot_data(plot_type = 'mean', compare = 'transport
     np.save('../../data/%s/dens_contrast_mhd_data'%sim_fam, mhd_data)
         
 
-sim_fam = 'production'
+sim_fam = 'production/Tmin1e4'
 work_dir = '../../simulations'
 
 plot_type = 'mean'
-generate_density_contrast_plot_data(plot_type, work_dir = work_dir, profile = 'isocool', warm = False)
+generate_density_contrast_plot_data(plot_type, work_dir = work_dir, sim_fam = sim_fam, profile = 'isocool', warm = False)
 
