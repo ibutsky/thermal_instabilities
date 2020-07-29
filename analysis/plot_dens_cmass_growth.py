@@ -17,10 +17,10 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
 
 
     tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list \
-        = pt.generate_lists(compare, tctf, beta = beta, crdiff = crdiff, cr = cr)
+        = pt.generate_lists(compare, tctf, beta = beta, crdiff = crdiff, cr = cr, crstream = stream, crheat = heat)
 
-    print(tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list)
-    
+    print(tctf_list, beta_list, cr_list, diff_list, stream_list, heat_list)    
+
     ncols = 3
     fig, ax = plt.subplots(nrows=1, ncols=ncols, figsize = (4*ncols, 3.8), sharex = True, sharey = False)
     for col in range(ncols):
@@ -40,12 +40,25 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
     wcool = 1.0 / (gamma * 1.0)
     pi = (5./3.) * wcool
     linecolor = 'black'
+
     if pt.dark_mode:
         linecolor = 'white'
-    if compare == 'tctf':
+    if compare == 'tctf' or compare == 'cr':
+        pi = 1.0
         ax[0].plot(time_list, 0.02*np.exp(pi*time_list), color = linecolor,\
                    linestyle = 'dashed', label = 'Linear Theory', linewidth = 3)
+    if compare == 'cr':
+        pi = 2./3.
+        ax[0].plot(time_list, 0.02*np.exp(pi*time_list), color = linecolor,\
+                   linestyle = 'dotted', label = 'Linear Theory, $\\eta \\gg 1$', linewidth = 3)
 
+        pi = 1./3.
+        ax[0].plot(time_list, 0.02*np.exp(pi*time_list), color = linecolor,\
+                   linestyle = 'dotted', label = 'Linear Theory, $\\eta \\gg 1$', linewidth = 3)
+
+        pi = 1./12.
+        ax[0].plot(time_list, 0.02*np.exp(pi*time_list), color = linecolor,\
+                   linestyle = 'dotted', label = 'Linear Theory, $\\eta \\gg 1$', linewidth = 3)
 
     cpal = pt.get_color_list(compare)
 
@@ -103,7 +116,7 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
     plt.savefig(figname, dpi = 300)
 
 
-def make_all_plots(compare, beta = 100, cr = 0, field = 'density'):
+def make_all_plots(compare, beta = 100, cr = 0, field = 'density', stream = 0, heat = 0):
     all_tctf = [.1, 0.3, 1, 3, 10]
     all_cr = [0.01, .1, 1, 3, 10]
     for sim in ['isocool']:
@@ -114,7 +127,7 @@ def make_all_plots(compare, beta = 100, cr = 0, field = 'density'):
 
         elif compare == 'cr':
             for tctf in all_tctf:
-                plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, work_dir = work_dir, field = field)
+                plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, stream = stream, heat = heat, work_dir = work_dir, field = field)
                 
         elif compare == 'tctf':
             tctf = 0.1
@@ -138,5 +151,5 @@ crdiff = 0
 compare = sys.argv[1]
 
 
-make_all_plots(compare)
+make_all_plots(compare, stream =1, heat = 1)
 

@@ -154,10 +154,10 @@ compare = 'transport_pdf'
 cr_list = [0.01, 0.1, 1, 10]
 tctf_list = [0.1, 0.3, 1, 3]
 
-cr_list = [1]#, 0.1] 
-tctf_list = [1.0]
+cr_list = [0.1, 10] 
+tctf_list = [0.3, 1.0]
 for cr in cr_list:
     for tctf in tctf_list:
-        for field in ['density']:#['density', 'temperature', 'cr_eta']:#, 'density', 'temperature']:
+        for field in ['temperature', 'cr_eta']:#, 'density', 'temperature']:
             make_plot(field, compare, tctf, cr, weighted = True, sim_fam = sim_fam)
 

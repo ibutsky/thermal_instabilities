@@ -151,7 +151,7 @@ def generate_density_contrast_plot_data(plot_type = 'mean', compare = 'transport
     np.save('../../data/%s/dens_contrast_mhd_data'%sim_fam, mhd_data)
         
 
-sim_fam = 'production/Tmin1e4'
+sim_fam = 'production/low_res'
 work_dir = '../../simulations'
 
 plot_type = 'mean'

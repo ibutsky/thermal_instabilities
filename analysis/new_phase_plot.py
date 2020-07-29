@@ -166,8 +166,8 @@ xfield = 'density'
 yfield = 'temperature'
 
 
-for cr in [0]:
-    for tctf in [0.3, 1.0]:
+for cr in [10]:
+    for tctf in [1.0]:
         sim_list = pt.generate_sim_list(compare, tctf = tctf, cr = cr)
         label_list = pt.generate_label_list(compare, tctf = tctf, cr = cr)
         for sim, label in zip(sim_list, label_list):

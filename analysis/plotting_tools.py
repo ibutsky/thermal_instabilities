@@ -185,9 +185,9 @@ def get_time_data(data_type, sim='isocool', tctf=0.1, beta=100, cr=0, diff = 0, 
             data_list = [n_clumps, clump_size, clump_std]
         else:
             time_list, data_list = np.loadtxt(out_name, skiprows = 1, unpack=True)
-            if len(time_list) < 100:
-                os.remove(out_name)
-                print("WARNING: removing %s"%out_name)
+#            if len(time_list) < 61:
+#                os.remove(out_name)
+#                print("WARNING: removing %s"%out_name)
     if not os.path.isfile(out_name) or load == False:
         if not os.path.isdir(sim_location):
             if data_type == 'clump':
@@ -668,14 +668,10 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         diff_list   = [0, 0, 0, 10, 3, 1, 0, 0, 0]
         stream_list = [0, 0, 0, 0, 0, 0, 1, 1, 1]
         heat_list   = [0, 0, 0, 0, 0, 0, 1, 1, 1]
+        beta_list   = [100, 10, 3, 100, 100, 100, 100, 10, 3]
         num = len(diff_list)
         tctf_list = num*[tctf]
         cr_list  = num*[cr]
-        beta_list = num*[100]
-        beta_list[-2] = 10
-        beta_list[-1] = 3
-        beta_list[2] = 10
-        beta_list[3] = 3
 
     elif compare == 'transport_pdf':
         diff_list   = [0, 0, 0, 0,10, 3, 1, 0, 0, 0, 0, 0, 0]
@@ -879,13 +875,15 @@ def get_fig_name(base, sim, compare, tctf, beta=100.0, cr=0, crdiff=0, crstream 
     if compare == 'beta':
         plot_name += '_beta_compare'
     elif compare == 'cr':
-        plot_name += '_beta_%.1f_cr_compare'%(beta)
+        if beta != 'inf':
+            plot_name += '_beta_%.1f'%(beta)
         if crdiff > 0:
             plot_name += '_diff_%.1f'%crdiff
         if crstream > 0:
             plot_name += '_stream'
         if crheat > 0:
             plot_name += '_heat'
+        plot_name += '_cr_compare'
     elif compare == 'diff':
         plot_name += '_beta_%.1f_cr_%.1f_diff_compare'%(beta, cr)
     elif compare == 'stream':
