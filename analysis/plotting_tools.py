@@ -185,9 +185,9 @@ def get_time_data(data_type, sim='isocool', tctf=0.1, beta=100, cr=0, diff = 0, 
             data_list = [n_clumps, clump_size, clump_std]
         else:
             time_list, data_list = np.loadtxt(out_name, skiprows = 1, unpack=True)
-#            if len(time_list) < 61:
-#                os.remove(out_name)
-#                print("WARNING: removing %s"%out_name)
+            if len(time_list) < 61:
+                os.remove(out_name)
+                print("WARNING: removing %s"%out_name)
     if not os.path.isfile(out_name) or load == False:
         if not os.path.isdir(sim_location):
             if data_type == 'clump':
@@ -982,7 +982,7 @@ def get_color_list(compare):
     if compare == 'tctf':
         color_list = palettable.cmocean.sequential.Tempo_6_r.mpl_colors
     elif compare == 'beta':
-        color_list = palettable.cmocean.sequential.Tempo_5_r.mpl_colors
+        color_list = palettable.cartocolors.sequential.Teal_6_r.mpl_colors
     elif compare == 'cr':
         color_list = palettable.scientific.sequential.Batlow_6.mpl_colors
     elif compare == 'diff':

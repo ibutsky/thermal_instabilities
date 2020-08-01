@@ -47,18 +47,18 @@ def plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, diff = 0, stre
         pi = 1.0
         ax[0].plot(time_list, 0.02*np.exp(pi*time_list), color = linecolor,\
                    linestyle = 'dashed', label = 'Linear Theory', linewidth = 3)
-    if compare == 'cr':
-        pi = 2./3.
-        ax[0].plot(time_list, 0.02*np.exp(pi*time_list), color = linecolor,\
-                   linestyle = 'dotted', label = 'Linear Theory, $\\eta \\gg 1$', linewidth = 3)
+#    if compare == 'cr':
+#        pi = 2./3.
+#        ax[0].plot(time_list, 0.02*np.exp(pi*time_list), color = linecolor,\
+#                   linestyle = 'dotted', label = 'Linear Theory, $\\eta \\gg 1$', linewidth = 3)
 
-        pi = 1./3.
-        ax[0].plot(time_list, 0.02*np.exp(pi*time_list), color = linecolor,\
-                   linestyle = 'dotted', label = 'Linear Theory, $\\eta \\gg 1$', linewidth = 3)
-
-        pi = 1./12.
-        ax[0].plot(time_list, 0.02*np.exp(pi*time_list), color = linecolor,\
-                   linestyle = 'dotted', label = 'Linear Theory, $\\eta \\gg 1$', linewidth = 3)
+ #       pi = 1./3.
+ #       ax[0].plot(time_list, 0.02*np.exp(pi*time_list), color = linecolor,\
+ #                  linestyle = 'dotted', label = 'Linear Theory, $\\eta \\gg 1$', linewidth = 3)
+#
+  #      pi = 1./12.
+ #       ax[0].plot(time_list, 0.02*np.exp(pi*time_list), color = linecolor,\
+ #                  linestyle = 'dotted', label = 'Linear Theory, $\\eta \\gg 1$', linewidth = 3)
 
     cpal = pt.get_color_list(compare)
 
@@ -139,7 +139,7 @@ def make_all_plots(compare, beta = 100, cr = 0, field = 'density', stream = 0, h
                 plot_density_fluctuation_growth(sim, compare, tctf, beta, cr, work_dir = work_dir, field = field)
 
 
-sim_fam = 'production'
+sim_fam = 'production/constant_crp'
 work_dir = '../../simulations'
 save = True
 load = True
@@ -150,6 +150,6 @@ mhd_compare = 0
 crdiff = 0
 compare = sys.argv[1]
 
-
-make_all_plots(compare, stream =1, heat = 1)
+for beta in ['inf']:#, 100, 10, 3]:
+    make_all_plots(compare, beta = beta)#, stream = 0, heat = 0)
 

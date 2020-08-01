@@ -177,6 +177,7 @@ if compare == 'transport' or compare == 'stream':
         plot_density_fluctuation(output, profile, compare, tctf, beta, cr, diff = diff, stream = stream, heat = heat, \
                                  work_dir = work_dir, relative = relative)
 if compare == 'cr':
+    beta = 'inf'
     plot_density_fluctuation(output, profile, compare, tctf, beta, cr, diff = diff, stream = stream, heat = heat, \
                                      work_dir = work_dir, relative = relative)
 

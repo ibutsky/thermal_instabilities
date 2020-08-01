@@ -50,6 +50,7 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
                                   weight_field = weight_field)
         else:
             s = yt.SlicePlot(ds, 'x', ('gas', field), center = (0, 0, 1), width = (1, 1.8))
+        s.set_buff_size(1024)
         frb = s.frb
 
         xbins = frb['y'].in_units('kpc')
@@ -138,10 +139,10 @@ heat = 0
 
 fixed_time = False
 projection = False
-for output in [70, 80, 90, 10]:
+for output in [50, 60]:
     for field in ['density', 'temperature']:
-        for tctf in [0.3]:
-            for compare in ['cr']:#, 'transport_multipanel']:
+        for tctf in [0.3, 1]:
+            for compare in ['cr', 'tctf']:#, 'transport_multipanel']:
                 if compare.__contains__('transport'):
                     cr = 1.0
                 if compare.__contains__('tctf'):

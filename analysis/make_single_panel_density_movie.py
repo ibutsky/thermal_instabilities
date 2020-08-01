@@ -23,7 +23,7 @@ kb = const.k_B.cgs.value
 p0 = (rho0 / mu / mh) * kb*T0
 
 workdir = '../../simulations/2d_4096'
-plot_folder = '../../movies/2d_4096/tmp'
+plot_folder = '../../movies/2d_4096/temp'
 
 sim = sys.argv[1]
 field = sys.argv[2]
