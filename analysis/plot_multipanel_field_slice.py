@@ -50,6 +50,7 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
                                   weight_field = weight_field)
         else:
             s = yt.SlicePlot(ds, 'x', ('gas', field), center = (0, 0, 1), width = (1, 1.8))
+        s.save()
         s.set_buff_size(1024)
         frb = s.frb
 
@@ -57,8 +58,10 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
         ybins = frb['z'].in_units('kpc')
         if field == 'density':
             data_norm = rho0
-        else:
+        elif field == 'temperature':
             data_norm = T0
+        else: 
+            data_norm = p0
 
         data   = frb[field] / data_norm
         
@@ -77,11 +80,14 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
             vmin = cr_eta / 100
             vmax = cr_eta * 100
             label = 'P$_c$ / P$_g$'
+        elif field == 'cr_pressure':
+            label = 'P$_c$ / P$_{c,0}$'
+            vmin = 0.2
+            vmax = 2
 
         cmap = pt.get_cmap(field)
-        pcm = ax[i].pcolormesh(xbins, ybins, data, norm = LogNorm(), cmap = cmap, \
+        pcm = ax[i].pcolormesh(xbins, ybins, data, cmap = cmap, norm = LogNorm(),\
                                vmax = vmax, vmin = vmin, zorder = 1)
-        
         
         ax[i].set_aspect('equal')
 #        ax[i].tick_params(direction='in', top=True, right=True, zorder = 10)
@@ -109,7 +115,11 @@ def plot_multipanel_slices(field, output, sim, compare, tctf, beta = 100, cr = 0
     cbar_x = pos_r[1][0] + .02
     print(cbar_x, cbar_y)
     cbax = fig.add_axes([cbar_x, cbar_y, dx, dy])
-    cbar = fig.colorbar(pcm,  cax=cbax, orientation = 'vertical')
+    if field == 'cr_pressure':
+        cbar = fig.colorbar(pcm,  cax=cbax, orientation = 'vertical', ticks =[0.2, 2])
+        cbar.ax.set_yticklabels(['0.2', '2'])
+    else:
+        cbar = fig.colorbar(pcm,  cax=cbax, orientation = 'vertical')
     cbar.set_label(label)
 
     if projection:
@@ -139,10 +149,10 @@ heat = 0
 
 fixed_time = False
 projection = False
-for output in [50, 60]:
-    for field in ['density', 'temperature']:
-        for tctf in [0.3, 1]:
-            for compare in ['cr', 'tctf']:#, 'transport_multipanel']:
+for output in [60]:
+    for field in ['cr_pressure']:#density', 'temperature']:
+        for tctf in [0.3]:#, 1]:
+            for compare in ['transport_multipanel']:#['cr', 'tctf']:#, 'transport_multipanel']:
                 if compare.__contains__('transport'):
                     cr = 1.0
                 if compare.__contains__('tctf'):

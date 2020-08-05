@@ -185,9 +185,9 @@ def get_time_data(data_type, sim='isocool', tctf=0.1, beta=100, cr=0, diff = 0, 
             data_list = [n_clumps, clump_size, clump_std]
         else:
             time_list, data_list = np.loadtxt(out_name, skiprows = 1, unpack=True)
-            if len(time_list) < 61:
-                os.remove(out_name)
-                print("WARNING: removing %s"%out_name)
+#            if len(time_list) < 61:
+#                os.remove(out_name)
+#                print("WARNING: removing %s"%out_name)
     if not os.path.isfile(out_name) or load == False:
         if not os.path.isdir(sim_location):
             if data_type == 'clump':
@@ -690,14 +690,13 @@ def generate_lists(compare, tctf, crdiff = 0, crstream = 0, crheat=0, cr = 1.0, 
         beta_list[3] = 3
 
     elif compare == 'transport_multipanel':
-        diff_list   = [0, 0, 3, 0]
-        stream_list = [0, 0, 0, 1]
-        heat_list   = [0, 0, 0, 1]
+        diff_list   = [0, 10, 3, 0, 0]
+        stream_list = [0, 0,  0, 1, 1]
+        heat_list   = [0, 0,  0, 1, 1]
+        beta_list   = [100, 100, 100, 100, 10]
         num = len(diff_list)
         tctf_list = num*[tctf]
         cr_list  = num*[cr]
-        cr_list[0] = 0
-        beta_list = num*[100]
     else:
         print("Unrecognized compare keyword: %s"%compare)
     tctf_list = np.array(tctf_list)
@@ -809,9 +808,15 @@ def get_label_name(compare, tctf, beta, cr, crdiff = 0, \
             if compare == 'transport_relative' or compare == 'transport_pdf':
                 label += ', $\\beta = %i$'%beta
             if crdiff > 0:
-                label = 'Diffusion, $t_{diff} / t_{ff}$ = %i'%crdiff
+                label = 'Diffusion,'
+                if compare.__contains__('multipanel'):
+                    label += '\n'
+                label += ' $t_{diff} / t_{ff}$ = %i'%crdiff
             elif crstream > 0:
-                label = 'Streaming, $\\beta = %i$'%beta
+                label = 'Streaming,'
+                if compare.__contains__('multipanel'):
+                    label += '\n'
+                label += '$\\beta = %i$'%beta
                 if crheat == 0:
                     label += '\n (no heat)'
     elif compare == 'diff':
@@ -958,7 +963,8 @@ def get_cmap(field):
     elif field == 'cr_eta':
         cmap = palettable.scientific.sequential.Tokyo_20.mpl_colormap
     elif field == 'cr_pressure':
-        cmap = palettable.scientific.sequential.Turku_20.mpl_colormap
+#        cmap = palettable.scientific.sequential.Turku_20.mpl_colormap
+        cmap = palettable.scientific.sequential.Tokyo_20.mpl_colormap
     elif field == 'velocity_z':
         cmap = palettable.scientific.diverging.Vik_20.mpl_colormap
     elif field == 'magnetic_field_strength':

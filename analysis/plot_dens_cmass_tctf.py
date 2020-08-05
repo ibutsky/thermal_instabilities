@@ -107,10 +107,16 @@ def plot_density_fluctuation(output, profile, compare, tctf, beta, cr, diff = 0,
                 if compare == 'transport_relative':
                     marker_list = ['o', 'o', 'o', 's', 's', 's', 'v', 'v', 'v']
                     marker = marker_list[i]
+                    xoffset = [1, 1, 1, 0.9, 0.9, 0.9, 1.1, 1.1, 1.1]
                 else:
                     marker = 'o'
                 
-                ax[col].plot(x_list, y_list, color = color_list[i], label = label, 
+                if compare == 'transport_relative':
+                    ax[col].plot(x_list*xoffset[i], y_list, color = color_list[i], linewidth = 1.5, alpha = 0.5)
+                    ax[col].plot(x_list*xoffset[i], y_list, color = color_list[i], label = label, linestyle = '', 
+                                    marker = marker, markersize = 12)
+                else:
+                    ax[col].plot(x_list, y_list, color = color_list[i], label = label,
                                  linewidth = 2, marker = marker, linestyle = linestyle)
                 ax[col].errorbar(x_list, y_list, err_list, color = color_list[i], linestyle = '')
     

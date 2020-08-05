@@ -154,8 +154,8 @@ compare = 'transport_pdf'
 cr_list = [0.01, 0.1, 1, 10]
 tctf_list = [0.1, 0.3, 1, 3]
 
-cr_list = [0.1, 10] 
-tctf_list = [0.3, 1.0]
+cr_list = [0.1, 1, 10] 
+tctf_list = [3.0, 0.1]
 for cr in cr_list:
     for tctf in tctf_list:
         for field in ['temperature', 'cr_eta']:#, 'density', 'temperature']:
