@@ -962,7 +962,8 @@ def get_cmap(field):
     elif field == 'temperature':
         cmap = palettable.scientific.sequential.LaJolla_20_r.mpl_colormap
     elif field == 'cr_eta':
-        cmap = palettable.scientific.sequential.Tokyo_20.mpl_colormap
+#        cmap = palettable.scientific.sequential.Tokyo_20.mpl_colormap
+        cmap = palettable.cartocolors.diverging.Geyser_7.mpl_colormap
     elif field == 'cr_pressure':
 #        cmap = palettable.scientific.sequential.Turku_20.mpl_colormap
         cmap = palettable.scientific.sequential.Tokyo_20.mpl_colormap
