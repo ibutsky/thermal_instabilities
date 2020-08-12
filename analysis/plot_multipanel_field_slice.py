@@ -150,7 +150,7 @@ heat = 0
 fixed_time = False
 projection = False
 for output in [60]:
-    for field in ['cr_pressure']:#density', 'temperature']:
+    for field in ['density', 'temperature']:
         for tctf in [0.3]:#, 1]:
             for compare in ['transport_multipanel']:#['cr', 'tctf']:#, 'transport_multipanel']:
                 if compare.__contains__('transport'):

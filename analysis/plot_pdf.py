@@ -93,9 +93,10 @@ def make_plot(field, compare, tctf = 0.3, cr = 1, weighted = True, nbins = 100,
         pal = palettable.scientific.sequential.LaJolla_13.mpl_colors[2:-1]
         if compare == 'transport_pdf':
             pal = palettable.scientific.sequential.LaJolla_16.mpl_colors[2:-1]
-
     elif field == 'cr_eta':
         pal = sns.cubehelix_palette(len(sim_list)+1)[1:]
+    elif field == 'plasma_beta':
+        pal = palettable.cmocean.sequential.Ice_16.mpl_colors[2:-1]
 
 
     x, y = format_data_for_pdf(field, sim_list, label_list, weighted = weighted, 
@@ -123,6 +124,12 @@ def make_plot(field, compare, tctf = 0.3, cr = 1, weighted = True, nbins = 100,
         aspect = 8
         use_label = False
         ylims = (0, 1)
+    elif field == 'plasma_beta':
+        xlabel = 'Log ($P_g / P_b$)'
+        xlims = (-3, 2)
+        aspect = 8
+        use_label = True
+
     ylims = (0, 1)
 
     g = create_pdf_plot(x, y, len(sim_list), height = 1, aspect = aspect, pal = pal, use_label = use_label)
@@ -155,9 +162,9 @@ cr_list = [0.01, 0.1, 1, 10]
 tctf_list = [0.1, 0.3, 1, 3]
 
 cr_list = [0.1, 1, 10] 
-tctf_list = [3.0, 0.1]
+tctf_list = [0.3, 1.0]
 for cr in cr_list:
     for tctf in tctf_list:
-        for field in ['temperature', 'cr_eta']:#, 'density', 'temperature']:
+        for field in ['plasma_beta']:#['temperature', 'cr_eta']:#, 'density', 'temperature']:
             make_plot(field, compare, tctf, cr, weighted = True, sim_fam = sim_fam)
 

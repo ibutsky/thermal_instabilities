@@ -20,7 +20,7 @@ def sim_has_all_outputs(sim_loc, min_output = 40, max_output = 60):
         
 def skip_sim(sim_loc):
     skip = False
-    skip_list = ['tctf_10.0']
+    skip_list = ['tctf_10.0', 'tctf_1.0', 'tctf_3.0']
     for s in skip_list:
         if sim_loc.__contains__(s):
             skip = True
@@ -145,13 +145,13 @@ def generate_density_contrast_plot_data(plot_type = 'mean', compare = 'transport
                             sim_fam = sim_fam, work_dir = work_dir, 
                                          zstart = zstart, zend = zend, T_cold = T_cold, warm = warm)
     data = np.vstack((rho_contrast, rho_err, creta, creta_err, transport_list))
-    np.save('../../data/%s/dens_contrast_plot_data'%sim_fam, data)
+    np.save('../../data/%s/dens_contrast_plot_data_low_tctf'%sim_fam, data)
         
     mhd_data = np.vstack((rho_cont_mhd, rho_err_mhd))
-    np.save('../../data/%s/dens_contrast_mhd_data'%sim_fam, mhd_data)
+    np.save('../../data/%s/dens_contrast_mhd_data_low_tctf'%sim_fam, mhd_data)
         
 
-sim_fam = 'production/low_res'
+sim_fam = 'production'
 work_dir = '../../simulations'
 
 plot_type = 'mean'

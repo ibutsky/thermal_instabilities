@@ -105,7 +105,7 @@ def calculate_cold_clump_properties(ds, field = 'neg_log_T'):
 
     return n_clumps, np.mean(radius_list), np.std(radius_list)
     
-def get_2d_hist_data(xfield, yfield, sim, weighted = True,
+def get_2d_hist_data(xfield, yfield, sim, weighted = True, output_list = None,
                      field = 'density', zstart = 0.8, zend = 1.2, grid_rank = 3,
                      T_min = 3.33333e5, save = True, load = True, data_loc = '../../data',
                      work_dir = '../../simulations', sim_fam = 'production'):
@@ -129,7 +129,8 @@ def get_2d_hist_data(xfield, yfield, sim, weighted = True,
         if not os.path.isdir(sim_location):
             return logx_list, logy_list, mass_list
         args_list = []
-        output_list = np.arange(40, 61, 1)
+        if output_list is None:
+            output_list = np.arange(40, 61, 1)
         #testing:
 #        output_list = [40]
         for output in output_list:
